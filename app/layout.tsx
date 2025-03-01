@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Sidebar from "@/app/sidebar"; // Assuming Sidebar is already in the right location
 import "./globals.css";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
+import { ContentLayout } from "@/components/admin-panel/content-layout";
 
 
 const geistSans = Geist({
@@ -26,11 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="djskg">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AdminPanelLayout>{children}</AdminPanelLayout>
+        <AdminPanelLayout>
+              <ContentLayout title="Test"> </ContentLayout>
+          {children}
+          </AdminPanelLayout>
       </body>
     </html>
   );
