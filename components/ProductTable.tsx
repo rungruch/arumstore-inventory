@@ -40,7 +40,7 @@ export default function ProductTable({ products }: { products: any }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {products.map((product, index) => (
+                    {products.map((product :any, index:any) => (
                         <tr key={product.id} className="border-b">
                             <td className="p-2">{index + 1}</td>
                             <td className="p-2">{convertTimestampToDate(product.updated_date)}</td>
