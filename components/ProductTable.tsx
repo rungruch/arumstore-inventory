@@ -24,10 +24,10 @@ export default function ProductTable({ products }: { products: any }) {
     };
 
     return (
-        <div className="overflow-x-auto bg-white rounded-lg shadow-md p-4">
+        <div className="overflow-x-auto bg-white rounded-lg shadow-md">
             <table className="w-full border-collapse">
-                <thead>
-                    <tr className="bg-gray-100 text-left">
+            <thead className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                    <tr className="text-left h-[9vh]">
                         <th className="p-2">#</th>
                         <th className="p-2">วันที่อัพเดต</th>
                         <th className="p-2">รหัส</th>
