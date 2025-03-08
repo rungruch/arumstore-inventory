@@ -15,9 +15,16 @@ import {
 	addDoc,
 	getFirestore,
     limit,
+    startAt, 
+    startAfter,
+    endAt,
+    CollectionReference,
+    getCountFromServer
 } from "firebase/firestore";
 
-import { db } from "@/app/firebase/clientApp";
+// import { db } from "@/app/firebase/clientApp";
+
+import { db } from "@/app/firebase/clientApp"
 
 // export async function updateRestaurantImageReference(
 // 	restaurantId,
@@ -170,26 +177,55 @@ export async function getProducts() {
     }
 }
 
-export async function getProductCategory() {
+export async function getProductCategoryPaginated(lastDoc = null, pageSize = 10) {
     try {
-        const q = query(
-            collection(db, "product_category"),
-        );
-        
-        const querySnapshot = await getDocs(q);
-        console.log(querySnapshot)
-        return querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
+      let q = query(collection(db, "product_category"), orderBy("created_at", "desc"), limit(pageSize));
+  
+      // If there’s a last document (for next page), start after it
+      if (lastDoc) {
+        q = query(collection(db, "product_category"), orderBy("created_at", "desc"), startAfter(lastDoc), limit(pageSize));
+      }
+  
+      const querySnapshot = await getDocs(q);
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
+  
+      return {
+        categories: querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+        lastDoc: lastVisible, // Store last document to fetch the next page
+      };
     } catch (error) {
-        console.error("Error fetching caterory: ", error);
-        return [];
+      console.error("Error fetching paginated categories:", error);
+      return { categories: [], lastDoc: null };
     }
-}
+  }
 
-export async function createProductCategory(categoryName: string) {
+  export async function getTotalCategoryCount() {
     try {
+      const categoryCollection = collection(db, "product_category");
+      const snapshot = await getCountFromServer(categoryCollection);
+      return snapshot.data().count;
+    } catch (error) {
+      console.error("Error fetching category count:", error);
+      return 0;
+    }
+  }
+
+
+  export async function createProductCategory(categoryName: string) {
+    try {
+      // First check if a category with this name already exists
+      const categoryQuery = query(
+        collection(db, "product_category"),
+        where("category_name", "==", categoryName)
+      );
+      
+      const existingCategories = await getDocs(categoryQuery);
+      
+      if (!existingCategories.empty) {
+        throw new Error(`หมวดหมู่ "${categoryName}" มีข้อมูลอยู่แล้ว`);
+      }
+      
+      // If no existing category found, create a new one
       const newCategory = {
         category_name: categoryName,
         created_at: Timestamp.now(),
@@ -200,8 +236,42 @@ export async function createProductCategory(categoryName: string) {
     } catch (error) {
       throw error; // Re-throw the error to handle it in the calling function
     }
+  }
+
+function startsWith(
+    collectionRef: CollectionReference,
+    fieldName: string,
+    term: string
+) {
+    return query(
+        collectionRef,
+        orderBy(fieldName),
+        startAt(term),
+        endAt(term + '~')
+    );
 }
 
+export async function getProductCategoryByName(partialName: string) {
+    try {
+      // Execute the query
+      const querySnapshot = await getDocs(
+        startsWith(
+            collection(db, 'product_category'),
+            'category_name',
+            partialName
+        )
+    );
+  
+      // Map the results into an array of category objects
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error("Error fetching category by partial name:", error);
+      throw error;
+    }
+}
 
 // export async function getProducts(filters = {}) {
 // 	let q = query(collection(db, "products"));

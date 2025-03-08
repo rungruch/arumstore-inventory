@@ -1,45 +1,39 @@
-import { Timestamp } from "firebase/firestore";
-
+import React from "react";
 export default function FlexTable({
-  datas,
-  customHeader,
-  customRow,
-}: {
-  datas: any;
-  customHeader?: React.ReactNode;
-  customRow?: (product: any, index: number) => React.ReactNode;
-}) {
-  const getTotalStock = (stocks: Record<string, number> | null | undefined): number => {
-    if (!stocks || typeof stocks !== "object") return 0;
-    return Object.values(stocks)
-      .filter((value): value is number => typeof value === "number")
-      .reduce((sum, value) => sum + value, 0);
-  };
-
-  const convertTimestampToDate = (timestamp: Timestamp): string => {
-    if (!timestamp) return "Invalid date";
-    const date = timestamp.toDate();
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  return (
-    <div className="overflow-x-auto bg-white rounded-lg hover:shadow-lg transition-shadow duration-300">
-      <table className="w-full border-collapse">
-        <thead className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
-          {/* Allow custom headers */}
-          {customHeader ? customHeader : null}
-        </thead>
-        <tbody>
-          {/* Allow custom row content */}
-          {datas.map((data: any, index: number) =>
-            customRow ? customRow(data, index) : null
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+    datas,
+    customHeader,
+    customRow,
+  }: {
+    datas: any[];
+    customHeader?: React.ReactNode;
+    customRow?: (data: any, index: number) => React.ReactNode;
+  }) {
+    return (
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        {/* Table header */}
+        <table className="w-full border-collapse">
+          <thead className="bg-gray-800 text-white">
+            {customHeader}
+          </thead>
+        </table>
+  
+        {/* Scrollable rows */}
+        <div className="max-h-[420px] overflow-y-auto">
+          <table className="w-full border-collapse">
+            <tbody>
+              {datas.length === 0 ? (
+                <tr>
+                  <td colSpan={customHeader ? React.Children.count(customHeader) : 1} className="text-center p-4">
+                    No data available
+                  </td>
+                </tr>
+              ) : (
+                datas.map((data, index) => (customRow ? customRow(data, index) : null))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+  
