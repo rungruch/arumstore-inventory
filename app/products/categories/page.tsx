@@ -16,9 +16,9 @@ interface Category {
 
 export default function ProductsPage() {
   const [search, setSearch] = useState(""); // Search input state
-  const [categories, setCategories] = useState<Category[]>([]); // Current categories
+  const [categories, setCategories] = useState<any>([]); // Current categories
   const [showPopup, setShowPopup] = useState(false); // Add category popup visibility
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null); // Last document for pagination
+  const [lastDoc, setLastDoc] = useState<any | null>(null); // Last document for pagination
   const [currentPage, setCurrentPage] = useState(1); // Current page number
   const [totalCategories, setTotalCategories] = useState(0); // Total number of categories
   const [loading, setLoading] = useState(false); // Loading state
