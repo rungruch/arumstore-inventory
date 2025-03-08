@@ -155,9 +155,9 @@ export default function ProductsPage() {
             <tr key={category.id} className="overflow-y-auto border-b">
               <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
               <td className="p-2 w-[35%]">{category.category_name}</td>
-              <td className="p-2">{category.stock ?? "N/A"}</td>
-              <td className="p-2">{category.value ?? "N/A"}</td>
-              <td className="p-2">{category.value ?? "N/A"}</td>
+              <td className="p-2">{category.stock ?? "0"}</td>
+              <td className="p-2">{category.value ?? "0"}</td>
+              <td className="p-2">{category.value ?? "0"}</td>
             </tr>
           )}
         />

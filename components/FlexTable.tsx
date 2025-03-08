@@ -11,14 +11,16 @@ export default function FlexTable({
     return (
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Table header */}
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-800 text-white">
-            {customHeader}
-          </thead>
-        </table>
+        <div className="overflow-x-auto">
+    <table className="min-w-full border-collapse">
+      <thead className="bg-gray-800 text-white">
+        {customHeader}
+      </thead>
+    </table>
+  </div>
   
         {/* Scrollable rows */}
-        <div className="max-h-[420px] overflow-y-auto">
+        <div className="max-h-[420px] overflow-y-auto overflow-x-auto">
           <table className="w-full border-collapse">
             <tbody>
               {datas.length === 0 ? (
