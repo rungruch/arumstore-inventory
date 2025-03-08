@@ -1,18 +1,24 @@
 "use client";
-
-import { getProductCategory } from "@/app/firebase/firestore";
+import { getProductCategory, getProducts } from "@/app/firebase/firestore";
+import { getFirestore } from "firebase/firestore";
+import { getAuthenticatedAppForUser } from "@/app/firebase/serverApp"
 import { useState } from "react";
 import FlexTable from "@/components/FlexTable";
 import AddCategoryPopup from "@/components/AddCategory";
+// import { Button } from "@/components/ui/Button";
 
-const categories = await getProductCategory();
-console.log(categories);
+const categories = await getProductCategory()
+console.log(categories)
 
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
-  const [showPopup, setShowPopup] = useState(false); // State for controlling the popup visibility
+  // const {firebaseServerApp} = await getAuthenticatedAppForUser()
+  // const restaurant = await getProducts(getFirestore(firebaseServerApp))
+  // console.log(restaurant)
 
+  const [showPopup, setShowPopup] = useState(false); // State for controlling the popup visibility
   const togglePopup = () => setShowPopup(!showPopup);
+
 
   return (
     <div className="container mx-auto p-6">
@@ -26,9 +32,9 @@ export default function ProductsPage() {
         />
         <button
           onClick={togglePopup}
-          className="bg-black text-white py-2 px-4 rounded-md hover:bg-gray-700 transition"
+          className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
         >
-          เพิ่มหมวดหมู่
+          Add Category
         </button>
       </div>
       <FlexTable
@@ -51,11 +57,7 @@ export default function ProductsPage() {
           </tr>
         )}
       />
-      
-      <AddCategoryPopup
-        isOpen={showPopup}
-        onClose={togglePopup}
-      />
+
     </div>
   );
 }

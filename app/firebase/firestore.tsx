@@ -170,6 +170,38 @@ export async function getProducts() {
     }
 }
 
+export async function getProductCategory() {
+    try {
+        const q = query(
+            collection(db, "product_category"),
+        );
+        
+        const querySnapshot = await getDocs(q);
+        console.log(querySnapshot)
+        return querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+    } catch (error) {
+        console.error("Error fetching caterory: ", error);
+        return [];
+    }
+}
+
+export async function createProductCategory(categoryName: string) {
+    try {
+      const newCategory = {
+        category_name: categoryName,
+        created_at: Timestamp.now(),
+      };
+  
+      const docRef = await addDoc(collection(db, "product_category"), newCategory);
+      return { id: docRef.id, ...newCategory };
+    } catch (error) {
+      throw error; // Re-throw the error to handle it in the calling function
+    }
+}
+
 
 // export async function getProducts(filters = {}) {
 // 	let q = query(collection(db, "products"));
