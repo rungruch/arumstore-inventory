@@ -9,7 +9,7 @@ export default function FlexTable({
     customRow?: (data: any, index: number) => React.ReactNode;
   }) {
     return (
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
         {/* Table header */}
         <div className="overflow-x-auto">
     <table className="min-w-full border-collapse">

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Sidebar from "@/app/sidebar"; // Assuming Sidebar is already in the right location
+import Sidebar from "@/app/sidebar"; 
 import "./globals.css";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
-
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,18 +22,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="djskg">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" className="h-full">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}>
         <AdminPanelLayout>
-              <ContentLayout title="Test"> </ContentLayout>
-          {children}
-          </AdminPanelLayout>
+          <ContentLayout>{children}</ContentLayout>
+        </AdminPanelLayout>
       </body>
     </html>
   );

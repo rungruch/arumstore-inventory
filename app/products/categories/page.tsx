@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import AddCategoryPopup from "@/components/AddCategory";
 import { Timestamp, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
+import { ChevronLeft, ChevronRight } from "lucide-react"
+
 
 interface Category {
   id: string;
@@ -14,7 +16,7 @@ interface Category {
   value?: number;
 }
 
-export default function ProductsPage() {
+export default function ProductCategoryPage() {
   const [search, setSearch] = useState(""); // Search input state
   const [categories, setCategories] = useState<any>([]); // Current categories
   const [showPopup, setShowPopup] = useState(false); // Add category popup visibility
@@ -22,7 +24,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1); // Current page number
   const [totalCategories, setTotalCategories] = useState(0); // Total number of categories
   const [loading, setLoading] = useState(false); // Loading state
-  const pageSize = 10; // Number of items per page
+  const [pageSize, setPageSize] = useState(10); // Default page size is 10
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -41,6 +43,27 @@ export default function ProductsPage() {
       }
     })();
   }, []);
+
+  // Handle page size change
+  const handlePageSizeChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSize = Number(event.target.value);
+    setPageSize(newSize);
+    setCurrentPage(1);
+    setLastDoc(null);
+
+    try {
+      setLoading(true);
+      const totalCount = await getTotalCategoryCount();
+      setTotalCategories(totalCount);
+      const { categories, lastDoc } = await getProductCategoryPaginated(null, newSize);
+      setCategories(categories);
+      setLastDoc(lastDoc);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle search functionality
   const handleSearch = async () => {
@@ -109,7 +132,11 @@ export default function ProductsPage() {
   const totalPages = Math.ceil(totalCategories / pageSize);
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-5">
+      <div className="flex flex-col items-start mb-4">
+        <h1 className="text-2xl font-bold">หมวดหมู่</h1>
+        <h2 className="text-1xl font-semibold text-gray-700">จำนวน {totalCategories} รายการ</h2>
+      </div>
       {/* Search and Add Category */}
       <div className="flex justify-between items-center mb-4">
         <input
@@ -135,62 +162,79 @@ export default function ProductsPage() {
 
       {/* Data Table with Loading State */}
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-black-500 border-solid"></div>
+        <div className="flex justify-center items-center py-20 opacity-100 transition-opacity duration-500 animate-pulse">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-solid"></div>
           <span className="ml-4 text-gray-500">Loading...</span>
         </div>
       ) : (
-        <FlexTable
-          datas={categories}
-          customHeader={
-            <tr className="text-left h-[9vh]">
-              <th className="p-2 w-[5%] text-center">#</th>
-              <th className="p-2 w-[35%]">ชื่อหมวดหมู่</th>
-              <th className="p-2">จำนวน SKU</th>
-              <th className="p-2">มูลค่าสินค้าคงเหลือ</th>
-              <th className="p-2">มูลค่าสินค้าพร้อมขาย</th>
-            </tr>
-          }
-          customRow={(category, index) => (
-            <tr key={category.id} className="overflow-y-auto border-b">
-              <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
-              <td className="p-2 w-[35%]">{category.category_name}</td>
-              <td className="p-2">{category.stock ?? "0"}</td>
-              <td className="p-2">{category.value ?? "0"}</td>
-              <td className="p-2">{category.value ?? "0"}</td>
-            </tr>
-          )}
-        />
+        <div className={`transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}>
+          <FlexTable
+            datas={categories}
+            customHeader={
+              <tr className="text-left h-[9vh]">
+                <th className="p-2 w-[5%] text-center">#</th>
+                <th className="p-2 w-[35%]">ชื่อหมวดหมู่</th>
+                <th className="p-2">จำนวน SKU</th>
+                <th className="p-2">มูลค่าสินค้าคงเหลือ</th>
+                <th className="p-2">มูลค่าสินค้าพร้อมขาย</th>
+              </tr>
+            }
+            customRow={(category, index) => (
+              <tr key={category.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100">
+                <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
+                <td className="p-2 w-[35%]">{category.category_name}</td>
+                <td className="p-2">{category.stock ?? "0"}</td>
+                <td className="p-2">{category.value ?? "0"}</td>
+                <td className="p-2">{category.value ?? "0"}</td>
+              </tr>
+            )}
+          />
+        </div>
       )}
 
+
       {/* Pagination */}
-      <div className="flex items-center justify-start mt-4 space-x-2">
-        <button
-          onClick={handlePrevPage}
-          disabled={currentPage === 1 || search.trim() !== ""}
-          className={`px-2 py-1 rounded-md transition ${
-            currentPage === 1 || search.trim() !== ""
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-gray-800 text-white hover:bg-gray-700"
-          }`}
-        >
-          ⬅️ 
-        </button>
-        <span className="py-2 text-gray-700">
-           {currentPage} / {totalPages}
-        </span>
-        <button
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages || !lastDoc || search.trim() !== ""}
-          className={`px-2 py-1 rounded-md transition ${
-            currentPage === totalPages || !lastDoc || search.trim() !== ""
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-gray-800 text-white hover:bg-gray-700"
-          }`}
-        >
-          ➡️
-        </button>
+      <div className="flex justify-between items-center mt-4">
+        <div className="flex items-center space-x-2">
+          <span className="text-gray-700">แถว/หน้า:</span>
+          <select
+            value={pageSize}
+            onChange={handlePageSizeChange}
+            className="border rounded-md p-2"
+          >
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+
+        {/* Pagination (unchanged) */}
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1 || search.trim() !== ""}
+            className={`px-3 py-2 rounded-md transition ${currentPage === 1 || search.trim() !== ""
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-gray-800 text-white hover:bg-gray-700"
+              }`}
+          >
+            <ChevronLeft size={16} className="inline-block" />
+          </button>
+          <span className="py-2 text-gray-700">{currentPage} / {totalPages}</span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages || !lastDoc || search.trim() !== ""}
+            className={`px-3 py-2 rounded-md transition ${currentPage === totalPages || !lastDoc || search.trim() !== ""
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-gray-800 text-white hover:bg-gray-700"
+              }`}
+          >
+            <ChevronRight size={16} className="inline-block" />
+          </button>
+        </div>
       </div>
+
 
       {/* Add Category Popup */}
       <AddCategoryPopup isOpen={showPopup} onClose={togglePopup} />
