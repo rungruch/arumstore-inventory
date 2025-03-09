@@ -53,7 +53,7 @@ export default function AddWarehousePopup({ isOpen, onClose }: AddWarehousePopup
       setWarehouseData({
         warehouse_name: "",
         details: "",
-        type: "standard"
+        type: "คลังมาตรฐาน"
       });
       window.location.reload();
     } catch (error) {
@@ -73,7 +73,7 @@ export default function AddWarehousePopup({ isOpen, onClose }: AddWarehousePopup
     setWarehouseData({
       warehouse_name: "",
       details: "",
-      type: "standard"
+      type: "คลังมาตรฐาน"
     });
     onClose();
   };

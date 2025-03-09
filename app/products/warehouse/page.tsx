@@ -179,7 +179,7 @@ export default function ProductWarehousePage() {
       <td className="p-2 w-[50px] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
       <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.warehouse_id}</td>
       <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.warehouse_name}</td>
-      <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.details || "-"}</td>
+      <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.type || "-"}</td>
       <td className="p-2 w-[120px] whitespace-nowrap overflow-hidden text-ellipsis">{0}</td>
       <td className="p-2 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
         {warehouse.updated_date ? 
