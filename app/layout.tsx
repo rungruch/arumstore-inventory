@@ -24,11 +24,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}>
+      <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased h-full` }>
         <AdminPanelLayout>
           <ContentLayout>{children}</ContentLayout>
         </AdminPanelLayout>
