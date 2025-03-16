@@ -3,7 +3,6 @@
 import { getProductPaginated, getTotalProductCount, getProductByName } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
-import AddCategoryPopup from "@/components/AddCategory";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddProductPopup from "@/components/AddProduct";
 import { Warehouse } from "@/app/firebase/interfaces";
@@ -12,7 +11,7 @@ import Image from "next/image";
 export default function ProductPage() {
   const [search, setSearch] = useState(""); // Search input state
   const [data, setDatas] = useState<any>([]); // Current categories
-  const [showPopup, setShowPopup] = useState(false); // Add category popup visibility
+  const [showPopup, setShowPopup] = useState(false); // Add popup visibility
   const [lastDoc, setLastDoc] = useState<any | null>(null); // Last document for pagination
   const [currentPage, setCurrentPage] = useState(1); // Current page number
   const [totalData, setTotalData] = useState(0); // Total number of categories
@@ -141,7 +140,7 @@ export default function ProductPage() {
         <h1 className="text-2xl font-bold">สินค้า</h1>
         <h2 className="text-1xl font-semibold text-gray-700">จำนวน {totalData} รายการ</h2>
       </div>
-      {/* Search and Add Category */}
+      {/* Search and Add */}
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
@@ -204,7 +203,9 @@ export default function ProductPage() {
                                 <div>
                                     <div>{product.name}</div>
                                     <div className="text-sm text-gray-500">{product.description}</div>
-                                    <div className="text-sm text-gray-500">{'หมวดหมู่: '+product.category}</div>
+                                    {product.category && (
+                                    <div className="text-sm text-gray-500">{'หมวดหมู่: ' + product.category}</div>
+                                    )}
                                 </div>
                             </td>
                 <td className="p-2">{product.price.buy_price} ฿</td>
