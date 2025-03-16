@@ -1,7 +1,7 @@
 "use client";
 import { useRef,useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { generateRandomSKU, createProduct } from "@/app/firebase/firestore";
+import { generateRandomSKU, createProduct, getProductCategory, getProductWarehouse } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum'
 import { getFile, uploadFile } from "@/app/firebase/storage";
@@ -20,6 +20,10 @@ import {
     const [uploaded, setUploaded] = useState("");
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [imageUploading, setimageUploading] = useState(false);
+    const [categories, setCategories] = useState<any>([]);
+    const [warehouses, setWarehouses] = useState<any>([]);
+
+
 
     const router = useRouter();
     // Use a single state object to manage all product fields
@@ -54,6 +58,18 @@ import {
     useEffect(() => {
         async function fetchSKU() {
             await generateSKU();
+            try {
+                const categories = await getProductCategory();
+                const warehouses = await getProductWarehouse();
+                setCategories(categories);
+                setWarehouses(warehouses);
+              } catch (error) {
+                setModalState({
+                    isOpen: true,
+                    title: ModalTitle.ERROR,
+                    message: `เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : String(error)}`,
+                });
+              }
         }
         fetchSKU();
     }, []);
@@ -233,7 +249,17 @@ import {
                             <label className="block mb-2 font-bold">ชื่อสินค้า *</label>
                             <input type="text" name="productName" placeholder="ชื่อสินค้า" value={productState.productName} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
                             <label className="block mb-2 font-bold">หมวดหมู่</label>
-                            <input type="text" name="productCategory" placeholder="หมวดหมู่" value={productState.productCategory} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <select 
+                                name="productCategory" 
+                                value={productState.productCategory} 
+                                onChange={handleChange} 
+                                className="w-full border p-2 rounded-md mb-4"
+                            >
+                            <option value="">เลือกหมวดหมู่</option>
+                                {categories.map((category: any) => (
+                                    <option key={category.category_name} value={category.category_name}>{category.category_name}</option>
+                                ))}
+                            </select>
                             <label className="block mb-2 font-bold">หน่วย</label>
                             <input type="text" name="unit" placeholder="หน่วย (ชิ้น, ตัว)" value={productState.unit} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
                             <label className="block mb-2 font-bold">รหัสสินค้า</label>
@@ -315,8 +341,18 @@ import {
                                 <input type="number" name="openingStock" placeholder="ยอดยกมา" min={0} value={productState.openingStock} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
                             </div>
                             <div>
-                                <label className="block mb-2 font-bold">สินค้าเข้าที่</label>
-                                <input type="text" name="warehouse" placeholder="สินค้าเข้าที่" value={productState.warehouse} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <label className="block mb-2 font-bold">สินค้าเข้าที่</label>
+                            <select 
+                                name="warehouse" 
+                                value={productState.warehouse} 
+                                onChange={handleChange} 
+                                className="w-full border p-2 rounded-md mb-4"
+                            >
+                            <option value="">เลือกคลังสินค้า</option>
+                                {warehouses.map((warehouse: any) => (
+                                <option key={warehouse.warehouse_name} value={warehouse.warehouse_name}>{warehouse.warehouse_name}</option>
+                                ))}
+                            </select>
                             </div>
                         </div>
                     </div>

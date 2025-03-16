@@ -370,3 +370,36 @@ export async function getProductByName(partialName: string): Promise<Warehouse[]
     throw error;
   }
 }
+
+export async function getProductCategory() {
+  try {
+    const q = query(
+      collection(db, "product_category"),
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching Category: ", error);
+    throw error;
+  }}
+
+
+export async function getProductWarehouse() {
+  try {
+    const q = query(
+      collection(db, "product_warehouse"),
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching Warehouse: ", error);
+    throw error;
+  }}
