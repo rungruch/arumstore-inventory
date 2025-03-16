@@ -3,7 +3,7 @@ import { storage } from "@/app/firebase/clientApp";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { nanoid } from "nanoid";
 
-export const uploadFile = async (file, folder) => {
+export const uploadFile = async (file:any, folder:any) => {
   try {
     const filename = nanoid();
     const storageRef = ref(
@@ -18,7 +18,7 @@ export const uploadFile = async (file, folder) => {
   }
 };
 
-export const getFile = async (path) => {
+export const getFile = async (path:any) => {
   try {
     const fileRef = ref(storage, path);
     return getDownloadURL(fileRef);

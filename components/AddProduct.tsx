@@ -16,9 +16,9 @@ import {
     trigger?: boolean;
     setTrigger?: React.Dispatch<React.SetStateAction<boolean>>;
   }) {
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [uploaded, setUploaded] = useState(null);
-    const inputRef = useRef(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploaded, setUploaded] = useState("");
+    const inputRef = useRef<HTMLInputElement | null>(null);
     const [imageUploading, setimageUploading] = useState(false);
 
     const router = useRouter();
@@ -297,7 +297,7 @@ import {
                     onClick={handleUpload}
                     disabled={imageUploading}
                 >
-                    {imageUploading ? "Uploading..." : "อัปโหลดรูปภาพ"}
+                    {imageUploading ? "กำลังอัพโหลด..." : "อัปโหลดรูปภาพ"}
                 </button>
             )}
 
