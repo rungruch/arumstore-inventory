@@ -7,6 +7,7 @@ import AddCategoryPopup from "@/components/AddCategory";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddProductPopup from "@/components/AddProduct";
 import { Warehouse } from "@/app/firebase/interfaces";
+import Image from "next/image";
 
 export default function ProductPage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -176,36 +177,39 @@ export default function ProductPage() {
             customHeader={
               <tr className="text-left h-[9vh]">
                 <th className="p-2 w-[5%] text-center">#</th>
-                <th className="p-2 w-[15%]">รหัส</th>
-                <th className="p-2 w-[20%]">ชื่อสินค้า</th>
-                <th className="p-2 w-[10%]">ราคาซื้อ</th>
-                <th className="p-2 w-[10%]">ราคาขาย</th>
-                <th className="p-2 w-[10%]">คงเหลือ</th>
-                <th className="p-2 w-[10%]">พร้อมขาย</th>
-                <th className="p-2 w-[180px] whitespace-nowrap">เคลื่อนไหวล่าสุด</th>
+                <th className="p-2 w-[50px] ">รหัส</th>
+                <th className="p-2 w-[300px]">ชื่อสินค้า</th>
+                <th className="p-2 ">ราคาซื้อ</th>
+                <th className="p-2 ">ราคาขาย</th>
+                <th className="p-2 ">คงเหลือ</th>
+                <th className="p-2 ]">พร้อมขาย</th>
+                <th className="p-2 whitespace-nowrap">เคลื่อนไหวล่าสุด</th>
               </tr>
             }
             customRow={(product, index) => (
               <tr key={product.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100">
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
-                <td className="p-2 w-[15%]">{product.sku}</td>
-                <td className="p-2 flex items-center gap-2">
-                                {/* <Image
-                                    src=""
-                                    alt="Product"
-                                    width={30}
-                                    height={30}
-                                    className="rounded-md"
-                                /> */}
+                <td className="p-2 w-[50px] ">{product.sku}</td>
+                <td className="p-2 w-[300px] flex items-center gap-2">
+                {product.sku_image && (
+                    <Image
+        src={product.sku_image}
+        alt="Product"
+        width={100}
+        height={100}
+        className="transition-opacity duration-500 ease-in-out opacity-0"
+        onLoadingComplete={(img) => img.classList.remove("opacity-0")}
+    />
+)}
                                 <div>
                                     <div>{product.name}</div>
                                     <div className="text-sm text-gray-500">{product.description}</div>
                                     <div className="text-sm text-gray-500">{'หมวดหมู่: '+product.category}</div>
                                 </div>
                             </td>
-                <td className="p-2 w-[10%]">{product.price.buy_price} ฿</td>
-                <td className="p-2 w-[10%]">{product.price.sell_price} ฿</td>
-                <td className="p-2 w-[10%]">
+                <td className="p-2">{product.price.buy_price} ฿</td>
+                <td className="p-2">{product.price.sell_price} ฿</td>
+                <td className="p-2">
   <span
     className={
       Object.values(product.stocks as Record<string, number> ).reduce((a, b) => a + b, 0) <= 0

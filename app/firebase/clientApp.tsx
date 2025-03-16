@@ -26,4 +26,5 @@ export const firebaseApp =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
-// export const storage = getStorage(firebaseApp);
+const STORAGE_FOLDER_PATH = "gs://arumstore-inventory.firebasestorage.app";
+export const storage = getStorage(firebaseApp, STORAGE_FOLDER_PATH);

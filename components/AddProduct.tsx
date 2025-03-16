@@ -1,20 +1,26 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useRef,useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { generateRandomSKU, createProduct } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum'
+import { getFile, uploadFile } from "@/app/firebase/storage";
 import {
     Timestamp
   } from "firebase/firestore";
 
-export default function AddProductForm({
+  export default function AddProductForm({
     trigger,
     setTrigger,
   }: {
     trigger?: boolean;
     setTrigger?: React.Dispatch<React.SetStateAction<boolean>>;
   }) {
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [uploaded, setUploaded] = useState(null);
+    const inputRef = useRef(null);
+    const [imageUploading, setimageUploading] = useState(false);
+
     const router = useRouter();
     // Use a single state object to manage all product fields
     const [productState, setProductState] = useState({
@@ -110,6 +116,7 @@ export default function AddProductForm({
     
             const formattedProductData = {
                 sku: productState.productCode,
+                sku_image: uploaded || "",
                 barcode: productState.qrBarcode,
                 name: productState.productName,
                 description: productState.description,
@@ -160,6 +167,11 @@ export default function AddProductForm({
     
         } catch (error) {
             setValidationError("เกิดข้อผิดพลาด: " + String(error));
+            setModalState({
+                isOpen: true,
+                title: ModalTitle.ERROR,
+                message: `${error instanceof Error ? error.message : String(error)}`,
+            });
         } finally {
             setIsSubmitting(false);
             if (trigger !== undefined && setTrigger !== undefined) {
@@ -182,6 +194,27 @@ export default function AddProductForm({
             ...prev,
             isOpen: false
         }));
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+
+        setimageUploading(true);
+        try {
+            const folder = "skuImages/";
+            const imagePath = await uploadFile(selectedFile, folder);
+            const imageUrl = await getFile(imagePath);
+            setUploaded(imageUrl);
+        } catch (error) {
+            console.error("Upload failed:", error);
+            setModalState({
+                isOpen: true,
+                title: ModalTitle.ERROR,
+                message: `${error instanceof Error ? error.message : String(error)}`,
+            });
+        } finally {
+            setimageUploading(false);
+        }
     };
 
     return (
@@ -215,6 +248,63 @@ export default function AddProductForm({
                             <input type="number" name="sellingPrice" placeholder="ราคาขาย" min={0} value={productState.sellingPrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
                             <label className="block mb-2 font-bold">ราคาซื้อ</label>
                             <input type="number" name="purchasePrice" placeholder="ราคาซื้อ" min={0} value={productState.purchasePrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <div className="container mx-auto mt-8 max-w-[560px]">
+                        </div>
+                        <div className="mt-8 max-w-lg mx-auto">
+            <label className="block mb-2 font-bold text-gray-700">รูปสินค้า</label>
+
+            <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition"
+                onClick={() => inputRef.current?.click()}
+            >
+                {selectedFile ? (
+                    <img
+                        src={URL.createObjectURL(selectedFile)}
+                        alt="Selected"
+                        className="w-48 h-48 object-cover rounded-md shadow-md"
+                    />
+                ) : (
+                    <>
+                        <svg
+                            className="w-12 h-12 text-gray-400 mb-3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0h10m-10 0l10 10m-5 6v-6m-4 0h8"></path>
+                        </svg>
+                        <p className="text-gray-600">คลิกหรือลากไฟล์มาวางที่นี่</p>
+                        <p className="text-sm text-gray-400">รองรับไฟล์ .jpg, .png</p>
+                    </>
+                )}
+            </div>
+
+            <input
+                type="file"
+                ref={inputRef}
+                className="hidden"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+            />
+
+            {selectedFile && (
+                <button
+                    className={`mt-4 text-white px-4 py-2 rounded-md shadow-md transition w-full ${
+                        imageUploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+                    }`}
+                    type="button"
+                    onClick={handleUpload}
+                    disabled={imageUploading}
+                >
+                    {imageUploading ? "Uploading..." : "อัปโหลดรูปภาพ"}
+                </button>
+            )}
+
+            {uploaded && (
+                <p className="mt-4 text-green-600 font-medium">อัปโหลดสำเร็จ!</p>
+            )}
+        </div>
                         </div>
                     </div>
                     <div className="mt-6">
