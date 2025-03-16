@@ -8,14 +8,6 @@ import { Timestamp, QueryDocumentSnapshot, DocumentData } from "firebase/firesto
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 
-interface Category {
-  id: string;
-  category_name: string;
-  created_at: Timestamp;
-  stock?: number;
-  value?: number;
-}
-
 export default function ProductCategoryPage() {
   const [search, setSearch] = useState(""); // Search input state
   const [categories, setCategories] = useState<any>([]); // Current categories

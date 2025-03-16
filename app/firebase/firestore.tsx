@@ -175,6 +175,17 @@ export async function getProductWarehousePaginated(lastDoc = null, pageSize = 10
   }
 }
 
+export async function createProduct(productData: any) {
+  try {
+      const productsCollection = collection(db, "products");
+      const docRef = await addDoc(productsCollection, productData);
+      return { id: docRef.id, ...productData };
+  } catch (error) {
+      console.error("Error adding product:", error);
+      throw new Error("ไม่สามารถเพิ่มสินค้าได้");
+  }
+}
+
 export async function getTotalWarehouseCount() {
   try {
     const warehouseCollection = collection(db, "product_warehouse");
@@ -282,3 +293,80 @@ async function getNextWarehouseId(): Promise<string> {
       return fallbackId;
     }
   }
+
+  export async function generateRandomSKU(): Promise<string> {
+    const productsCollection = collection(db, 'products');
+  
+    return runTransaction(db, async (transaction) => {
+      let sku: string;
+      let skuExists: boolean;
+      let retries = 0;
+      const maxRetries = 5; // Adjust as needed
+      do {
+        if (retries >= maxRetries) {
+          throw new Error('Failed to generate unique SKU after multiple retries.');
+        }
+        sku = `SKU_${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`; // Generate random SKU
+        const skuQuery = query(productsCollection, where('sku', '==', sku));
+        const skuSnapshot = await getDocs(skuQuery);
+        skuExists = !skuSnapshot.empty;
+        retries++;
+      } while (skuExists);
+      return sku;
+    });
+  }
+
+// New warehouse functions
+export async function getProductPaginated(lastDoc = null, pageSize = 10) {
+  try {
+    let q = query(collection(db, "products"), orderBy("created_date", "desc"), limit(pageSize));
+
+    // If there's a last document (for next page), start after it
+    if (lastDoc) {
+      q = query(collection(db, "products"), orderBy("created_date", "desc"), startAfter(lastDoc), limit(pageSize));
+    }
+
+    const querySnapshot = await getDocs(q);
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
+
+    // Use the Warehouse interface when mapping document data
+    const d = {
+        data: querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+        lastDoc: lastVisible, // Store last document to fetch the next page
+      }
+    return d
+  } catch (error) {
+    console.error("Error fetching paginated products:", error);
+    return { data: [], lastDoc: null };
+  }
+}
+
+
+// Get the total count of products for pagination
+export const getTotalProductCount = async () => {
+  const productsRef = collection(db, "products");
+  const snapshot = await getCountFromServer(productsRef);
+  return snapshot.data().count;
+}
+
+export async function getProductByName(partialName: string): Promise<Warehouse[]> {
+  try {
+    // Execute the query
+    const querySnapshot = await getDocs(
+      startsWith(
+        collection(db, 'products'),
+        'name',
+        partialName
+      )
+    );
+
+    // Map the results and type them as Warehouse[]
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    } as any));
+  } catch (error) {
+    console.error("Error fetching products by partial name:", error);
+    throw error;
+  }
+}

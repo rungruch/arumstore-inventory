@@ -1,6 +1,7 @@
-const Productpage = () => {
+import AddProduct from "@/components/AddProduct";
+const addProductpage = () => {
   return (
-    <div>produtb add page</div>
+  <AddProduct></AddProduct>
   )
 }
-export default Productpage
+export default addProductpage
