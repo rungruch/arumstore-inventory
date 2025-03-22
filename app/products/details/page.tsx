@@ -1,14 +1,15 @@
 "use client";
 
-import { useSearchParams } from "next/navigation"; // Correctly use `useSearchParams` from "next/navigation"
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getProductBySKU } from "@/app/firebase/firestore";
 import Image from "next/image";
+import { Products } from "@/app/firebase/interfaces";
 
 
 export default function ProductDetails() {
   const searchParams = useSearchParams();
-  const psku = searchParams.get("psku"); // Get the 'psku' parameter from the URL query
+  const psku = searchParams.get("psku");
   const [product, setProduct] = useState<any>(null); // Product data
   const [loading, setLoading] = useState(true);
 
@@ -20,8 +21,12 @@ export default function ProductDetails() {
     const fetchProductDetails = async () => {
       try {
         setLoading(true);
-        const productData = await getProductBySKU(psku);
-        setProduct(productData[0]);
+        const productData = await getProductBySKU(psku) as Products[];
+        if (productData && productData.length > 0) {
+          setProduct(productData[0]);
+        } else {
+          setProduct(null);
+        }
         console.log("Product details:", productData[0]);
       } catch (error) {
         console.error("Error fetching product details:", error);
@@ -53,19 +58,21 @@ export default function ProductDetails() {
       <div className="mt-4">
         {product && (
           <>
-          <Image
-                    src={product.sku_image}
-                    alt="Product"
-                    width={100}
-                    height={100}
-                    className="transition-opacity duration-500 ease-in-out opacity-0"
-                    onLoadingComplete={(img: HTMLImageElement) => img.classList.remove("opacity-0")}
-                />
+            {product.sku_image && product.sku_image !== "" && (
+              <Image
+                src={product.sku_image}
+                alt="Product"
+                width={100}
+                height={100}
+                className="transition-opacity duration-500 ease-in-out opacity-0"
+                onLoadingComplete={(img: HTMLImageElement) => img.classList.remove("opacity-0")}
+              />
+            )}
             <p>รหัสสินค้า: {product.sku}</p>
             <p>ราคาซื้อ: {product.price.buy_price} ฿</p>
             <p>ราคาขาย: {product.price.sell_price} ฿</p>
             <p>หมวดหมู่: {product.category || "ไม่ระบุ"}</p>
-            <p>คงเหลือ: {Object.values(product.stocks).reduce((a: number, b: number) => a + b, 0).toString()}</p>
+            <p>คงเหลือ: {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)}</p>
           </>
         )}
       </div>
