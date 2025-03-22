@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddProductPopup from "@/components/AddProduct";
 import { Warehouse } from "@/app/firebase/interfaces";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function ProductPage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -201,7 +202,14 @@ export default function ProductPage() {
     />
 )}
                                 <div>
-                                    <div>{product.name}</div>
+                                <Link
+      href={`/products/details?psku=${product.sku}`}
+      passHref
+    >
+      <span className="text-blue-500 hover:underline cursor-pointer">
+        {product.name}
+      </span>
+    </Link>
                                     <div className="text-sm text-gray-500">{product.description}</div>
                                     {product.category && (
                                     <div className="text-sm text-gray-500">{'หมวดหมู่: ' + product.category}</div>

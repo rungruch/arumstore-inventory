@@ -348,7 +348,7 @@ import {
                                 onChange={handleChange} 
                                 className="w-full border p-2 rounded-md mb-4"
                             >
-                            <option value="">เลือกคลังสินค้า</option>
+                            <option value="" disabled>เลือกคลังสินค้า</option>
                                 {warehouses.map((warehouse: any) => (
                                 <option key={warehouse.warehouse_name} value={warehouse.warehouse_name}>{warehouse.warehouse_name}</option>
                                 ))}

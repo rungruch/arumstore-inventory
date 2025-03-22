@@ -22,6 +22,7 @@ import {
 
 import { db } from "@/app/firebase/clientApp";
 import { Warehouse } from "@/app/firebase/interfaces";
+import { TransactionType } from "@/app/firebase/enum";
 
 // Existing code from your file...
 
@@ -349,6 +350,24 @@ export const getTotalProductCount = async () => {
   return snapshot.data().count;
 }
 
+export async function getProductBySKU(sku: string) {
+  try {
+    // Execute the query
+    const querySnapshot = await getDocs(
+      query(collection(db, 'products'), where('sku', '==', sku), limit(1))
+    );
+
+    // Map the results into an array of category objects
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching category by partial name:", error);
+    throw error;
+  }
+}
+
 export async function getProductByName(partialName: string): Promise<Warehouse[]> {
   try {
     // Execute the query
@@ -403,3 +422,50 @@ export async function getProductWarehouse() {
     console.error("Error fetching Warehouse: ", error);
     throw error;
   }}
+
+  export async function generateRandomSellTransactionId(): Promise<string> {
+    const transactionsCollection = collection(db, "transactions");
+  
+    return runTransaction(db, async (transaction) => {
+      // Query to find the latest 'SELL' transaction
+      const sellQuery = query(
+        transactionsCollection,
+        where("transaction_type", "==", TransactionType.SELL),
+        orderBy("created_date", "desc"), // Assuming 'createdAt' is a timestamp field
+        limit(1)
+      );
+  
+      const sellSnapshot = await getDocs(sellQuery);
+      let newTransactionId: string;
+  
+      if (!sellSnapshot.empty) {
+        // Extract the latest transaction_id
+        const latestTransaction = sellSnapshot.docs[0].data();
+        const latestTransactionId = latestTransaction.transaction_id;
+  
+        // Extract the numeric part from the latestTransactionId (e.g., 'SELL-YYMMDD-1' -> 1)
+        const match = latestTransactionId.match(/S-\d{6}-(\d+)/);
+        const lastNumber = match ? parseInt(match[1], 10) : 0;
+  
+        // Generate the new transaction_id
+        const today = new Date();
+        const yy = today.getFullYear().toString().slice(-2);
+        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
+        const dd = today.getDate().toString().padStart(2, "0");
+        const datePart = `${yy}${mm}${dd}`;
+  
+        newTransactionId = `S-${datePart}-${lastNumber + 1}`;
+      } else {
+        // If no transactions exist, start with 'SELL-YYMMDD-1'
+        const today = new Date();
+        const yy = today.getFullYear().toString().slice(-2);
+        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
+        const dd = today.getDate().toString().padStart(2, "0");
+        const datePart = `${yy}${mm}${dd}`;
+  
+        newTransactionId = `S-${datePart}-1`;
+      }
+  
+      return newTransactionId;
+    });
+  }

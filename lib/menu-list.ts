@@ -86,12 +86,16 @@ export function getMenuList(pathname: string): Group[] {
           icon: Package,
           submenus: [
             {
-              href: "/sales/create",
+              href: "/sales",
               label: "ดูรายการขาย"
             },
             {
-              href: "/sales",
+              href: "/sales/create",
               label: "สร้างรายการขาย"
+            },
+            {
+              href: "/sales/packing",
+              label: "รายการแพ็คสินค้า"
             }
           ]
         },

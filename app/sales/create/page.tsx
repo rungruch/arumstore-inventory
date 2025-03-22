@@ -1,6 +1,7 @@
-const Sellpage = () => {
+import AddOrder from "@/components/AddOrder";
+const addProductpage = () => {
   return (
-    <div>Sellpage create page</div>
+  <AddOrder></AddOrder>
   )
 }
-export default Sellpage
+export default addProductpage

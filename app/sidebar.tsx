@@ -36,8 +36,8 @@ const menuItems: MenuItem[] = [
     title: "รายการขาย",
     icon: <MdAttachMoney />,
     subMenu: [
-      { title: "สร้างรายการขาย", path: "/sales/create" },
       { title: "ดูรายการขาย", path: "/sales" },
+      { title: "สร้างรายการขาย", path: "/sales/create" },
       { title: "รายการแพ็คสินค้า", path: "/sales/packing" }
     ]
   },
