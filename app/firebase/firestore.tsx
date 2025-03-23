@@ -469,3 +469,83 @@ export async function getProductWarehouse() {
       return newTransactionId;
     });
   }
+
+  export async function createSellTransaction(transactionData: any) {
+    try {
+      const transactionsCollection = collection(db, "transactions");
+
+      // Query to find that transaction_id is not exists
+      const sellQuery = query(
+        transactionsCollection,
+        where("transaction_id", "==", transactionData.transaction_id)
+      );
+
+      // Check if transaction_id already exists
+      const existingTransaction = await getDocs(sellQuery);
+      if (!existingTransaction.empty) {
+        throw new Error(`Transaction ID "${transactionData.transaction_id}" already exists`);
+      }
+
+      // If no existing transaction found, create a new one
+      const docRef = await addDoc(transactionsCollection, transactionData);
+      return { id: docRef.id, ...transactionData };
+    } catch (error) {
+      console.error("Error adding transaction:", error);
+      throw error; // Re-throw the error to handle it in the calling function
+    }
+  }
+
+  // New warehouse functions
+export async function getSellTransactionPaginated(lastDoc = null, pageSize = 10) {
+  try {
+    let q = query(collection(db, "transactions"), where("transaction_type", "==", TransactionType.SELL), orderBy("created_date", "desc"), limit(pageSize));
+
+    // If there's a last document (for next page), start after it
+    if (lastDoc) {
+      q = query(collection(db, "transactions"), where("transaction_type", "==", TransactionType.SELL), orderBy("created_date", "desc"), startAfter(lastDoc), limit(pageSize));
+    }
+
+    const querySnapshot = await getDocs(q);
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
+
+    // Use the Warehouse interface when mapping document data
+    const d = {
+        data: querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+        lastDoc: lastVisible, // Store last document to fetch the next page
+      }
+    return d
+  } catch (error) {
+    console.error("Error fetching paginated products:", error);
+    return { data: [], lastDoc: null };
+  }
+}
+
+
+// // Get the total count of products for pagination
+// export const getTotalProductCount = async () => {
+//   const productsRef = collection(db, "products");
+//   const snapshot = await getCountFromServer(productsRef);
+//   return snapshot.data().count;
+// }
+
+// export async function getProductByName(partialName: string): Promise<Warehouse[]> {
+//   try {
+//     // Execute the query
+//     const querySnapshot = await getDocs(
+//       startsWith(
+//         collection(db, 'products'),
+//         'name',
+//         partialName
+//       )
+//     );
+
+//     // Map the results and type them as Warehouse[]
+//     return querySnapshot.docs.map((doc) => ({
+//       id: doc.id,
+//       ...doc.data()
+//     } as any));
+//   } catch (error) {
+//     console.error("Error fetching products by partial name:", error);
+//     throw error;
+//   }
+// }

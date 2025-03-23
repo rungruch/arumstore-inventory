@@ -3,12 +3,11 @@ export enum OrderStatus {
     SHIPPING = "SHIPPING",
     COMPLETED = "COMPLETED",
     CANCELLED = "CANCELLED",
-    REFUNDED = "REFUNDED",
     FAILED = "FAILED"
   }
 
   export enum OrderStatusDisplay {
-    PENDING = "รอชำระ",
+    PENDING = "รอยืนยัน",
     SHIPPING = "กำลังจัดส่ง",
     COMPLETED = "เสร็จสิ้น",
     CANCELLED = "ยกเลิก",
@@ -20,3 +19,15 @@ export enum OrderStatus {
     SELL = "SELL",
     REFUND = "REFUND"
   }
+
+  export enum VatType {
+    VAT0 = "VAT0",
+    VAT7 = "VAT7",
+    NO_VAT = "NO_VAT",
+  }
+
+  export enum DeliveryType {
+    PICKUP = "PICKUP",
+    SHIPPING = "SHIPPING"
+  }
+  

@@ -1,7 +1,6 @@
 "use client";
 import React from 'react';
-import { ModalTitle } from '@/components/enum'
-
+import { ModalTitle } from '@/components/enum';
 
 interface ModalProps {
   isOpen: boolean;
@@ -14,11 +13,10 @@ const Modal: React.FC<ModalProps> = ({
   isOpen, 
   onClose, 
   title, 
-  message
+  message 
 }) => {
   if (!isOpen) return null;
 
-  // Define colors based on state
   const getTitleColorClass = () => {
     switch (title) {
       case ModalTitle.SUCCESS:
@@ -32,7 +30,6 @@ const Modal: React.FC<ModalProps> = ({
     }
   };
 
-  // Define button colors based on state
   const getButtonColorClass = () => {
     switch (title) {
       case ModalTitle.SUCCESS:
@@ -42,11 +39,10 @@ const Modal: React.FC<ModalProps> = ({
       case ModalTitle.ERROR:
         return 'bg-red-600 hover:bg-red-700';
       default:
-        return 'bg-black hover:bg-grey';
+        return 'bg-black hover:bg-gray-700';
     }
   };
 
-  // Define icons based on state
   const getIcon = () => {
     switch (title) {
       case ModalTitle.SUCCESS:
@@ -81,7 +77,8 @@ const Modal: React.FC<ModalProps> = ({
         className="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
+        {/* Added scrollable content area */}
+        <div className="p-6 max-h-[80vh] overflow-y-auto">
           <div className="flex items-center mb-4">
             <div className="mr-3">
               {getIcon()}
@@ -89,16 +86,18 @@ const Modal: React.FC<ModalProps> = ({
             <h2 className={`text-xl font-bold ${getTitleColorClass()}`}>{title}</h2>
           </div>
           
-          <p className="text-gray-600 mb-6">{message}</p>
-          
-          <div className="flex justify-end">
-            <button 
-              onClick={onClose}
-              className={`px-4 py-2 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors ${getButtonColorClass()}`}
-            >
-              ปิด
-            </button>
-          </div>
+          {/* Scrollable Message Area */}
+          <p className="text-gray-600 whitespace-pre-wrap">{message}</p>
+        </div>
+        
+        {/* Footer with close button */}
+        <div className="p-4 border-t border-gray-200 flex justify-end">
+          <button 
+            onClick={onClose}
+            className={`px-4 py-2 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors ${getButtonColorClass()}`}
+          >
+            ปิด
+          </button>
         </div>
       </div>
     </div>
