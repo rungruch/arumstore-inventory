@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { generateRandomSellTransactionId, getProductWarehouse, createSellTransaction } from "@/app/firebase/firestore";
+import { generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeduction } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
 import ProductSection from "./ProductSection";
 import {VatType, TransactionType, DeliveryType} from "@/app/firebase/enum";
+import { error } from "console";
 
 // Define types for the component
 interface Warehouse {
@@ -213,7 +214,7 @@ export default function AddSellOrderForm({
 
       console.log(orderItems)
 
-      await createSellTransaction(formattedTransactionData);
+      await createSellTransactionWithStockDeduction(formattedTransactionData);
 
       // Reset form
       setOrderState({
@@ -240,6 +241,14 @@ export default function AddSellOrderForm({
       setTotalOrderAmountNoVat(0);
 
       generateSKU();
+
+      if (trigger !== undefined && setTrigger !== undefined) {
+        setTrigger(!trigger);
+        }
+        else{
+            router.push("/sales");
+        }
+
     } catch (error) {
       setValidationError("เกิดข้อผิดพลาด: " + String(error));
       setModalState({
@@ -249,12 +258,6 @@ export default function AddSellOrderForm({
       });
     } finally {
      setIsSubmitting(false);
-    //   if (trigger !== undefined && setTrigger !== undefined) {
-    //     setTrigger(!trigger);
-    //     }
-    //     else{
-    //         router.push("/sales");
-    //     }
     }
   };
 

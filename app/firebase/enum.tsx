@@ -1,15 +1,17 @@
 export enum OrderStatus {
     PENDING = "PENDING",
     SHIPPING = "SHIPPING",
-    COMPLETED = "COMPLETED",
+    SHIPPED = "SHIPPED",
+    PICKED_UP = "PICKED_UP",
     CANCELLED = "CANCELLED",
     FAILED = "FAILED"
   }
 
   export enum OrderStatusDisplay {
-    PENDING = "รอยืนยัน",
-    SHIPPING = "กำลังจัดส่ง",
-    COMPLETED = "เสร็จสิ้น",
+    PENDING = "รออนุมัติ",
+    SHIPPING = "เตรียมส่ง",
+    SHIPPED = "จัดส่งแล้ว",
+    PICKED_UP = "รับสินค้าแล้ว",
     CANCELLED = "ยกเลิก",
     FAILED = "ล้มเหลว"
   }
@@ -31,3 +33,22 @@ export enum OrderStatus {
     SHIPPING = "SHIPPING"
   }
   
+  export const STATUS_TRANSITIONS: { [key in OrderStatus]: OrderStatus[] } = {
+    [OrderStatus.PENDING]: [
+      OrderStatus.SHIPPING, 
+      OrderStatus.CANCELLED
+    ],
+    [OrderStatus.SHIPPING]: [
+      OrderStatus.SHIPPED, 
+      OrderStatus.PICKED_UP,
+      OrderStatus.CANCELLED
+    ],
+    [OrderStatus.SHIPPED]: [
+      OrderStatus.FAILED
+    ],
+    [OrderStatus.PICKED_UP]: [
+      OrderStatus.FAILED
+    ],
+    [OrderStatus.CANCELLED]: [],
+    [OrderStatus.FAILED]: []
+  };

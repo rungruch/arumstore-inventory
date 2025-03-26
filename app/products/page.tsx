@@ -172,6 +172,7 @@ export default function ProductPage() {
         </div>
       ) : (
         <div className={`transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}>
+          {showPopup && <div className="mb-6"><AddProductPopup trigger={trigger} setTrigger={setTrigger} /></div>}
           <FlexTable
             datas={data}
             customHeader={
@@ -221,17 +222,17 @@ export default function ProductPage() {
                 <td className="p-2">
   <span
     className={
-      Object.values(product.stocks as Record<string, number> ).reduce((a, b) => a + b, 0) <= 0
+      Object.values(product.stocks as Record<string, number> ).reduce((a, b) => a + b, 0)+(Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)) <= 0
         ? 'text-red-500' // red if stock is 0 or less
-        : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
+        : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)+(Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)) < 5
         ? 'text-yellow-500' // yellow if stock is less than 5
         : 'text-green-500' // green if stock is greater than 5
     }
   >
-    {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)}
+    {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)+(Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0))}
   </span>
 </td>
-                <td className="p-2 w-[10%]">{Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)-(Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0))}</td>
+                <td className="p-2 w-[10%]">{Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)}</td>
                 <td className="p-2 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
                     {product.updated_date ? 
                         new Date(product.updated_date.toDate()).toLocaleString('th-TH', {
@@ -291,8 +292,6 @@ export default function ProductPage() {
           </button>
         </div>
       </div>
-
-      {showPopup && <div className="mt-6"><AddProductPopup trigger={trigger} setTrigger={setTrigger} /></div>}
     </div>
   );
 }

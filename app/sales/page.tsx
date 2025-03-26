@@ -1,14 +1,22 @@
 "use client";
 
-import { getSellTransactionPaginated, getProductPaginated, getTotalProductCount, getProductByName } from "@/app/firebase/firestore";
+import { getSellTransactionPaginated, getProductPaginated, getTotalSellTransactionCount, getProductByName, updateOrderTransactionStatus } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import AddProductPopup from "@/components/AddProduct";
+import AddOrderPopup from "@/components/AddOrder";
 import { Warehouse } from "@/app/firebase/interfaces";
 import Image from "next/image";
 import Link from "next/link";
 import { OrderStatus, OrderStatusDisplay } from "@/app/firebase/enum"
+import Modal from "@/components/modal";
+import { ModalTitle } from '@/components/enum';
+
+interface ModalState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+}
 
 export default function ProductPage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -20,6 +28,11 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(false); // Loading state
   const [pageSize, setPageSize] = useState(10); // Default page size is 10
   const [trigger, setTrigger] = useState(false);
+  const [modalState, setModalState] = useState<ModalState>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -27,7 +40,7 @@ export default function ProductPage() {
       try {
         
         setLoading(true);
-        const totalCount = await getTotalProductCount();
+        const totalCount = await getTotalSellTransactionCount();
         setTotalData(totalCount); // Update total categories
         const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize);
         console.log(data);
@@ -58,7 +71,7 @@ export default function ProductPage() {
 
     try {
       setLoading(true);
-      const totalCount = await getTotalProductCount();
+      const totalCount = await getTotalSellTransactionCount();
       setTotalData(totalCount);
       const { data, lastDoc } = await getSellTransactionPaginated(null, newSize);
       setDatas(data);
@@ -78,7 +91,7 @@ export default function ProductPage() {
         // Reset to paginated behavior when search is cleared
         setCurrentPage(1);
         setLastDoc(null);
-        const totalCount = await getTotalProductCount(); // Recalculate total categories
+        const totalCount = await getTotalSellTransactionCount(); // Recalculate total categories
         setTotalData(totalCount);
         const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize);
         setDatas(data);
@@ -131,6 +144,44 @@ export default function ProductPage() {
     }
   };
 
+  const handleStatusChange = async (
+    transactionId: string, 
+    currentStatus: OrderStatus, 
+    newStatus: OrderStatus
+  ) => {
+    try {
+      setLoading(true);
+      await updateOrderTransactionStatus(transactionId, currentStatus, newStatus);
+      
+      // Optionally refresh the data or update locally
+      setTrigger(prev => !prev);
+      
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.SUCCESS,
+        message: "สถานะรายการขายถูกอัปเดตเรียบร้อย"
+      });
+    } catch (error) {
+      console.error("Status update error:", error);
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: error instanceof Error 
+          ? error.message 
+          : "เกิดข้อผิดพลาดในการอัปเดตสถานะ"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeModal = (): void => {
+    setModalState(prev => ({
+      ...prev,
+      isOpen: false
+    }));
+  };
+
   // Toggle Add Category Popup
   const togglePopup = () => setShowPopup(!showPopup);
 
@@ -138,9 +189,16 @@ export default function ProductPage() {
   const totalPages = Math.ceil(totalData / pageSize);
 
   return (
+    <>
+    <Modal 
+        isOpen={modalState.isOpen} 
+        onClose={closeModal} 
+        title={modalState.title} 
+        message={modalState.message}
+      />
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
-        <h1 className="text-2xl font-bold">รายการขาย//as-is แสดง-สร้างในหน้าหลักได้อย่างเดียว</h1>
+        <h1 className="text-2xl font-bold">รายการขาย</h1>
         <h2 className="text-1xl font-semibold text-gray-700">จำนวน {totalData} รายการ</h2>
       </div>
       {/* Search and Add */}
@@ -162,9 +220,9 @@ export default function ProductPage() {
           onClick={togglePopup}
           className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
         >
-          เพิ่มสินค้า
+          เพิ่มรายการขาย
         </button>
-      </div>
+        </div>
 
       {/* Data Table with Loading State */}
       {loading ? (
@@ -174,6 +232,8 @@ export default function ProductPage() {
         </div>
       ) : (
         <div className={`transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}>
+          {showPopup && <div><AddOrderPopup trigger={trigger} setTrigger={setTrigger} /></div>}
+          <div className="mb-10"/>
           <FlexTable
             datas={data}
             customHeader={
@@ -204,11 +264,21 @@ export default function ProductPage() {
                 <td className="p-2 w-[200px]">{data.client_name}</td>
                 <td className="p-2">{data.total_amount}</td>
                 <td className="p-2">
-                  {data.status === OrderStatus.PENDING ? OrderStatusDisplay.PENDING : 
-                   data.status === OrderStatus.SHIPPING ? OrderStatusDisplay.SHIPPING : 
-                   data.status === OrderStatus.COMPLETED ? OrderStatusDisplay.COMPLETED : 
-                   data.status === OrderStatus.CANCELLED ? OrderStatusDisplay.CANCELLED : 
-                   data.status}
+                    <select
+                      value={data.status}
+                      onChange={(e) => handleStatusChange(
+                      data.transaction_id, 
+                      data.status, 
+                      e.target.value as OrderStatus
+                      )}
+                      className="p-1 rounded border border-gray-300"
+                    >
+                    <option value={OrderStatus.PENDING}>{OrderStatusDisplay.PENDING}</option>
+                    <option value={OrderStatus.SHIPPING}>{OrderStatusDisplay.SHIPPING}</option>
+                    <option value={OrderStatus.SHIPPED}>{OrderStatusDisplay.SHIPPED}</option>
+                    <option value={OrderStatus.PICKED_UP}>{OrderStatusDisplay.PICKED_UP}</option>
+                    <option value={OrderStatus.CANCELLED}>{OrderStatusDisplay.CANCELLED}</option>
+                    </select>
                 </td>
                 <td className="p-2">{"-"}</td>
               </tr>
@@ -258,8 +328,7 @@ export default function ProductPage() {
           </button>
         </div>
       </div>
-
-      {showPopup && <div className="mt-6"><AddProductPopup trigger={trigger} setTrigger={setTrigger} /></div>}
     </div>
+    </>
   );
 }
