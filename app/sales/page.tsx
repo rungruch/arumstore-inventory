@@ -43,7 +43,6 @@ export default function ProductPage() {
         const totalCount = await getTotalSellTransactionCount();
         setTotalData(totalCount); // Update total categories
         const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize);
-        console.log(data);
 
         // Ensure categories and lastDoc are correctly set
         if (data && lastDoc !== undefined) {
