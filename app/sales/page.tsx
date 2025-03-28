@@ -287,32 +287,32 @@ export default function ProductPage() {
           <FlexTable
             datas={data}
             customHeader={
-              <tr className="text-left h-[9vh]">
+                <tr className="text-left h-[9vh]">
                 <th className="p-2 w-[5%] text-center">#</th>
-                <th className="p-2 w-[150px] ">วันที่</th>
-                <th className="p-2 w-[150px]">รายการ</th>
-                <th className="p-2 w-[200px]">ลูกค้า</th>
-                <th className="p-2 ">มูลค่า</th>
-                <th className="p-2 ">สถานะ</th>
-                <th className="p-2 ]">วันส่งสินค้า</th>
-                <th className="p-2 whitespace-nowrap">.</th>
-              </tr>
-            }
-            customRow={(data, index) => (
-              <tr key={data.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100">
+                <th className="p-2 w-[15%]">วันที่</th>
+                <th className="p-2 w-[20%]">รายการ</th>
+                <th className="p-2 w-[25%]">ลูกค้า</th>
+                <th className="p-2 flex-1">มูลค่า</th>
+                <th className="p-2 flex-1">สถานะ</th>
+                <th className="p-2 flex-1">วันส่งสินค้า</th>
+                <th className="p-2 w-[5%]">.</th>
+                </tr>
+              }
+              customRow={(data, index) => (
+                <tr key={data.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100">
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
-                <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">
-                    {data.created_date ? 
-                        new Date(data.created_date.toDate()).toLocaleString('th-TH', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                    }) 
-                    : "-"}
+                <td className="p-2 w-[15%] whitespace-nowrap overflow-hidden text-ellipsis">
+                  {data.created_date ? 
+                    new Date(data.created_date.toDate()).toLocaleString('th-TH', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  }) 
+                  : "-"}
                 </td>
-                <td className="p-2 w-[150px] ">{data.transaction_id}</td>
-                <td className="p-2 w-[200px]">{data.client_name}</td>
-                <td className="p-2">{data.total_amount}</td>
+                <td className="p-2 w-[20%] whitespace-nowrap">{data.transaction_id}</td>
+                <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.client_name}</td>
+                <td className="p-2 flex-1">{data.total_amount}</td>
                 <td className="p-2">
                     <select
                       value={data.status}

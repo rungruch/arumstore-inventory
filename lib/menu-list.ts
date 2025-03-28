@@ -92,10 +92,6 @@ export function getMenuList(pathname: string): Group[] {
             {
               href: "/sales/create",
               label: "สร้างรายการขาย"
-            },
-            {
-              href: "/sales/packing",
-              label: "รายการแพ็คสินค้า"
             }
           ]
         },

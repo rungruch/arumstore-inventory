@@ -38,7 +38,6 @@ const menuItems: MenuItem[] = [
     subMenu: [
       { title: "ดูรายการขาย", path: "/sales" },
       { title: "สร้างรายการขาย", path: "/sales/create" },
-      { title: "รายการแพ็คสินค้า", path: "/sales/packing" }
     ]
   },
   {
