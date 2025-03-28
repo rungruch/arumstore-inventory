@@ -729,6 +729,30 @@ async function handleCancelledOrderStockUpdate(
   }
 }
 
+export const updateShippingDetails = async (
+  transactionId: string, 
+  shippingDetails: {
+    shipping_date: Date,
+    shipping_method: string,
+    recipient_name: string,
+    tracking_number?: string,
+    image: string
+  }
+) => {
+  const transactionsCollection = collection(db, "transactions");
+  const transactionQuery = query(transactionsCollection, where("transaction_id", "==", transactionId));
+  const transactionSnapshot = await getDocs(transactionQuery);
+  
+  if (transactionSnapshot.empty) {
+    throw new Error(`Transaction with ID "${transactionId}" not found`);
+  }
+  
+  const transactionRef = transactionSnapshot.docs[0].ref;
+  await updateDoc(transactionRef, {
+    shipping_details: shippingDetails
+  });
+};
+
 // // Get the total count of products for pagination
 // export const getTotalProductCount = async () => {
 //   const productsRef = collection(db, "products");

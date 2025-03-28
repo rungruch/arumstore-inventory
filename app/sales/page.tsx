@@ -5,12 +5,14 @@ import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddOrderPopup from "@/components/AddOrder";
-import { Warehouse } from "@/app/firebase/interfaces";
 import Image from "next/image";
 import Link from "next/link";
 import { OrderStatus, OrderStatusDisplay } from "@/app/firebase/enum"
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
+import ShippingDetailsForm from "@/components/AddShippingDetail";
+import { updateShippingDetails } from "@/app/firebase/firestore";
+
 
 interface ModalState {
   isOpen: boolean;
@@ -32,6 +34,15 @@ export default function ProductPage() {
     isOpen: false,
     title: "",
     message: "",
+  });
+  const [shippingDetailsModal, setShippingDetailsModal] = useState<{
+    isOpen: boolean;
+    transactionId: string | null;
+    currentShippingDetails?: any;
+  }>({
+    isOpen: false,
+    transactionId: null,
+    currentShippingDetails: undefined
   });
 
   // Fetch initial data on component mount
@@ -181,6 +192,24 @@ export default function ProductPage() {
     }));
   };
 
+  // Update the function to open shipping details modal with current details
+  const openShippingDetailsModal = (transactionId: string, currentShippingDetails?: any) => {
+    setShippingDetailsModal({
+      isOpen: true,
+      transactionId: transactionId,
+      currentShippingDetails: currentShippingDetails
+    });
+  };
+
+  // Function to close shipping details modal
+  const closeShippingDetailsModal = () => {
+    setShippingDetailsModal({
+      isOpen: false,
+      transactionId: null,
+      currentShippingDetails: undefined
+    });
+  };
+
   // Toggle Add Category Popup
   const togglePopup = () => setShowPopup(!showPopup);
 
@@ -195,6 +224,28 @@ export default function ProductPage() {
         title={modalState.title} 
         message={modalState.message}
       />
+
+{shippingDetailsModal.isOpen && shippingDetailsModal.transactionId && (
+        <ShippingDetailsForm 
+          transactionId={shippingDetailsModal.transactionId}
+          currentShippingDetails={shippingDetailsModal.currentShippingDetails?.shipping_details}
+          onSubmitSuccess={() => {
+            // Refresh data
+            setTrigger(prev => !prev);
+            
+            // Close the modal
+            closeShippingDetailsModal();
+            
+            // Show success modal
+            setModalState({
+              isOpen: true,
+              title: ModalTitle.SUCCESS,
+              message: "บันทึกข้อมูลการจัดส่งสำเร็จ"
+            });
+          }}
+          onCancel={closeShippingDetailsModal}
+        />
+      )}
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">รายการขาย</h1>
@@ -279,7 +330,35 @@ export default function ProductPage() {
                     <option value={OrderStatus.CANCELLED}>{OrderStatusDisplay.CANCELLED}</option>
                     </select>
                 </td>
-                <td className="p-2">{"-"}</td>
+                <td className="p-2">
+              {data.shipping_details ? (
+                <div 
+                  onClick={() => openShippingDetailsModal(data.transaction_id, data)}
+                >
+                  <div className="cursor-pointer hover:underline">
+                  {new Date(data.shipping_details.shipping_date.toDate()).toLocaleString('th-TH', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {data.shipping_details.shipping_method}
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => openShippingDetailsModal(data.transaction_id)}
+                  className="text-blue-900 hover:text-blue-600 flex items-center gap-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  แก้ไข
+                </button>
+              )}
+            </td>
               </tr>
             )}
           />
