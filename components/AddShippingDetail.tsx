@@ -81,7 +81,6 @@ export default function ShippingDetailsForm({
         setIsLoading(false);
         return;
       }
-      console.log(transactionId)
 
       await updateShippingDetails(transactionId, {
         shipping_date: new Date(shippingDate),
@@ -90,8 +89,6 @@ export default function ShippingDetailsForm({
         tracking_number: trackingNumber || undefined,
         image: uploaded || "",
       });
-
-    console.log()
 
       // Call success callback
       onSubmitSuccess();

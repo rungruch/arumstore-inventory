@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddOrderPopup from "@/components/AddOrder";
 import Image from "next/image";
 import Link from "next/link";
-import { OrderStatus, OrderStatusDisplay } from "@/app/firebase/enum"
+import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS } from "@/app/firebase/enum"
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ShippingDetailsForm from "@/components/AddShippingDetail";
@@ -163,14 +163,14 @@ export default function ProductPage() {
       setLoading(true);
       await updateOrderTransactionStatus(transactionId, currentStatus, newStatus);
       
-      // Optionally refresh the data or update locally
-      setTrigger(prev => !prev);
-      
       setModalState({
         isOpen: true,
         title: ModalTitle.SUCCESS,
         message: "สถานะรายการขายถูกอัปเดตเรียบร้อย"
       });
+
+      // Optionally refresh the data or update locally
+      setTrigger(prev => !prev);
     } catch (error) {
       console.error("Status update error:", error);
       setModalState({
@@ -229,10 +229,7 @@ export default function ProductPage() {
         <ShippingDetailsForm 
           transactionId={shippingDetailsModal.transactionId}
           currentShippingDetails={shippingDetailsModal.currentShippingDetails?.shipping_details}
-          onSubmitSuccess={() => {
-            // Refresh data
-            setTrigger(prev => !prev);
-            
+          onSubmitSuccess={() => {            
             // Close the modal
             closeShippingDetailsModal();
             
@@ -242,6 +239,9 @@ export default function ProductPage() {
               title: ModalTitle.SUCCESS,
               message: "บันทึกข้อมูลการจัดส่งสำเร็จ"
             });
+
+            // Refresh data
+            setTrigger(prev => !prev);
           }}
           onCancel={closeShippingDetailsModal}
         />
@@ -323,11 +323,21 @@ export default function ProductPage() {
                       )}
                       className="p-1 rounded border border-gray-300"
                     >
-                    <option value={OrderStatus.PENDING}>{OrderStatusDisplay.PENDING}</option>
-                    <option value={OrderStatus.SHIPPING}>{OrderStatusDisplay.SHIPPING}</option>
-                    <option value={OrderStatus.SHIPPED}>{OrderStatusDisplay.SHIPPED}</option>
-                    <option value={OrderStatus.PICKED_UP}>{OrderStatusDisplay.PICKED_UP}</option>
-                    <option value={OrderStatus.CANCELLED}>{OrderStatusDisplay.CANCELLED}</option>
+                    <option value={OrderStatus.PENDING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PENDING)}>
+                      {OrderStatusDisplay.PENDING}
+                    </option>
+                    <option value={OrderStatus.SHIPPING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.SHIPPING)}>
+                      {OrderStatusDisplay.SHIPPING}
+                    </option>
+                    <option value={OrderStatus.SHIPPED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.SHIPPED)}>
+                      {OrderStatusDisplay.SHIPPED}
+                    </option>
+                    <option value={OrderStatus.PICKED_UP} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PICKED_UP)}>
+                      {OrderStatusDisplay.PICKED_UP}
+                    </option>
+                    <option value={OrderStatus.CANCELLED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.CANCELLED)}>
+                      {OrderStatusDisplay.CANCELLED}
+                    </option>
                     </select>
                 </td>
                 <td className="p-2">
