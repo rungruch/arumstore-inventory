@@ -48,3 +48,30 @@ export interface SellTransaction {
   created_date: Timestamp;
   updated_date: Timestamp;
 }
+
+export interface Contact {
+  client_id: string;
+  name: string;
+  tax_reference?: {
+    tax_id?: string;
+    branch_name?: string;
+    branch_number?: string;
+  };
+  contact_info?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    home_phone?: string;
+    fax?: string;
+  };
+  social_media?: {
+    facebook?: string;
+    line?: string;
+    instagram?: string;
+  };
+  address?: string;
+  group?: string;
+  notes?: string;
+  created_date: Timestamp;
+  updated_date: Timestamp;
+}

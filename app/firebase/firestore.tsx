@@ -21,7 +21,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/app/firebase/clientApp";
-import { Warehouse } from "@/app/firebase/interfaces";
+import { Warehouse, Contact } from "@/app/firebase/interfaces";
 import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS } from "@/app/firebase/enum";
 
 // Existing code from your file...
@@ -41,14 +41,6 @@ export async function getProducts() {
     console.error("Error fetching products: ", error);
     return [];
   }
-}
-
-interface Category {
-  id: string;
-  category_name: string;
-  created_at: Timestamp;
-  stock?: number;
-  value?: number;
 }
 
 export async function getProductCategoryPaginated(lastDoc: any = null, pageSize: number = 10) {
@@ -800,31 +792,198 @@ export const updateShippingDetails = async (
   });
 };
 
-// // Get the total count of products for pagination
-// export const getTotalProductCount = async () => {
-//   const productsRef = collection(db, "products");
-//   const snapshot = await getCountFromServer(productsRef);
-//   return snapshot.data().count;
-// }
 
-// export async function getProductByName(partialName: string): Promise<Warehouse[]> {
-//   try {
-//     // Execute the query
-//     const querySnapshot = await getDocs(
-//       startsWith(
-//         collection(db, 'products'),
-//         'name',
-//         partialName
-//       )
-//     );
+// Get paginated contacts
+export async function getContactsPaginated(lastDoc: any = null, pageSize: number = 10) {
+  try {
+    let q = query(collection(db, "contacts"), orderBy("created_date", "desc"), limit(pageSize));
 
-//     // Map the results and type them as Warehouse[]
-//     return querySnapshot.docs.map((doc) => ({
-//       id: doc.id,
-//       ...doc.data()
-//     } as any));
-//   } catch (error) {
-//     console.error("Error fetching products by partial name:", error);
-//     throw error;
-//   }
-// }
+    // If there's a last document (for next page), start after it
+    if (lastDoc) {
+      q = query(collection(db, "contacts"), orderBy("created_date", "desc"), startAfter(lastDoc), limit(pageSize));
+    }
+
+    const querySnapshot = await getDocs(q);
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
+
+    return {
+      contacts: querySnapshot.docs.map((doc) => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      })),
+      lastDoc: lastVisible,
+    };
+  } catch (error) {
+    console.error("Error fetching paginated contacts:", error);
+    return { contacts: [] as Contact[], lastDoc: null };
+  }
+}
+
+// Get total count of contacts
+export async function getTotalContactsCount() {
+  try {
+    const contactsCollection = collection(db, "contacts");
+    const snapshot = await getCountFromServer(contactsCollection);
+    return snapshot.data().count;
+  } catch (error) {
+    console.error("Error fetching contacts count:", error);
+    return 0;
+  }
+}
+
+
+// Search contacts by name
+export async function getContactsByName(partialName: string) {
+  try {
+    // Execute the query with range-based search
+    const querySnapshot = await getDocs(
+      query(
+        collection(db, 'contacts'),
+        orderBy('name'),
+        startAt(partialName),
+        endAt(partialName + '\uf8ff')
+      )
+    );
+
+    // Map the results
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error("Error fetching contacts by partial name:", error);
+    throw error;
+  }
+}
+
+// Create a new contact
+export async function createContact(contactData: Omit<Contact, 'id' | 'created_date' | 'updated_date'>): Promise<Contact> {
+  try {
+    // Check if a contact with this name already exists
+    const contactQuery = query(
+      collection(db, "contacts"),
+      where("name", "==", contactData.name)
+    );
+    
+    const existingContacts = await getDocs(contactQuery);
+    
+    if (!existingContacts.empty) {
+      throw new Error(`ผู้ติดต่อ "${contactData.name}" มีข้อมูลอยู่แล้ว`);
+    }
+    
+      contactData.client_id = await generateClientId();
+    
+    // Add timestamps
+    const newContact = {
+      ...contactData,
+      created_date: Timestamp.now(),
+      updated_date: Timestamp.now()
+    };
+
+    const docRef = await addDoc(collection(db, "contacts"), newContact);
+    
+    // Return the new contact with its Firestore ID
+    return { id: docRef.id, ...newContact } as Contact;
+  } catch (error) {
+    console.error("Error creating contact:", error);
+    throw error;
+  }
+}
+
+export async function generateClientId(): Promise<string> {
+  const contactsCollection = collection(db, 'contacts');
+
+  return runTransaction(db, async (transaction) => {
+    let contact_id: string;
+    let skuExists: boolean;
+    let retries = 0;
+    const maxRetries = 5; // Adjust as needed
+    do {
+      if (retries >= maxRetries) {
+        throw new Error('Failed to generate unique contact after multiple retries.');
+      }
+      contact_id = `C_${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`; // Generate random SKU
+      const skuQuery = query(contactsCollection, where('contact_id', '==', contact_id));
+      const skuSnapshot = await getDocs(skuQuery);
+      skuExists = !skuSnapshot.empty;
+      retries++;
+    } while (skuExists);
+    return contact_id;
+  });
+}
+
+// Update an existing contact
+export async function updateContact(contactId: string, contactData: Partial<Contact>): Promise<Contact> {
+  try {
+    const contactRef = doc(db, "contacts", contactId);
+    const contactDoc = await getDoc(contactRef);
+    
+    if (!contactDoc.exists()) {
+      throw new Error(`ไม่พบข้อมูลผู้ติดต่อ ID: ${contactId}`);
+    }
+    
+    // Add updated timestamp
+    const updatedData = {
+      ...contactData,
+      updated_date: Timestamp.now()
+    };
+    
+    await updateDoc(contactRef, updatedData);
+    
+    // Return the updated contact
+    return {
+      id: contactId,
+      ...contactDoc.data(),
+      ...updatedData
+    } as Contact;
+  } catch (error) {
+    console.error("Error updating contact:", error);
+    throw error;
+  }
+}
+
+// Delete a contact
+export async function deleteContact(contactId: string): Promise<void> {
+  try {
+    const contactRef = doc(db, "contacts", contactId);
+    const contactDoc = await getDoc(contactRef);
+    
+    if (!contactDoc.exists()) {
+      throw new Error(`ไม่พบข้อมูลผู้ติดต่อ ID: ${contactId}`);
+    }
+    
+    // Here you could implement additional checks before deletion
+    // e.g., check if the contact is referenced elsewhere
+    
+    await updateDoc(contactRef, { 
+      deleted: true,
+      updated_date: Timestamp.now()
+    });
+    
+    // Alternatively, you could completely delete the document:
+    // await deleteDoc(contactRef);
+    
+  } catch (error) {
+    console.error("Error deleting contact:", error);
+    throw error;
+  }
+}
+
+// Get all contacts (no pagination)
+export async function getAllContacts() {
+  try {
+    const q = query(
+      collection(db, "contacts"),
+      orderBy("name", "asc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching all contacts:", error);
+    return [];
+  }
+}

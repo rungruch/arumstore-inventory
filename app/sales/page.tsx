@@ -291,7 +291,7 @@ export default function ProductPage() {
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
-          placeholder="ค้นหา"
+          placeholder="ค้นหาโดยชื่อลูกค้า"
           className="border p-2 rounded-md w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -391,12 +391,13 @@ export default function ProductPage() {
           </p>
           <p><span className="font-semibold">ลูกค้า:</span> {data.client_name}</p>
           <p><span className="font-semibold">มูลค่า:</span> {data.total_amount} บาท</p>
+          <p><span className="font-semibold">หมายเหตุ:</span> {data.notes}</p>
           <div className="mt-2 border-t pt-2">
             <p className="font-semibold">รายการสินค้า:</p>
             {data.items.map((item:any, idx:any) => (
-              <div key={idx} className="pl-2 mt-1">
+                <div key={idx} className="pl-2 mt-1 break-words">
                 - {item.name} ({item.price}฿) : {item.quantity} ชิ้น
-              </div>
+                </div>
             ))}
           </div>
           {data.payment_method && (

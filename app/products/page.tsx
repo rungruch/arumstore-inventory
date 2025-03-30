@@ -145,7 +145,7 @@ export default function ProductPage() {
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
-          placeholder="ค้นหา"
+          placeholder="ค้นหาโดยชื่อสินค้า"
           className="border p-2 rounded-md w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

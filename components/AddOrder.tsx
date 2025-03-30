@@ -1,13 +1,12 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeduction } from "@/app/firebase/firestore";
+import { generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeduction, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
 import ProductSection from "./ProductSection";
 import {VatType, TransactionType, DeliveryType} from "@/app/firebase/enum";
-import { error } from "console";
 
 // Define types for the component
 interface Warehouse {
@@ -73,6 +72,18 @@ interface FormattedOrderData extends OrderState {
   updated_date: any;
 }
 
+interface Contact {
+  id: string;
+  name: string;
+  client_id: string;
+  tel: string;
+  email: string;
+  address: string;
+  tax_id: string;
+  branch_name: string;
+  branch_id: string;
+}
+
 export default function AddSellOrderForm({
   trigger,
   setTrigger,
@@ -111,6 +122,9 @@ export default function AddSellOrderForm({
     title: "",
     message: "",
   });
+
+  const [contactSuggestions, setContactSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -153,6 +167,52 @@ export default function AddSellOrderForm({
       [name]: value
     }));
     setValidationError("");
+  };
+
+  const handleClientNameChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setOrderState(prev => ({
+      ...prev,
+      client_name: value
+    }));
+
+    if (value.length >= 2) {
+      try {
+        const contacts = await getContactsByName(value);
+        setContactSuggestions(contacts);
+        setShowSuggestions(true);
+      } catch (error) {
+        console.error("Error fetching contacts:", error);
+      }
+    } else {
+      setContactSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleClientNameClick = async () => {
+    try {
+      const { contacts } = await getContactsPaginated(null, 50);  // Get first page of contacts
+      setContactSuggestions(contacts);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
+  };
+
+  const handleContactSelect = (contact : any) => {
+    setOrderState(prev => ({
+      ...prev,
+      client_name: contact.name,
+      client_id: contact.client_id,
+      client_tel: contact.contact_info.phone,
+      client_email: contact.contact_info.email,
+      client_address: contact.address,
+      tax_id: contact.tax_reference.tax_id,
+      branch_name: contact.tax_reference.branch_name,
+      branch_id: contact.tax_reference.branch_number
+    }));
+    setShowSuggestions(false);
   };
 
   const handleProductsChange = (products: OrderItem[], totalAmount: number, totalAmountNoVat: number, vatAmount: number): void => {
@@ -212,7 +272,6 @@ export default function AddSellOrderForm({
         updated_date: Timestamp.now(),
       };
 
-      console.log(orderItems)
 
       await createSellTransactionWithStockDeduction(formattedTransactionData);
 
@@ -336,14 +395,50 @@ export default function AddSellOrderForm({
             <div>
               <h3 className="text-sm font-semibold mb-2">ข้อมูลลูกค้าจัดส่ง</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <input 
-                  type="text" 
-                  name="client_name" 
-                  placeholder="ชื่อ" 
-                  value={orderState.client_name} 
-                  onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-2 text-sm" 
-                />
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    name="client_name" 
+                    placeholder="ชื่อ" 
+                    value={orderState.client_name} 
+                    onChange={handleClientNameChange}
+                    onClick={handleClientNameClick}  // Add onClick handler
+                    className="w-full border p-2 rounded-md mb-2 text-sm" 
+                    autoComplete="off"
+                  /> 
+                    <div ref={(node) => {
+                    // Add click outside handler
+                    const handleClickOutside = (e: MouseEvent) => {
+                      if (node && !node.contains(e.target as Node)) {
+                      setShowSuggestions(false);
+                      }
+                    };
+                    
+                    if (node) {
+                      document.addEventListener('mousedown', handleClickOutside);
+                    }
+                    
+                    // Cleanup
+                    return () => {
+                      document.removeEventListener('mousedown', handleClickOutside);
+                    };
+                    }}>
+                    {showSuggestions && contactSuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {contactSuggestions.map((contact) => (
+                        <div
+                        key={contact.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => handleContactSelect(contact)}
+                        >
+                        <div className="font-semibold">{contact.name}</div>
+                        <div className="text-sm text-gray-600">{contact.tel}</div>
+                        </div>
+                      ))}
+                      </div>
+                    )}
+                    </div>
+                </div>
                 <input 
                   type="text" 
                   name="client_id" 
