@@ -1,6 +1,6 @@
 "use client";
 
-import { getSellTransactionPaginated, getProductPaginated, getTotalSellTransactionCount, getProductByName, updateOrderTransactionStatus } from "@/app/firebase/firestore";
+import { getSellTransactionPaginated, getProductPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -98,6 +98,7 @@ export default function ProductPage() {
       setLoading(true);
       if (search.trim() === "") {
         // Reset to paginated behavior when search is cleared
+        setStatusFilter(OrderStatusFilter.ALL)
         setCurrentPage(1);
         setLastDoc(null);
         const totalCount = await getTotalSellTransactionCount(); // Recalculate total categories
@@ -107,7 +108,8 @@ export default function ProductPage() {
         setLastDoc(lastDoc);
       } else {
         // Perform search and reset pagination
-        const filteredCategories = await getProductByName(search);
+        const filteredCategories = await getSellTransactionbyName(search);
+        setStatusFilter(OrderStatusFilter.ALL)
         setDatas(filteredCategories);
         setCurrentPage(1);
         setTotalData(filteredCategories.length); // Set total to match filtered results

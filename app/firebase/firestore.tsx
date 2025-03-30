@@ -397,6 +397,30 @@ export async function getProductByName(partialName: string): Promise<Warehouse[]
     throw error;
   }
 }
+export async function getSellTransactionbyName(partialName: string) {
+  try {
+    // Execute the query
+    const querySnapshot = await getDocs(
+      query(
+        collection(db, 'transactions'),
+        where("transaction_type", "==", TransactionType.SELL),
+        orderBy('client_name'),
+        startAt(partialName),
+        endAt(partialName + '\uf8ff')
+      )
+    );
+
+    // Map the results
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error("Error fetching transactions by customer name:", error);
+    throw error;
+  }
+}
+
 
 export async function getProductCategory() {
   try {
