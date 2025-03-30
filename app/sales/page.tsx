@@ -7,11 +7,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddOrderPopup from "@/components/AddOrder";
 import Image from "next/image";
 import Link from "next/link";
-import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS } from "@/app/firebase/enum"
+import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS, OrderStatusFilter } from "@/app/firebase/enum"
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ShippingDetailsForm from "@/components/AddShippingDetail";
-import { updateShippingDetails } from "@/app/firebase/firestore";
 
 
 interface ModalState {
@@ -26,6 +25,7 @@ export default function ProductPage() {
   const [showPopup, setShowPopup] = useState(false); // Add popup visibility
   const [lastDoc, setLastDoc] = useState<any | null>(null); // Last document for pagination
   const [currentPage, setCurrentPage] = useState(1); // Current page number
+  const [totaAllData, setTotalAllData] = useState(0); // Total number of categories
   const [totalData, setTotalData] = useState(0); // Total number of categories
   const [loading, setLoading] = useState(false); // Loading state
   const [pageSize, setPageSize] = useState(10); // Default page size is 10
@@ -44,24 +44,23 @@ export default function ProductPage() {
     transactionId: null,
     currentShippingDetails: undefined
   });
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>(OrderStatusFilter.ALL);
+  const [hoveredShipping, setHoveredShipping] = useState<string | null>(null);
 
   // Fetch initial data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        
         setLoading(true);
-        const totalCount = await getTotalSellTransactionCount();
-        setTotalData(totalCount); // Update total categories
-        const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize);
-
-        // Ensure categories and lastDoc are correctly set
-        if (data && lastDoc !== undefined) {
-            setDatas(data);
+        const totalAllCount = await getTotalSellTransactionCount();
+        setTotalAllData(totalAllCount);
+        const { data, lastDoc, count } = await getSellTransactionPaginated(null, pageSize, statusFilter);
+          setDatas(data);
           setLastDoc(lastDoc);
-        } else {
-          console.error("Invalid data returned from getTransactionPaginated");
-        }
+          setTotalData(count);
+          console.log(data)
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -70,7 +69,7 @@ export default function ProductPage() {
     };
 
     fetchData();
-  }, [pageSize,trigger]);
+  }, [pageSize, trigger, statusFilter]);
 
   // Handle page size change
   const handlePageSizeChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -126,7 +125,11 @@ export default function ProductPage() {
     if (!lastDoc || currentPage === Math.ceil(totalData / pageSize)) return; // Prevent invalid navigation
     try {
       setLoading(true);
-      const { data: nextData, lastDoc: newLastDoc } = await getSellTransactionPaginated(lastDoc, pageSize);
+      const { data: nextData, lastDoc: newLastDoc } = await getSellTransactionPaginated(
+        lastDoc, 
+        pageSize,
+        statusFilter
+      );
       
       setDatas(nextData); // Update categories to the next page
       setLastDoc(newLastDoc); // Update lastDoc
@@ -144,7 +147,7 @@ export default function ProductPage() {
     try {
       setLoading(true);
       setCurrentPage(currentPage - 1); // Decrement page
-      const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize); // Re-fetch for the page
+      const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize, statusFilter); // Re-fetch for the page
       setDatas(data);
       setLastDoc(lastDoc);
     } catch (error) {
@@ -216,6 +219,21 @@ export default function ProductPage() {
   // Calculate total pages
   const totalPages = Math.ceil(totalData / pageSize);
 
+  const handleStatusFilterChange = (newStatus: OrderStatusFilter | undefined) => {
+    setStatusFilter(newStatus || OrderStatusFilter.ALL);
+    setCurrentPage(1);
+    setLastDoc(null);
+    // The useEffect will handle fetching new data with the filter
+  };
+
+  const statusButtons: Array<{value: OrderStatusFilter; label: string}> = [
+    { value: OrderStatusFilter.ALL, label: 'ทั้งหมด' },
+    { value: OrderStatusFilter.PENDING, label: OrderStatusDisplay.PENDING },
+    { value: OrderStatusFilter.SHIPPING, label: OrderStatusDisplay.SHIPPING },
+    { value: OrderStatusFilter.COMPLETED, label: 'เสร็จสิ้น' },
+    { value: OrderStatusFilter.CANCELLED, label: OrderStatusDisplay.CANCELLED },
+  ];
+
   return (
     <>
     <Modal 
@@ -249,9 +267,25 @@ export default function ProductPage() {
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">รายการขาย</h1>
-        <h2 className="text-1xl font-semibold text-gray-700">จำนวน {totalData} รายการ</h2>
+        <h2 className="text-1xl font-semibold text-gray-700">จำนวน {totaAllData} รายการ</h2>
       </div>
       {/* Search and Add */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {statusButtons.map(({ value, label }) => (
+            <button
+            key={value}
+            onClick={() => handleStatusFilterChange(value)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              statusFilter === value 
+              ? "bg-gray-900 text-white" 
+              : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+            >
+            {label}{statusFilter === value ? ` (${totalData})` : ''}
+            </button>
+        ))}
+      </div>
+
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
@@ -310,7 +344,85 @@ export default function ProductPage() {
                   }) 
                   : "-"}
                 </td>
-                <td className="p-2 w-[20%] whitespace-nowrap">{data.transaction_id}</td>
+                <td 
+  className="p-2 w-[20%] whitespace-nowrap"
+  onMouseEnter={(e) => {
+    setHoveredRow(data.transaction_id);
+    setTooltipPosition({ 
+      x: e.clientX, 
+      y: e.clientY 
+    });
+  }}
+  onMouseMove={(e) => {
+    setTooltipPosition({ 
+      x: e.clientX, 
+      y: e.clientY 
+    });
+  }}
+  onMouseLeave={() => setHoveredRow(null)}
+>
+  <div className="cursor-pointer hover:underline">
+    {data.transaction_id}
+    {hoveredRow === data.transaction_id && (
+      <div 
+        className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50"
+        style={{ 
+          top: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.y - 90}px`,
+          left: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.x + 20}px`,
+          transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
+          maxWidth: window.innerWidth <= 768 ? '90vw' : '450px',
+          maxHeight: '80vh',
+          overflow: 'auto',
+          position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
+        }}
+      >
+        <h3 className="font-bold text-gray-800 border-b pb-1 mb-2">{data.transaction_id}</h3>
+        <div className="text-sm space-y-1">
+          <p><span className="font-semibold">วันที่:</span> {data.created_date ? 
+            new Date(data.created_date.toDate()).toLocaleString('th-TH', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : "-"}
+          </p>
+          <p><span className="font-semibold">ลูกค้า:</span> {data.client_name}</p>
+          <p><span className="font-semibold">มูลค่า:</span> {data.total_amount} บาท</p>
+          <div className="mt-2 border-t pt-2">
+            <p className="font-semibold">รายการสินค้า:</p>
+            {data.items.map((item:any, idx:any) => (
+              <div key={idx} className="pl-2 mt-1">
+                - {item.name} ({item.price}฿) : {item.quantity} ชิ้น
+              </div>
+            ))}
+          </div>
+          {data.payment_method && (
+            <p><span className="font-semibold">ชำระโดย:</span> {data.payment_method}</p>
+          )}
+          {data.note && (
+            <p><span className="font-semibold">หมายเหตุ:</span> {data.note}</p>
+          )}
+          {data.shipping_details && (
+            <div className="mt-2 pt-1 border-t">
+              <p><span className="font-semibold">ส่งโดย:</span> {data.shipping_details.shipping_method}</p>
+              <p><span className="font-semibold">วันที่ส่ง:</span> {
+                new Date(data.shipping_details.shipping_date.toDate()).toLocaleString('th-TH', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                })
+              }</p>
+              {data.shipping_details.tracking_number && (
+                <p><span className="font-semibold">เลขพัสดุ:</span> {data.shipping_details.tracking_number}</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+</td>
                 <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.client_name}</td>
                 <td className="p-2 flex-1">{data.total_amount}</td>
                 <td className="p-2">
@@ -345,13 +457,55 @@ export default function ProductPage() {
                 <div 
                   onClick={() => openShippingDetailsModal(data.transaction_id, data)}
                 >
-                  <div className="cursor-pointer hover:underline">
-                  {new Date(data.shipping_details.shipping_date.toDate()).toLocaleString('th-TH', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                  </div>
+                    <div 
+                    className="cursor-pointer hover:underline"
+                    onMouseEnter={(e) => {
+                      setHoveredShipping(data.transaction_id);
+                    }}
+                    onMouseLeave={(e) => {
+                      setHoveredShipping(null);
+                    }}
+                    >
+                    {new Date(data.shipping_details.shipping_date.toDate()).toLocaleString('th-TH', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                    {hoveredShipping === data.transaction_id && (
+                      <div 
+                      className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 tooltip-container"
+                      style={{ 
+                      transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
+                      maxWidth: window.innerWidth <= 768 ? '90vw' : '350px',
+                      maxHeight: '80vh',
+                      overflow: 'auto',
+                      position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
+                      }}
+                      >
+                      <h3 className="font-bold text-gray-800 border-b pb-1 mb-2">รายละเอียดการจัดส่ง</h3>
+                      <div className="text-sm space-y-1">
+                      <p><span className="font-semibold">วิธีการจัดส่ง:</span> {data.shipping_details.shipping_method}</p>
+                      <p><span className="font-semibold">วันที่ส่ง:</span> {
+                      new Date(data.shipping_details.shipping_date.toDate()).toLocaleString('th-TH', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })
+                      }</p>
+                      {data.shipping_details.tracking_number && (
+                      <p><span className="font-semibold">เลขพัสดุ:</span> {data.shipping_details.tracking_number}</p>
+                      )}
+                      {data.shipping_details.image && (
+                      <img
+                      src={data.shipping_details.image}
+                      alt="Uploaded preview"
+                      className="mt-4 w-48 h-48 object-cover rounded-md shadow-md"
+                    />
+                      )}
+                      </div>
+                      </div>
+                    )}
+                    </div>
                   <div className="text-sm text-gray-600">
                     {data.shipping_details.shipping_method}
                   </div>

@@ -22,7 +22,7 @@ import {
 
 import { db } from "@/app/firebase/clientApp";
 import { Warehouse } from "@/app/firebase/interfaces";
-import { OrderStatus, TransactionType, STATUS_TRANSITIONS } from "@/app/firebase/enum";
+import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS } from "@/app/firebase/enum";
 
 // Existing code from your file...
 
@@ -51,7 +51,7 @@ interface Category {
   value?: number;
 }
 
-export async function getProductCategoryPaginated(lastDoc = null, pageSize = 10) {
+export async function getProductCategoryPaginated(lastDoc: any = null, pageSize: number = 10) {
   try {
     let q = query(collection(db, "product_category"), orderBy("created_at", "desc"), limit(pageSize));
 
@@ -59,7 +59,7 @@ export async function getProductCategoryPaginated(lastDoc = null, pageSize = 10)
     if (lastDoc) {
       q = query(collection(db, "product_category"), orderBy("created_at", "desc"), startAfter(lastDoc), limit(pageSize));
     }
-
+    
     const querySnapshot = await getDocs(q);
     const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
 
@@ -148,7 +148,7 @@ export async function getProductCategoryByName(partialName: string) {
 }
 
 // New warehouse functions
-export async function getProductWarehousePaginated(lastDoc = null, pageSize = 10) {
+export async function getProductWarehousePaginated(lastDoc: any = null, pageSize: number = 10) {
   try {
     let q = query(collection(db, "product_warehouse"), orderBy("created_date", "desc"), limit(pageSize));
 
@@ -318,7 +318,7 @@ async function getNextWarehouseId(): Promise<string> {
   }
 
 // New warehouse functions
-export async function getProductPaginated(lastDoc = null, pageSize = 10) {
+export async function getProductPaginated(lastDoc: any = null, pageSize: number = 10) {
   try {
     let q = query(collection(db, "products"), orderBy("created_date", "desc"), limit(pageSize));
 
@@ -553,33 +553,56 @@ export async function getProductWarehouse() {
   }
 
   // New warehouse functions
-export async function getSellTransactionPaginated(lastDoc = null, pageSize = 10) {
+export async function getSellTransactionPaginated(lastDoc: any = null, pageSize: number = 10, statusFilter?: OrderStatusFilter) {
   try {
-    let q = query(collection(db, "transactions"), where("transaction_type", "==", TransactionType.SELL), orderBy("created_date", "desc"), limit(pageSize));
+    let baseQuery = collection(db, "transactions");
+    let conditions = [where("transaction_type", "==", TransactionType.SELL)];
+    
+    console.log(statusFilter)
+    if (statusFilter) {
+      if (statusFilter === OrderStatusFilter.COMPLETED)
+        {console.log("inn")
+        conditions.push(where("status", "in", [OrderStatus.PICKED_UP, OrderStatus.SHIPPED]));
+        }      
+        else if (statusFilter === OrderStatusFilter.ALL)
+      {}
+      else {conditions.push(where("status", "==", statusFilter));}
+    }
 
-    // If there's a last document (for next page), start after it
+    let q = query(
+      baseQuery, 
+      ...conditions,
+      orderBy("created_date", "desc"), 
+      limit(pageSize)
+    );
+
     if (lastDoc) {
-      q = query(collection(db, "transactions"), where("transaction_type", "==", TransactionType.SELL), orderBy("created_date", "desc"), startAfter(lastDoc), limit(pageSize));
+      q = query(
+        baseQuery,
+        ...conditions,
+        orderBy("created_date", "desc"),
+        startAfter(lastDoc),
+        limit(pageSize)
+      );
     }
 
     const querySnapshot = await getDocs(q);
-    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
 
-    // Use the Warehouse interface when mapping document data
-    const d = {
-        data: querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-        lastDoc: lastVisible, // Store last document to fetch the next page
-      }
-    return d
+    return {
+      data: querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      lastDoc: lastVisible,
+      count: await getCountFromServer(query(baseQuery, ...conditions)).then(res => res.data().count)
+    };
   } catch (error) {
     console.error("Error fetching paginated products:", error);
-    return { data: [], lastDoc: null };
+    return { data: [], lastDoc: null, count:0 };
   }
 }
 
 export async function updateOrderTransactionStatus(
   transaction_id: string, 
-  current_status: OrderStatus, 
+  current_status: OrderStatus,
   next_status: OrderStatus
 ) {
   try {

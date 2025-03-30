@@ -7,6 +7,15 @@ export enum OrderStatus {
     FAILED = "FAILED"
   }
 
+  export enum OrderStatusFilter {
+    ALL = "ALL",
+    PENDING = "PENDING",
+    SHIPPING = "SHIPPING",
+    COMPLETED = "COMPLETED",
+    CANCELLED = "CANCELLED",
+    FAILED = "FAILED"
+  }
+
   export enum OrderStatusDisplay {
     PENDING = "รออนุมัติ",
     SHIPPING = "เตรียมส่ง",
