@@ -41,7 +41,7 @@ export default function DocumentPreview() {
 
     ],
     totals: {
-        textTotal:"กีบาท",
+        textTotal:"บาท",
         subtotal: 105000,
         discount: 20,
         shipping: 600,
@@ -64,9 +64,8 @@ export default function DocumentPreview() {
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Configuration Panel */}
       <div className="w-full lg:w-1/3 p-4 border rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">กำหนดเอกสาร</h2>
+        <h2 className="text-xl font-semibold mb-4">แก้ไขข้อมูลเอกสาร</h2>
 
-        <h3 className="font-medium mb-2">โซนแก้ไขข้อมูลเอกสาร</h3>
         
         {/* Store Info Form */}
         <div className="mb-4 hidden">
@@ -82,6 +81,9 @@ export default function DocumentPreview() {
             {/* Add more input fields for other store info */}
           </div>
         </div>
+        <h3 className="font-medium mb-2">หัวเอกสาร/สำเนา-ต้นฉบับ/วันที่/หมวดผู้ซื้อ/หมายเหตุ/ตัวเลือกลายเซนต์</h3>
+        <h3 className="font-medium mb-2"></h3>
+        <h3 className="font-medium mb-2">รายการผู้ซื้อ</h3>
 
         {/* Customer Info Form */}
         <div className="mb-4" >
