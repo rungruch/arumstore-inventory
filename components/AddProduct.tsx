@@ -30,7 +30,7 @@ import {
     const [productState, setProductState] = useState({
         productName: "",
         productCategory: "",
-        unit: "",
+        unit: "ชิ้น",
         productCode: "",
         qrBarcode: "",
         description: "",
@@ -260,7 +260,7 @@ import {
                                     <option key={category.category_name} value={category.category_name}>{category.category_name}</option>
                                 ))}
                             </select>
-                            <label className="block mb-2 font-bold">หน่วย</label>
+                            <label className="block mb-2 font-bold">หน่วย *</label>
                             <input type="text" name="unit" placeholder="หน่วย (ชิ้น, ตัว)" value={productState.unit} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
                             <label className="block mb-2 font-bold">รหัสสินค้า</label>
                             <input type="text" name="productCode" placeholder="รหัสสินค้า" value={productState.productCode} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
