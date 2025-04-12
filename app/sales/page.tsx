@@ -428,33 +428,41 @@ export default function ProductPage() {
 </td>
                 <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.client_name}</td>
                 <td className="p-2 flex-1">{data.total_amount}</td>
-                <td className="p-2">
-                    <select
-                      value={data.status}
-                      onChange={(e) => handleStatusChange(
-                      data.transaction_id, 
-                      data.status, 
-                      e.target.value as OrderStatus
-                      )}
-                      className="p-1 rounded border border-gray-300"
-                    >
-                    <option value={OrderStatus.PENDING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PENDING)}>
-                      {OrderStatusDisplay.PENDING}
-                    </option>
-                    <option value={OrderStatus.SHIPPING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.SHIPPING)}>
-                      {OrderStatusDisplay.SHIPPING}
-                    </option>
-                    <option value={OrderStatus.SHIPPED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.SHIPPED)}>
-                      {OrderStatusDisplay.SHIPPED}
-                    </option>
-                    <option value={OrderStatus.PICKED_UP} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PICKED_UP)}>
-                      {OrderStatusDisplay.PICKED_UP}
-                    </option>
-                    <option value={OrderStatus.CANCELLED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.CANCELLED)}>
-                      {OrderStatusDisplay.CANCELLED}
-                    </option>
-                    </select>
-                </td>
+<td className="p-2">
+  <div className="relative" style={{ width: "120px" }}>
+    <select
+      value={data.status}
+      onChange={(e) => handleStatusChange(
+        data.transaction_id, 
+        data.status, 
+        e.target.value as OrderStatus
+      )}
+      className="w-full px-3 py-2 text-sm appearance-none rounded-md bg-white border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors"
+      style={{ paddingRight: "2.5rem" }}
+    >
+      <option value={OrderStatus.PENDING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PENDING)}>
+        {OrderStatusDisplay.PENDING}
+      </option>
+      <option value={OrderStatus.SHIPPING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.SHIPPING)}>
+        {OrderStatusDisplay.SHIPPING}
+      </option>
+      <option value={OrderStatus.SHIPPED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.SHIPPED)}>
+        {OrderStatusDisplay.SHIPPED}
+      </option>
+      <option value={OrderStatus.PICKED_UP} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PICKED_UP)}>
+        {OrderStatusDisplay.PICKED_UP}
+      </option>
+      <option value={OrderStatus.CANCELLED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.CANCELLED)}>
+        {OrderStatusDisplay.CANCELLED}
+      </option>
+    </select>
+    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+      <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+      </svg>
+    </div>
+  </div>
+</td>
                 <td className="p-2">
               {data.shipping_details ? (
                 <div 
@@ -526,6 +534,69 @@ export default function ProductPage() {
                 </button>
               )}
             </td>
+            <td className="p-2 w-[5%] relative">
+  <div className="relative inline-block">
+    <button 
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent event from bubbling up
+        // Toggle dropdown visibility
+        const dropdown = document.getElementById(`print-dropdown-${data.transaction_id}`);
+        
+        // Close all other dropdowns first
+        document.querySelectorAll('[id^="print-dropdown-"]').forEach(el => {
+          if (el.id !== `print-dropdown-${data.transaction_id}`) {
+            el.classList.add('hidden');
+          }
+        });
+        
+        if (dropdown) {
+          dropdown.classList.toggle('hidden');
+          
+          // Add click event listener to document to close dropdown when clicking outside
+          if (!dropdown.classList.contains('hidden')) {
+            setTimeout(() => {
+              const clickHandler = (event: MouseEvent) => {
+                if (!dropdown.contains(event.target as Node)) {
+                  dropdown.classList.add('hidden');
+                  document.removeEventListener('click', clickHandler);
+                }
+              };
+              document.addEventListener('click', clickHandler);
+            }, 0);
+          }
+        }
+      }}
+      className="flex items-center text-blue-600 hover:text-blue-800 whitespace-nowrap text-sm"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+        <rect x="6" y="14" width="12" height="8"></rect>
+      </svg>
+      พิมพ์เอกสาร
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </button>
+    
+    <div 
+      id={`print-dropdown-${data.transaction_id}`} 
+      className="absolute hidden z-10 right-0 mt-2 w-56 bg-white shadow-lg rounded-md border border-gray-200"
+    >
+      <div className="py-1">
+        <Link href={`/document/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          พิมพ์เอกสาร
+        </Link>
+        <Link href={`/document/delivery?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          พิมพ์ใบหน้าจ่าหมาย/กล่อง
+        </Link>
+        <Link href={`/document/label?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          พิมพ์ฉลากจัดส่ง
+        </Link>
+      </div>
+    </div>
+  </div>
+</td>
               </tr>
             )}
           />

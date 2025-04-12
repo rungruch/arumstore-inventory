@@ -4,6 +4,7 @@ import Sidebar from "@/app/sidebar";
 import "./globals.css";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,11 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased h-full` }>
         <AdminPanelLayout>
-          <ContentLayout>{children}</ContentLayout>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ContentLayout>
+            {children}
+            </ContentLayout>
+            </ThemeProvider>
         </AdminPanelLayout>
       </body>
     </html>
