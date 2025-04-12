@@ -25,13 +25,14 @@ interface ProductSectionProps {
   onProductsChange?: (products: Product[], totalAmount: number, totalAmountNoVat: number, totalVat: number) => void;
   warehouseName: string;
   vatType: VatType;
+  shippingCost: number;
 }
 
 interface PaginatedResponse {
     [key: string]: any;
 }
 
-const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, warehouseName, vatType }) => {
+const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, warehouseName, vatType, shippingCost }) => {
   const [products, setProducts] = useState<Product[]>([
     { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0 }
   ]);
@@ -47,17 +48,17 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
 
   useEffect(() => {
     // Calculate total amount whenever products change
-    const sum = products.reduce((acc, product) => acc + (product.total || 0), 0);
+    const sum:number = products.reduce((acc, product) => acc + (product.total || 0), 0);
     if (vatType === VatType.VAT7) {
-        setTotalAmountNoVat(sum);
-        setTotalVat(sum * 0.07);
-        setTotalAmount(sum + (sum * 0.07));
+        setTotalAmountNoVat(Number(sum));
+        setTotalVat(Number(sum) * 0.07);
+        setTotalAmount(Number(sum + (sum * 0.07)) + Number(shippingCost));
     } else if (vatType === VatType.VAT0) {
-        setTotalAmount(sum);
-        setTotalAmountNoVat(sum * (100/107));
+        setTotalAmount(Number(sum) + Number(shippingCost));
+        setTotalAmountNoVat(Number(sum) * (100/107));
         setTotalVat(sum * (7/107));
     }else{
-        setTotalAmount(sum);
+        setTotalAmount(Number(sum) + Number(shippingCost));
         setTotalAmountNoVat(sum);
         setTotalVat(0);
     }
@@ -95,8 +96,12 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
     const updatedProducts = [...products];
     const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
     
-    // Type assertion to make TypeScript happy
-    (updatedProducts[index] as any)[field] = value;
+    // Ensure type safety for each field
+    if (field === 'id' || field === 'product_code' || field === 'product_name') {
+      (updatedProducts[index][field] as string) = value as string;
+    } else {
+      (updatedProducts[index][field] as number) = Number(value);
+    }
 
     // Handle discount validation
     if (field === 'discount') {
@@ -337,6 +342,11 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
             <tr>
               <td colSpan={5} className="px-4 py-3  border-r border-gray-200 text-right font-medium">ภาษีมูลค่าเพิ่ม</td>
               <td className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium text-black-700">{formatCurrency(totalVat)}</td>
+              <td className="px-4 py-3 border-t border-gray-200"></td>
+            </tr>
+            <tr>
+              <td colSpan={5} className="px-4 py-3  border-r border-gray-200 text-right font-medium">ค่าส่ง</td>
+              <td className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium text-black-700">{formatCurrency(shippingCost)}</td>
               <td className="px-4 py-3 border-t border-gray-200"></td>
             </tr>
             <tr>

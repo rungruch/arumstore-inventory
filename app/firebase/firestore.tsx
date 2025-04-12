@@ -413,6 +413,32 @@ export async function getSellTransactionbyName(partialName: string) {
   }
 }
 
+export async function getSellTransactionByTransactionId(transactionId: string) {
+  try {
+    const transactionsCollection = collection(db, "transactions");
+    const q = query(
+      transactionsCollection,
+      where("transaction_id", "==", transactionId),
+      where("transaction_type", "==", TransactionType.SELL),
+      limit(1)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return null;
+    }
+
+    return {
+      id: querySnapshot.docs[0].id,
+      ...querySnapshot.docs[0].data()
+    };
+  } catch (error) {
+    console.error("Error fetching transaction by ID:", error);
+    throw error;
+  }
+}
+
 
 export async function getProductCategory() {
   try {
@@ -574,7 +600,6 @@ export async function getSellTransactionPaginated(lastDoc: any = null, pageSize:
     let baseQuery = collection(db, "transactions");
     let conditions = [where("transaction_type", "==", TransactionType.SELL)];
     
-    console.log(statusFilter)
     if (statusFilter) {
       if (statusFilter === OrderStatusFilter.COMPLETED)
         {console.log("inn")

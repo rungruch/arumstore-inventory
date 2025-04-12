@@ -188,8 +188,8 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
         
         <View>
           <View  style={{ flex: 1, flexDirection: 'column', alignItems: 'center' }}>
-          <Text style={styles.pagetitle}>ใบเสร็จรับเงิน/ใบกำกับภาษี</Text>
-          <Text style={{textAlign: 'center', fontWeight: 'bold'}}>ต้นฉบับ</Text>
+          <Text style={styles.pagetitle}>{data.orderInfo.titleDocument}</Text>
+          <Text style={{textAlign: 'center', fontWeight: 'bold'}}>{data.orderInfo.documentType}</Text>
           </View>
           <Text style={{ textAlign: 'right', marginTop: 5 }}>วันที่ : {data.orderInfo.date}</Text>
           <Text style={{ textAlign: 'right' }}>เลขที่เอกสาร : {data.orderInfo.orderNumber}</Text>
@@ -253,6 +253,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
           <Text style={styles.tableCol3}>ชื่อสินค้า</Text>
           <Text style={styles.tableCol4}>จำนวน</Text>
           <Text style={styles.tableCol5}>ราคา/หน่วย</Text>
+          <Text style={styles.tableCol5}>ส่วนลด/หน่วย</Text>
           <Text style={styles.tableCol6}>จำนวนเงิน</Text>
         </View>
 
@@ -263,6 +264,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
             <Text style={styles.tableCol3_data}>  {item.name}</Text>
             <Text style={styles.tableCol4_data}>{item.quantity} ชิ้น</Text>
             <Text style={styles.tableCol5_data}>{item.unitPrice.toLocaleString()}  </Text>
+            <Text style={styles.tableCol5_data}>{item.discount.toLocaleString()}  </Text>
             <Text style={styles.tableCol6_data}>{item.total.toLocaleString()}</Text>
           </View>
         ))}
@@ -270,7 +272,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
         <View style={styles.totalItemsRow}>
           <Text style={{ width: '65%', textAlign: 'left', borderRight: '1px solid #e0e0e0'}}>  ชำระเงินด้วย {data.totals.paymentType}</Text>
           <Text style={{ width: '18%', textAlign: 'right'}}>รวม</Text>
-          <Text style={{ width: '17%', textAlign: 'right'}}>{data.totals.subtotal.toLocaleString()} บาท</Text>
+          <Text style={{ width: '17%', textAlign: 'right'}}>{data.totals.rawTotal.toLocaleString()} บาท</Text>
         </View>
       </View>
 
@@ -290,24 +292,24 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
 
         <View style={styles.totalsTable}>
           <View style={styles.totalsRow}>
-            <Text style={styles.totalsLabel}>ส่วนลดเงินสด</Text>
+            <Text style={styles.totalsLabel}>รวมส่วนลดเงินสด</Text>
             <Text style={styles.totalsValue}>{data.totals.discount.toLocaleString()}</Text>
           </View>
           <View style={styles.totalsRow}>
-            <Text style={styles.totalsLabel}>ค่าส่ง</Text>
-            <Text style={styles.totalsValue}>{data.totals.shipping.toLocaleString()}</Text>
-          </View>
-          <View style={styles.totalsRow}>
-            <Text style={styles.totalsLabel}>จำนวนเงินไม่รวมภาษีมูลค่าเพิ่ม</Text>
-            <Text style={styles.totalsValue}>{data.totals.grandTotal.toLocaleString()}</Text>
+            <Text style={styles.totalsLabel}>ราคารวมทั้งสิ้น</Text>
+            <Text style={styles.totalsValue}>{data.totals.total_amount_no_vat.toLocaleString()}</Text>
           </View>
           <View style={styles.totalsRow}>
             <Text style={styles.totalsLabel}>จำนวนภาษีมูลค่าเพิ่ม 7%</Text>
-            <Text style={styles.totalsValue}>{data.totals.grandTotal.toLocaleString()}</Text>
+            <Text style={styles.totalsValue}>{data.totals.total_vat.toLocaleString()}</Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>ค่าส่ง</Text>
+            <Text style={styles.totalsValue}>{data.totals.shipping_cost.toLocaleString()}</Text>
           </View>
           <View style={styles.grandTotalRow}>
             <Text style={styles.totalsLabel}>จำนวนเงินรวมทั้งสิ้น</Text>
-            <Text style={styles.totalsValue}>{data.totals.grandTotal.toLocaleString()}</Text>
+            <Text style={styles.totalsValue}>{data.totals.total_amount.toLocaleString()}</Text>
           </View>
         </View>
       </View>

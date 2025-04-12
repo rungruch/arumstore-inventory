@@ -27,7 +27,7 @@ export function Navbar({}: NavbarProps) {
                 menu.submenus
                   ? menu.submenus.some((submenu) => submenu.href === pathname)
                   : menu.href === pathname
-              )?.label || "G"}
+              )?.label || "ARUM"}
           </h1>
         </div>
         <div className="flex flex-1 items-center justify-end">

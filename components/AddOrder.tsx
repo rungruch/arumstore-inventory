@@ -45,6 +45,7 @@ interface OrderState {
   warehouse: string;
   shipping_method: DeliveryType;
   notes: string;
+  shipping_cost: number;
 }
 
 interface ModalState {
@@ -108,6 +109,7 @@ export default function AddSellOrderForm({
     warehouse: "คลังสินค้าหลัก",
     shipping_method: DeliveryType.PICKUP,
     notes: "",
+    shipping_cost: 0
   });
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -293,6 +295,7 @@ export default function AddSellOrderForm({
         warehouse: "คลังสินค้าหลัก",
         shipping_method: DeliveryType.PICKUP,
         notes: "",
+        shipping_cost: 0
       });
       setOrderItems([]);
       setTotalOrderAmount(0);
@@ -509,6 +512,7 @@ export default function AddSellOrderForm({
             onProductsChange={handleProductsChange} 
             warehouseName={orderState.warehouse}
             vatType={orderState.vat_type}
+            shippingCost={orderState.shipping_cost}
           />
 
           <div className="mt-4">
@@ -549,6 +553,17 @@ export default function AddSellOrderForm({
                     </option>
                   ))}
                 </select>
+                <h3 className="text-sm font-semibold mb-2">ค่าส่ง</h3>
+                <input 
+                type="number" 
+                min="0" 
+                required
+                name="shipping_cost" 
+                placeholder="ค่าส่ง" 
+                value={orderState.shipping_cost} 
+                onChange={handleChange} 
+                className="w-full border p-2 rounded-md mb-2 text-sm" 
+              />
               </div>
             </div>
           </div>

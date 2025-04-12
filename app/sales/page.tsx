@@ -1,6 +1,6 @@
 "use client";
 
-import { getSellTransactionPaginated, getProductPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus } from "@/app/firebase/firestore";
+import { getSellTransactionPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -331,7 +331,7 @@ export default function ProductPage() {
                 <th className="p-2 flex-1">มูลค่า</th>
                 <th className="p-2 flex-1">สถานะ</th>
                 <th className="p-2 flex-1">วันส่งสินค้า</th>
-                <th className="p-2 w-[5%]">.</th>
+                <th className="p-2 w-[5%]"> </th>
                 </tr>
               }
               customRow={(data, index) => (
@@ -566,15 +566,14 @@ export default function ProductPage() {
           }
         }
       }}
-      className="flex items-center text-blue-600 hover:text-blue-800 whitespace-nowrap text-sm"
+      className="flex items-center text-blue-900 hover:text-blue-600 whitespace-nowrap text-sm"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="6 9 6 2 18 2 18 9"></polyline>
         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
         <rect x="6" y="14" width="12" height="8"></rect>
       </svg>
-      พิมพ์เอกสาร
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
     </button>
@@ -584,13 +583,13 @@ export default function ProductPage() {
       className="absolute hidden z-10 right-0 mt-2 w-56 bg-white shadow-lg rounded-md border border-gray-200"
     >
       <div className="py-1">
-        <Link href={`/document/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <Link href={`/documents/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
           พิมพ์เอกสาร
         </Link>
-        <Link href={`/document/delivery?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <Link href={`/documents/delivery?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
           พิมพ์ใบหน้าจ่าหมาย/กล่อง
         </Link>
-        <Link href={`/document/label?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <Link href={`/documents/label?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
           พิมพ์ฉลากจัดส่ง
         </Link>
       </div>
