@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   paymentSection: {
-    marginTop: 0,
+    marginTop: 5,
   },
   paymentTitle: {
     borderBottom: '1px solid #000',
@@ -248,14 +248,24 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
 
       {/* Items Table */}
       <View style={styles.table}>
+        
         <View style={styles.tableHeader}>
           <Text style={styles.tableCol1}>ลำดับ</Text>
           <Text style={styles.tableCol2}>รหัสสินค้า</Text>
           <Text style={styles.tableCol3}>ชื่อสินค้า</Text>
           <Text style={styles.tableCol4}>จำนวน</Text>
-          <Text style={styles.tableCol5}>ราคา/หน่วย</Text>
-          <Text style={styles.tableCol5}>ส่วนลด/หน่วย</Text>
-          <Text style={styles.tableCol6}>จำนวนเงิน</Text>
+          {(data.orderInfo.titleDocument !== 'ใบส่งสินค้า') && (
+          <>
+            <Text style={styles.tableCol5}>ราคา/หน่วย</Text>
+            <Text style={styles.tableCol5}>ส่วนลด/หน่วย</Text>
+            <Text style={styles.tableCol6}>จำนวนเงิน</Text>
+          </>
+          )}
+          {(data.orderInfo.titleDocument === 'ใบส่งสินค้า') && (
+          <>
+            <Text style={styles.tableCol6}>จำนวนได้รับ</Text>
+          </>
+          )}
         </View>
 
         {data.items.map((item : any, index : any) => (
@@ -264,12 +274,21 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
             <Text style={styles.tableCol2_data}>{item.id}</Text>
             <Text style={styles.tableCol3_data}>  {item.name}</Text>
             <Text style={styles.tableCol4_data}>{item.quantity} {item.unitType}</Text>
+            {(data.orderInfo.titleDocument !== 'ใบส่งสินค้า') && (
+            <>
             <Text style={styles.tableCol5_data}>{item.unitPrice.toLocaleString()}  </Text>
             <Text style={styles.tableCol5_data}>{item.discount.toLocaleString()}  </Text>
             <Text style={styles.tableCol6_data}>{item.total.toLocaleString()}</Text>
+            </>
+            )}
+            {(data.orderInfo.titleDocument === 'ใบส่งสินค้า') && (
+            <>
+            </>
+            )}
           </View>
         ))}
 
+{(data.orderInfo.showPriceSummary === true) && (
         <View style={styles.totalItemsRow}>
         {(data.paymentSummary.paymentSummaryEnabled === false) && (
           <Text style={{ width: '65%', textAlign: 'left', borderRight: '1px solid #e0e0e0'}}>  ชำระเงินด้วย {data.orderInfo.paymentMethod}</Text>
@@ -280,9 +299,11 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
           <Text style={{ width: '18%', textAlign: 'right'}}>รวม</Text>
           <Text style={{ width: '17%', textAlign: 'right'}}>{data.totals.rawTotal.toLocaleString()} บาท</Text>
         </View>
+        )}
       </View>
 
       {/* Totals Section */}
+      {(data.orderInfo.showPriceSummary === true) && (
       <View style={styles.totalsSection}>
         <View style={styles.emptySpace}>
         <Text style={{ fontWeight: 'bold',fontSize: 12, marginTop: 5 }}>
@@ -319,6 +340,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
           </View>
         </View>
       </View>
+      )}
 
       {/* Payment Section */}
       {(data.paymentSummary.paymentSummaryEnabled === true) && (

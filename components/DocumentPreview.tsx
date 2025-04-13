@@ -6,106 +6,7 @@ import { getSellTransactionByTransactionId } from "@/app/firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import { bahttext } from "bahttext";
-
-// Define interfaces for structured data
-interface StoreInfo {
-  name: string;
-  branch_name: string;
-  address: string;
-  phone: string;
-  email: string;
-  tax_id: string;
-}
-
-interface CustomerInfo {
-  name: string;
-  address: string;
-  branch_name: string;
-  branch_id: string;
-  tax_id: string;
-  phone: string;
-  email: string;
-}
-
-interface OrderInfo {
-  date: string;
-  orderNumber: string;
-  titleDocument: string;
-  documentType: string;
-  paymentMethod: string;
-  documentNote: string;
-  receiverSignatureEnabled: boolean;
-  senderSignatureEnabled: boolean;
-  receiverMoneySignatureEnabled: boolean;
-  approverSignatureEnabled: boolean;
-}
-
-interface Item {
-  id: string;
-  name: string;
-  quantity: number;
-  unitType: string;
-  unitPrice: number;
-  total: number;
-}
-
-interface Totals {
-  textTotal: string;
-  rawTotal: number;
-  discount: number;
-  total_amount: number;
-  total_amount_no_vat: number;
-  total_vat: number;
-  shipping_cost: number;
-  thaiTotal_amount: string;
-}
-
-interface PaymentSummary {
-  paymentSummaryEnabled: boolean;
-  paymentDate: string;
-  paymentMethod: string;
-  paymentReference: string;
-  paymentAmount: number;
-}
-
-interface DocumentData {
-  storeInfo: StoreInfo;
-  customerInfo: CustomerInfo;
-  orderInfo: OrderInfo;
-  paymentSummary: PaymentSummary;
-  items: Item[];
-  totals: Totals;
-}
-
-interface TransactionItem {
-  sku?: string;
-  name?: string;
-  quantity?: number;
-  unit_type?: string;
-  price?: number;
-  subtotal?: number;
-  discount?: number;
-}
-
-interface TransactionData {
-  transaction_id?: string;
-  created_date?: {
-    toDate: () => Date;
-  };
-  client_name?: string;
-  client_address?: string;
-  branch_name?: string;
-  branch_id?: string;
-  tax_id?: string;
-  client_tel?: string;
-  client_email?: string;
-  items?: TransactionItem[];
-  discount?: number;
-  total_amount?: number;
-  total_amount_no_vat?: number;
-  total_vat?: number;
-  shipping_cost?: number;
-}
+import {StoreInfo, CustomerInfo, OrderInfo, Item, Totals, PaymentSummary, DocumentData, TransactionItem, TransactionData} from '../components/interface';
 
 export default function DocumentPreview(): JSX.Element {
   const searchParams = useSearchParams();
@@ -188,6 +89,7 @@ export default function DocumentPreview(): JSX.Element {
             senderSignatureEnabled: false,
             receiverMoneySignatureEnabled: true,
             approverSignatureEnabled: false,
+            showPriceSummary: true,
           },
           paymentSummary: {
             paymentSummaryEnabled: false,
@@ -287,6 +189,7 @@ export default function DocumentPreview(): JSX.Element {
               />
               <datalist id="titleDocumentOptions">
                 <option value="ใบกำกับภาษี/ใบเสร็จรับเงิน" />
+                <option value="ใบส่งสินค้า" />
                 <option value="ใบกำกับภาษี" />
                 <option value="ใบเสร็จรับเงิน" />
                 <option value="ใบวางบิล" />
@@ -442,6 +345,21 @@ export default function DocumentPreview(): JSX.Element {
         <h3 className="font-medium mb-2">อื่นๆ</h3>
         <div className="mb-4">
             <div className="space-y-2">
+              <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.showPriceSummary}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'showPriceSummary'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงราคาสรุปยอด</label>
+              </div>
               <textarea
                 placeholder="หมายเหตุ"
                 value={documentData.orderInfo.documentNote}
@@ -517,7 +435,7 @@ export default function DocumentPreview(): JSX.Element {
         </div>
 
         {/* Download Button */}
-        <div className="mt-4">
+        <div className="mt-7">
           <PDFDownloadLink
             key={`download-${pdfKey}`}
             document={<ReceiptDocument key={`receipt-doc-${pdfKey}`} data={documentData} />}

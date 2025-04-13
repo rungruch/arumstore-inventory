@@ -595,7 +595,7 @@ export default function ProductPage() {
         <Link href={`/documents/invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" target="_blank" rel="noopener noreferrer">
           พิมพ์ใบแจ้งหนี้
         </Link>
-        <Link href={`/documents/invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" target="_blank" rel="noopener noreferrer">
+        <Link href={`/documents/shipping-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" target="_blank" rel="noopener noreferrer">
           พิมพ์ใบส่งสินค้า
         </Link>
         <Link href={`/documents/delivery?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
