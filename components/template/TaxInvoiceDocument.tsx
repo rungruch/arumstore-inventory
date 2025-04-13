@@ -149,7 +149,8 @@ const styles = StyleSheet.create({
   },
   signatureSection: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
+    gap: '50px',
     marginTop: 45,
   },
   signature: {
@@ -270,7 +271,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
         ))}
 
         <View style={styles.totalItemsRow}>
-          <Text style={{ width: '65%', textAlign: 'left', borderRight: '1px solid #e0e0e0'}}>  ชำระเงินด้วย {data.totals.paymentType}</Text>
+          <Text style={{ width: '65%', textAlign: 'left', borderRight: '1px solid #e0e0e0'}}>  ชำระเงินด้วย {data.orderInfo.paymentMethod}</Text>
           <Text style={{ width: '18%', textAlign: 'right'}}>รวม</Text>
           <Text style={{ width: '17%', textAlign: 'right'}}>{data.totals.rawTotal.toLocaleString()} บาท</Text>
         </View>
@@ -286,7 +287,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
             จำนวนเงินรวมทั้งสิ้น
           </Text>
           <Text style={{ fontStyle: 'italic', fontSize: 12, marginTop: 5 }}>
-            ({data.totals.textTotal})
+            ({data.totals.thaiTotal_amount})
           </Text>
         </View>
 
@@ -314,44 +315,52 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
         </View>
       </View>
 
-      {/* Payment Section
+      {/* Payment Section */}
       <View style={styles.paymentSection}>
         <Text style={styles.paymentTitle}>การชำระเงิน/Payment</Text>
         <View style={styles.paymentRow}>
-          <Text>วันที่ชำระ : {data.orderInfo.paymentDate}</Text>
+          <Text>วันที่ชำระ : {"data.orderInfo.paymentDate"}</Text>
         </View>
         <View style={styles.paymentRow}>
           <Text>1. บัตรเครดิต</Text>
-          <Text style={{ marginLeft: 'auto' }}>{data.totals.grandTotal.toLocaleString()} บาท</Text>
+          <Text style={{ marginLeft: 'auto' }}>{"data.totals.grandTotal.toLocaleString()"} บาท</Text>
         </View>
         <View style={styles.paymentTotal}>
           <Text style={{ width: '80%', textAlign: 'right' }}>ยอดชำระ :</Text>
-          <Text style={{ width: '20%', textAlign: 'right' }}>{data.totals.grandTotal.toLocaleString()} บาท</Text>
+          <Text style={{ width: '20%', textAlign: 'right' }}>{"data.totals.grandTotal.toLocaleString()"} บาท</Text>
         </View>
-      </View> */}
+      </View>
 
       {/* Signature Section */}
-      <View style={styles.signatureSection}>
-        <View style={styles.signature}>
-          <Text style={styles.signatureLine}></Text>
-          <Text>ผู้รับสินค้า</Text>
-          <Text style={{ marginTop: 30 }}>วันที่ ...........................</Text>
-        </View>
-        <View style={styles.signature}>
-          <Text style={styles.signatureLine}></Text>
-          <Text>ผู้ส่งสินค้า</Text>
-          <Text style={{ marginTop: 30 }}>วันที่ ...........................</Text>
-        </View>
-        <View style={styles.signature}>
-          <Text style={styles.signatureLine}></Text>
-          <Text>ผู้รับเงิน</Text>
-          <Text style={{ marginTop: 30 }}>วันที่ ...........................</Text>
-        </View>
-        <View style={styles.signature}>
-          <Text style={styles.signatureLine}></Text>
-          <Text>ผู้อนุมัติ</Text>
-          <Text style={{ marginTop: 30 }}>วันที่ ...........................</Text>
-        </View>
+      <View style={[styles.signatureSection]}>
+        {(data.orderInfo.receiverSignatureEnabled === true) && (
+          <View style={styles.signature}>
+            <Text style={styles.signatureLine}></Text>
+            <Text>ผู้รับสินค้า</Text>
+            <Text style={{ marginTop: 0 }}>วันที่ ..............................................</Text>
+          </View>
+        )}
+        {(data.orderInfo.senderSignatureEnabled === true) && (
+          <View style={styles.signature}>
+            <Text style={styles.signatureLine}></Text>
+            <Text>ผู้ส่งสินค้า</Text>
+            <Text style={{ marginTop: 0 }}>วันที่ ..............................................</Text>
+          </View>
+        )}
+        {(data.orderInfo.receiverMoneySignatureEnabled === true) && (
+          <View style={styles.signature}>
+            <Text style={styles.signatureLine}></Text>
+            <Text>ผู้รับเงิน</Text>
+            <Text style={{ marginTop: 0 }}>วันที่ ..............................................</Text>
+          </View>
+        )}
+        {(data.orderInfo.approverSignatureEnabled === true) && (
+          <View style={styles.signature}>
+            <Text style={styles.signatureLine}></Text>
+            <Text>ผู้อนุมัติ</Text>
+            <Text style={{ marginTop: 0 }}>วันที่ ..............................................</Text>
+          </View>
+        )}
       </View>
     </Page>
   </Document>

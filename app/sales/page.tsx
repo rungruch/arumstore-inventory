@@ -269,7 +269,7 @@ export default function ProductPage() {
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">รายการขาย</h1>
-        <h2 className="text-1xl font-semibold text-gray-700">จำนวน {totaAllData} รายการ</h2>
+        <h2 className="text-1xl font-semibold text-gray-700 dark:text-gray-200">จำนวน {totaAllData} รายการ</h2>
       </div>
       {/* Search and Add */}
       <div className="flex flex-wrap gap-2 mb-4">
@@ -437,7 +437,7 @@ export default function ProductPage() {
         data.status, 
         e.target.value as OrderStatus
       )}
-      className="w-full px-3 py-2 text-sm appearance-none rounded-md bg-white border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors"
+      className="w-full px-3 py-2 text-sm appearance-none rounded-md bg-white dark:bg-gray-800 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors"
       style={{ paddingRight: "2.5rem" }}
     >
       <option value={OrderStatus.PENDING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PENDING)}>

@@ -5,6 +5,7 @@ import ReceiptDocument from '../components/template/TaxInvoiceDocument';
 import { getSellTransactionByTransactionId } from "@/app/firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import { bahttext } from "bahttext";
 
 // Define interfaces for structured data
 interface StoreInfo {
@@ -31,6 +32,11 @@ interface OrderInfo {
   orderNumber: string;
   titleDocument: string;
   documentType: string;
+  paymentMethod: string;
+  receiverSignatureEnabled: boolean;
+  senderSignatureEnabled: boolean;
+  receiverMoneySignatureEnabled: boolean;
+  approverSignatureEnabled: boolean;
 }
 
 interface Item {
@@ -49,6 +55,7 @@ interface Totals {
   total_amount_no_vat: number;
   total_vat: number;
   shipping_cost: number;
+  thaiTotal_amount: string;
 }
 
 interface DocumentData {
@@ -95,6 +102,8 @@ export default function DocumentPreview(): JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Add a key state to force re-renders
+  const [pdfKey, setPdfKey] = useState<number>(Date.now());
 
   useEffect(() => {
     if (!transaction_id) {
@@ -165,6 +174,11 @@ export default function DocumentPreview(): JSX.Element {
             orderNumber: transactionData.transaction_id || '',
             titleDocument: "ใบกำกับภาษี/ใบเสร็จรับเงิน",
             documentType: "ต้นฉบับ",
+            paymentMethod: transactionData.payment_method || 'เงินสด',
+            receiverSignatureEnabled: true,
+            senderSignatureEnabled: false,
+            receiverMoneySignatureEnabled: true,
+            approverSignatureEnabled: false,
           },
           items: products,
           totals: {
@@ -175,11 +189,14 @@ export default function DocumentPreview(): JSX.Element {
             total_amount_no_vat: transactionData.total_amount_no_vat || 0,
             total_vat: transactionData.total_vat || 0,
             shipping_cost: transactionData.shipping_cost || 0,
+            thaiTotal_amount: bahttext(transactionData.total_amount || 0)
           }
         };
 
         setDocumentData(formattedDocumentData);
         setIsLoading(false);
+        // Generate a new key when data changes
+        setPdfKey(Date.now());
       } catch (error) {
         console.error("Error fetching transaction data:", error);
         setError("Failed to fetch transaction data");
@@ -205,6 +222,9 @@ export default function DocumentPreview(): JSX.Element {
         [field]: e.target.value
       }
     });
+    
+    // Update key to force PDF re-render when data changes
+    setPdfKey(Date.now());
   };
 
   if (isLoading) {
@@ -321,27 +341,120 @@ export default function DocumentPreview(): JSX.Element {
               value={documentData.customerInfo.email}
               onChange={(e) => handleChange(e, 'customerInfo', 'email')}
               className="w-full p-2 border rounded"
-            />
-            
+            /> 
           </div>
+        </div>
+
+        <h3 className="font-medium mb-2">อื่นๆ</h3>
+        <div className="mb-4">
+            <div className="space-y-2">
+            <div className="relative">
+              <input
+                type="text"
+                list="paymentMethodOptions"
+                placeholder="ชำระเงินด้วย"
+                value={documentData.orderInfo.paymentMethod}
+                onChange={(e) => handleChange(e as any, 'orderInfo', 'paymentMethod')}
+                className="w-full p-2 border rounded"
+              />
+              <datalist id="paymentMethodOptions">
+                <option value="เงินสด" />
+                <option value="เงินโอน" />
+              </datalist>
+              </div>
+
+                <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={documentData.orderInfo.receiverSignatureEnabled}
+                  onChange={(e) =>
+                  handleChange(
+                  { target: { value: e.target.checked } } as any,
+                  'orderInfo',
+                  'receiverSignatureEnabled'
+                  )
+                  }
+                  className="w-4 h-4"
+                />
+                <label>แสดงผู้รับสินค้า</label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={documentData.orderInfo.senderSignatureEnabled}
+                  onChange={(e) =>
+                  handleChange(
+                  { target: { value: e.target.checked } } as any,
+                  'orderInfo',
+                  'senderSignatureEnabled'
+                  )
+                  }
+                  className="w-4 h-4"
+                />
+                <label>แสดงผู้ส่งสินค้า</label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={documentData.orderInfo.receiverMoneySignatureEnabled}
+                  onChange={(e) =>
+                  handleChange(
+                  { target: { value: e.target.checked } } as any,
+                  'orderInfo',
+                  'receiverMoneySignatureEnabled'
+                  )
+                  }
+                  className="w-4 h-4"
+                />
+                <label>แสดงผู้รับเงิน</label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={documentData.orderInfo.approverSignatureEnabled}
+                  onChange={(e) =>
+                  handleChange(
+                  { target: { value: e.target.checked } } as any,
+                  'orderInfo',
+                  'approverSignatureEnabled'
+                  )
+                  }
+                  className="w-4 h-4"
+                />
+                <label>แสดงผู้อนุมัติ</label>
+                </div>
+              
+            </div>
         </div>
 
         {/* Download Button */}
         <div className="mt-4">
           <PDFDownloadLink
-            document={<ReceiptDocument data={documentData} />}
+            key={`download-${pdfKey}`}
+            document={<ReceiptDocument key={`receipt-doc-${pdfKey}`} data={documentData} />}
             fileName={`receipt-${documentData.orderInfo.orderNumber}.pdf`}
             className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
-            {({ loading }) => (loading ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF')}
+            {({ loading }) => (loading ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด')}
           </PDFDownloadLink>
         </div>
       </div>
 
       {/* PDF Preview */}
       <div className="w-full lg:w-2/3 h-[800px] border rounded-lg">
-        <PDFViewer width="100%" height="100%" className="border-0">
-          <ReceiptDocument data={documentData} />
+        <PDFViewer 
+          key={`viewer-${pdfKey}`}
+          width="100%" 
+          height="100%" 
+          className="border-0"
+        >
+          <ReceiptDocument 
+            key={`receipt-view-${pdfKey}`} 
+            data={documentData} 
+          />
         </PDFViewer>
       </div>
     </div>
