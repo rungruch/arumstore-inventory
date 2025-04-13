@@ -33,6 +33,7 @@ interface OrderInfo {
   titleDocument: string;
   documentType: string;
   paymentMethod: string;
+  documentNote: string;
   receiverSignatureEnabled: boolean;
   senderSignatureEnabled: boolean;
   receiverMoneySignatureEnabled: boolean;
@@ -58,10 +59,19 @@ interface Totals {
   thaiTotal_amount: string;
 }
 
+interface PaymentSummary {
+  paymentSummaryEnabled: boolean;
+  paymentDate: string;
+  paymentMethod: string;
+  paymentReference: string;
+  paymentAmount: number;
+}
+
 interface DocumentData {
   storeInfo: StoreInfo;
   customerInfo: CustomerInfo;
   orderInfo: OrderInfo;
+  paymentSummary: PaymentSummary;
   items: Item[];
   totals: Totals;
 }
@@ -133,14 +143,9 @@ export default function DocumentPreview(): JSX.Element {
           discount: (item.discount ?? 0),
         })) : [];
 
-        console.log(transactionData);
-        console.log(transactionData.items);
         // Calculate total amount
         const rawtotalAmount: number = transactionData.items.reduce((acc:any, product:any) => acc + (product.subtotal || 0), 0);
         const rawtotalDiscount: number = transactionData.items.reduce((acc:any, product:any) => acc + (product.quantity || 0) * (product.discount || 0), 0);
-
-        console.log("rawtotalAmount", rawtotalAmount);
-        console.log("rawtotalDiscount", rawtotalDiscount);
       
         // Format date from Firestore timestamp
         const formattedDate: string = transactionData.created_date ? 
@@ -174,11 +179,19 @@ export default function DocumentPreview(): JSX.Element {
             orderNumber: transactionData.transaction_id || '',
             titleDocument: "ใบกำกับภาษี/ใบเสร็จรับเงิน",
             documentType: "ต้นฉบับ",
+            documentNote: "",
             paymentMethod: transactionData.payment_method || 'เงินสด',
             receiverSignatureEnabled: true,
             senderSignatureEnabled: false,
             receiverMoneySignatureEnabled: true,
             approverSignatureEnabled: false,
+          },
+          paymentSummary: {
+            paymentSummaryEnabled: false,
+            paymentDate: formattedDate,
+            paymentMethod: transactionData.payment_method || 'เงินสด',
+            paymentReference: '',
+            paymentAmount: transactionData.total_amount || 0,
           },
           items: products,
           totals: {
@@ -257,8 +270,6 @@ export default function DocumentPreview(): JSX.Element {
       {/* Configuration Panel */}
       <div className="w-full lg:w-1/3 p-4 border rounded-lg">
         <h2 className="text-xl font-semibold mb-4">แก้ไขข้อมูลเอกสาร</h2>
-
-        <h3 className="font-medium mb-2">หัวเอกสาร/สำเนา-ต้นฉบับ/วันที่/หมวดผู้ซื้อ/หมายเหตุ/ตัวเลือกลายเซนต์</h3>
         <h3 className="font-medium mb-2">หัวข้อเอกสาร</h3>
         <div className="mb-4">
             <div className="space-y-2">
@@ -345,87 +356,159 @@ export default function DocumentPreview(): JSX.Element {
           </div>
         </div>
 
+        <h3 className="font-medium mb-2">หมวดชำระเงิน</h3>
+        <div className="mb-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.paymentSummary.paymentSummaryEnabled}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'paymentSummary',
+                'paymentSummaryEnabled'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงหมวดชำระเงิน</label>
+              </div>
+              <div className="relative">
+              <input
+              type="text"
+              list="paymentMethodOptions"
+              placeholder="ชำระเงินด้วย"
+              value={documentData.orderInfo.paymentMethod}
+              onChange={(e) => handleChange(e as any, 'orderInfo', 'paymentMethod')}
+              className="w-full p-2 border rounded"
+              />
+              <datalist id="paymentMethodOptions">
+              <option value="เงินสด" />
+              <option value="โอนเงินผ่านธนาคาร" />
+              <option value="เช็คธนาคาร" />
+              </datalist>
+            </div>
+
+                <input
+                type="text"
+                placeholder="อ้างอิงการชำระเงิน"
+                value={documentData.paymentSummary.paymentReference}
+                onChange={(e) => handleChange(e, 'paymentSummary', 'paymentReference')}
+                className="w-full p-2 border rounded"
+                />
+                <input
+                type="date"
+                placeholder="วันที่ชำระเงิน"
+                value={(() => {
+                  const thaiDate = documentData.paymentSummary.paymentDate;
+                  if (!thaiDate) return '';
+                  
+                  // Extract year, month, and day from Thai date format
+                  const parts = thaiDate.split(' ');
+                  if (parts.length !== 3) return '';
+                  
+                  const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 
+                          'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+                  
+                  const day = parts[0];
+                  const month = (thaiMonths.indexOf(parts[1]) + 1).toString().padStart(2, '0');
+                  const year = parseInt(parts[2]) - 543;
+                  
+                  return `${year}-${month}-${day.padStart(2, '0')}`;
+                })()}
+                onChange={(e) => {
+                const date = new Date(e.target.value);
+                const formattedDate = date.toLocaleString('th-TH', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                });
+                handleChange(
+                  { target: { value: formattedDate } } as any,
+                  'paymentSummary',
+                  'paymentDate'
+                );
+                }}
+                className="w-full p-2 border rounded"
+              />
+            
+            </div>
+        </div>
+
         <h3 className="font-medium mb-2">อื่นๆ</h3>
         <div className="mb-4">
             <div className="space-y-2">
-            <div className="relative">
-              <input
-                type="text"
-                list="paymentMethodOptions"
-                placeholder="ชำระเงินด้วย"
-                value={documentData.orderInfo.paymentMethod}
-                onChange={(e) => handleChange(e as any, 'orderInfo', 'paymentMethod')}
+              <textarea
+                placeholder="หมายเหตุ"
+                value={documentData.orderInfo.documentNote}
+                onChange={(e) => handleChange(e as any, 'orderInfo', 'documentNote')}
                 className="w-full p-2 border rounded"
+                rows={3}
               />
-              <datalist id="paymentMethodOptions">
-                <option value="เงินสด" />
-                <option value="เงินโอน" />
-              </datalist>
+              <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.receiverSignatureEnabled}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'receiverSignatureEnabled'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงผู้รับสินค้า</label>
               </div>
 
-                <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={documentData.orderInfo.receiverSignatureEnabled}
-                  onChange={(e) =>
-                  handleChange(
-                  { target: { value: e.target.checked } } as any,
-                  'orderInfo',
-                  'receiverSignatureEnabled'
-                  )
-                  }
-                  className="w-4 h-4"
-                />
-                <label>แสดงผู้รับสินค้า</label>
-                </div>
+              <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.senderSignatureEnabled}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'senderSignatureEnabled'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงผู้ส่งสินค้า</label>
+              </div>
 
-                <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={documentData.orderInfo.senderSignatureEnabled}
-                  onChange={(e) =>
-                  handleChange(
-                  { target: { value: e.target.checked } } as any,
-                  'orderInfo',
-                  'senderSignatureEnabled'
-                  )
-                  }
-                  className="w-4 h-4"
-                />
-                <label>แสดงผู้ส่งสินค้า</label>
-                </div>
+              <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.receiverMoneySignatureEnabled}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'receiverMoneySignatureEnabled'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงผู้รับเงิน</label>
+              </div>
 
-                <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={documentData.orderInfo.receiverMoneySignatureEnabled}
-                  onChange={(e) =>
-                  handleChange(
-                  { target: { value: e.target.checked } } as any,
-                  'orderInfo',
-                  'receiverMoneySignatureEnabled'
-                  )
-                  }
-                  className="w-4 h-4"
-                />
-                <label>แสดงผู้รับเงิน</label>
-                </div>
-
-                <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={documentData.orderInfo.approverSignatureEnabled}
-                  onChange={(e) =>
-                  handleChange(
-                  { target: { value: e.target.checked } } as any,
-                  'orderInfo',
-                  'approverSignatureEnabled'
-                  )
-                  }
-                  className="w-4 h-4"
-                />
-                <label>แสดงผู้อนุมัติ</label>
-                </div>
+              <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.approverSignatureEnabled}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'approverSignatureEnabled'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงผู้อนุมัติ</label>
+              </div>
               
             </div>
         </div>

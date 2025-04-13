@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   paymentSection: {
-    marginTop: 20,
+    marginTop: 0,
   },
   paymentTitle: {
     borderBottom: '1px solid #000',
@@ -271,7 +271,12 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
         ))}
 
         <View style={styles.totalItemsRow}>
+        {(data.paymentSummary.paymentSummaryEnabled === false) && (
           <Text style={{ width: '65%', textAlign: 'left', borderRight: '1px solid #e0e0e0'}}>  ชำระเงินด้วย {data.orderInfo.paymentMethod}</Text>
+        )}
+        {(data.paymentSummary.paymentSummaryEnabled === true) && (
+          <Text style={{ width: '65%', textAlign: 'left', borderRight: '1px solid #e0e0e0'}}></Text>
+        )}
           <Text style={{ width: '18%', textAlign: 'right'}}>รวม</Text>
           <Text style={{ width: '17%', textAlign: 'right'}}>{data.totals.rawTotal.toLocaleString()} บาท</Text>
         </View>
@@ -281,7 +286,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
       <View style={styles.totalsSection}>
         <View style={styles.emptySpace}>
         <Text style={{ fontWeight: 'bold',fontSize: 12, marginTop: 5 }}>
-            หมายเหตุ:
+            หมายเหตุ: {data.orderInfo.documentNote}
           </Text>
           <Text style={{ fontStyle: 'italic', fontSize: 12, marginTop: 5 }}>
             จำนวนเงินรวมทั้งสิ้น
@@ -316,20 +321,22 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
       </View>
 
       {/* Payment Section */}
-      <View style={styles.paymentSection}>
-        <Text style={styles.paymentTitle}>การชำระเงิน/Payment</Text>
-        <View style={styles.paymentRow}>
-          <Text>วันที่ชำระ : {"data.orderInfo.paymentDate"}</Text>
-        </View>
-        <View style={styles.paymentRow}>
-          <Text>1. บัตรเครดิต</Text>
-          <Text style={{ marginLeft: 'auto' }}>{"data.totals.grandTotal.toLocaleString()"} บาท</Text>
-        </View>
-        <View style={styles.paymentTotal}>
-          <Text style={{ width: '80%', textAlign: 'right' }}>ยอดชำระ :</Text>
-          <Text style={{ width: '20%', textAlign: 'right' }}>{"data.totals.grandTotal.toLocaleString()"} บาท</Text>
-        </View>
-      </View>
+      {(data.paymentSummary.paymentSummaryEnabled === true) && (
+              <View style={styles.paymentSection}>
+              <Text style={styles.paymentTitle}>การชำระเงิน</Text>
+              <View style={styles.paymentRow}>
+                <Text>วันที่ชำระ : {data.paymentSummary.paymentDate}</Text>
+              </View>
+              <View style={styles.paymentRow}>
+                <Text>1. {data.orderInfo.paymentMethod}</Text>
+                <Text style={{ marginLeft: 'auto' }}>{data.paymentSummary.paymentReference}</Text>
+              </View>
+              <View style={styles.paymentTotal}>
+                <Text style={{ width: '80%', textAlign: 'right' }}>ยอดชำระ :</Text>
+                <Text style={{ width: '20%', textAlign: 'right' }}>{data.paymentSummary.paymentAmount} บาท</Text>
+              </View>
+            </View>
+      )}
 
       {/* Signature Section */}
       <View style={[styles.signatureSection]}>
