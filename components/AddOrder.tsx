@@ -26,6 +26,7 @@ interface formOrderItem {
     discount: number;
     subtotal: number;
     warehouse_id: string;  
+    unit_type: string;
 }
 
 interface OrderState {
@@ -257,6 +258,7 @@ export default function AddSellOrderForm({
             name: item.product_name,
             sku: item.product_code,
             quantity: item.quantity,
+            unit_type: item.unit_type,
             initial_quantity: item.stock,
             price: item.price,
             discount: item.discount,

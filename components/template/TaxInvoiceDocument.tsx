@@ -263,7 +263,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
             <Text style={styles.tableCol1}>{index + 1}</Text>
             <Text style={styles.tableCol2_data}>{item.id}</Text>
             <Text style={styles.tableCol3_data}>  {item.name}</Text>
-            <Text style={styles.tableCol4_data}>{item.quantity} ชิ้น</Text>
+            <Text style={styles.tableCol4_data}>{item.quantity} {item.unitType}</Text>
             <Text style={styles.tableCol5_data}>{item.unitPrice.toLocaleString()}  </Text>
             <Text style={styles.tableCol5_data}>{item.discount.toLocaleString()}  </Text>
             <Text style={styles.tableCol6_data}>{item.total.toLocaleString()}</Text>

@@ -44,6 +44,7 @@ interface Item {
   id: string;
   name: string;
   quantity: number;
+  unitType: string;
   unitPrice: number;
   total: number;
 }
@@ -80,6 +81,7 @@ interface TransactionItem {
   sku?: string;
   name?: string;
   quantity?: number;
+  unit_type?: string;
   price?: number;
   subtotal?: number;
   discount?: number;
@@ -138,6 +140,7 @@ export default function DocumentPreview(): JSX.Element {
           id: item.sku || '',
           name: item.name || '',
           quantity: item.quantity || 0,
+          unitType: item.unit_type || 'ชิ้น',
           unitPrice: item.price || 0,
           total: (item.subtotal || 0),
           discount: (item.discount ?? 0),

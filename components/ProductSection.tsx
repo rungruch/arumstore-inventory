@@ -15,6 +15,7 @@ interface Product {
   discount?: number;
   total: number;
   stock?: number;
+  unit_type: string;
 }
 
 interface ProductData {
@@ -34,7 +35,7 @@ interface PaginatedResponse {
 
 const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, warehouseName, vatType, shippingCost }) => {
   const [products, setProducts] = useState<Product[]>([
-    { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0 }
+    { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }
   ]);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -72,12 +73,12 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
   useEffect(() => {
     // Reset products when warehouseName changes
     setProducts([
-      { id: '', product_code: '', product_name: '', quantity: 1, price: 0, discount: 0, total: 0 }
+      { id: '', product_code: '', product_name: '', quantity: 1, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }
     ]);
   }, [warehouseName]);
 
   const handleAddProduct = (): void => {
-    setProducts([...products, { id: '', product_code: '', product_name: '', quantity: 1, price: 0, discount: 0, total: 0 }]);
+    setProducts([...products, { id: '', product_code: '', product_name: '', quantity: 1, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }]);
   };
 
   const handleRemoveProduct = (index: number): void => {
@@ -86,7 +87,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
     
     // Always keep at least one row
     if (updatedProducts.length === 0) {
-      updatedProducts.push({ id: '', product_code: '', product_name: '', quantity: 1, price: 0, discount: 0, total: 0 });
+      updatedProducts.push({ id: '', product_code: '', product_name: '', quantity: 1, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' });
     }
     
     setProducts(updatedProducts);
@@ -214,7 +215,8 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
         price: product.price.sell_price,
         discount: 0,
         total: product.price.sell_price,
-        stock: stockAmount
+        stock: stockAmount,
+        unit_type: product.unit_type || 'ชิ้น'
       };
       
       setProducts(updatedProducts);

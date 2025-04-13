@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Arum",
+  title: "Arum Inventory",
   description: "Arum Store Inventory Management System",
   openGraph: {
     title: "Arum",
