@@ -192,8 +192,14 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
           <Text style={styles.pagetitle}>{data.orderInfo.titleDocument}</Text>
           <Text style={{textAlign: 'center', fontWeight: 'bold'}}>{data.orderInfo.documentType}</Text>
           </View>
-          <Text style={{ textAlign: 'right', marginTop: 5 }}>วันที่ : {data.orderInfo.date}</Text>
-          <Text style={{ textAlign: 'right' }}>เลขที่เอกสาร : {data.orderInfo.orderNumber}</Text>
+          <Text style={{ textAlign: 'right', marginTop: 2 }}>เลขที่เอกสาร : {data.orderInfo.orderNumber}</Text>
+          <Text style={{ textAlign: 'right'}}>วันที่ : {data.orderInfo.date}</Text>
+          {(data.orderInfo.showQuotationSection === true) && (
+          <>
+          <Text style={{ textAlign: 'right' }}>เครดิต : {data.orderInfo.quotationCredit} วัน</Text>
+          <Text style={{ textAlign: 'right' }}>วันที่ครบกำหนด : {data.orderInfo.quotationExpiredate}</Text>
+          </>
+          )}
         </View>
       </View>
 
@@ -306,15 +312,26 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
       {(data.orderInfo.showPriceSummary === true) && (
       <View style={styles.totalsSection}>
         <View style={styles.emptySpace}>
-        <Text style={{ fontWeight: 'bold',fontSize: 12, marginTop: 5 }}>
-            หมายเหตุ: {data.orderInfo.documentNote}
-          </Text>
-          <Text style={{ fontStyle: 'italic', fontSize: 12, marginTop: 5 }}>
+        <Text style={{ fontStyle: 'italic', fontSize: 12, marginTop: 5 }}>
             จำนวนเงินรวมทั้งสิ้น
           </Text>
           <Text style={{ fontStyle: 'italic', fontSize: 12, marginTop: 5 }}>
             ({data.totals.thaiTotal_amount})
           </Text>
+          <Text style={{ fontWeight: 'bold',fontSize: 12, marginTop: 5 }}>
+            หมายเหตุ: {data.orderInfo.documentNote}
+          </Text>
+          {(data.orderInfo.showQuotationSection === true) && (
+          <Text style={{ fontWeight: 'bold',fontSize: 12, marginTop: 5 }}>
+            {`เงื่อนไข: ${data.orderInfo.quotationCondition}\nการจัดส่ง: ${data.orderInfo.quotationShippingCondition}`}
+          </Text>
+          )}
+          {(data.orderInfo.showStoretransferPaymentInfo === true) && (
+          <Text style={{ fontStyle: 'italic', fontWeight: 'bold', fontSize: 12, marginTop: 5 }}>
+            สามารถชำระเงินได้ที่: {data.storeInfo.transferPaymentInfo}
+          </Text>
+          )}
+      
         </View>
 
         <View style={styles.totalsTable}>
@@ -362,6 +379,20 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
 
       {/* Signature Section */}
       <View style={[styles.signatureSection]}>
+      {(data.orderInfo.buyerSignatureEnabled === true) && (
+          <View style={styles.signature}>
+            <Text style={styles.signatureLine}></Text>
+            <Text>ผู้ซื้อ</Text>
+            <Text style={{ marginTop: 0 }}>วันที่ ..............................................</Text>
+          </View>
+        )}
+       {(data.orderInfo.sellerSignatureEnabled === true) && (
+          <View style={styles.signature}>
+            <Text style={styles.signatureLine}></Text>
+            <Text>ผู้ขาย</Text>
+            <Text style={{ marginTop: 0 }}>วันที่ ..............................................</Text>
+          </View>
+        )}
         {(data.orderInfo.receiverSignatureEnabled === true) && (
           <View style={styles.signature}>
             <Text style={styles.signatureLine}></Text>

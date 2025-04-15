@@ -59,6 +59,15 @@ export default function DocumentPreview(): JSX.Element {
             day: 'numeric',
           }) : "-";
 
+
+          const date = new Date(transactionData.created_date.toDate());
+          date.setDate(date.getDate() + 7);
+          const quotationExpireformattedDate: string = date.toLocaleString('th-TH', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+
         // Prepare complete document data
         const formattedDocumentData: DocumentData = {
           storeInfo: {
@@ -67,7 +76,8 @@ export default function DocumentPreview(): JSX.Element {
             address: "299/128 ถนนวิภาวดีรังสิต แขวงตลาดบางเขน เขตหลักสี่ กรุงเทพมหานคร 10210",
             phone: "088-178-8669",
             email: "icesouthmanagers@gmail.com",
-            tax_id: "0105566043410"
+            tax_id: "0105566043410",
+            transferPaymentInfo:`ธนาคารกสิกรไทย ชื่อบัญชี บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด \nเลขที่บัญชี 152-8-24874-4`,
           },
           customerInfo: {
             name: transactionData.client_name || '',
@@ -90,6 +100,14 @@ export default function DocumentPreview(): JSX.Element {
             receiverMoneySignatureEnabled: true,
             approverSignatureEnabled: false,
             showPriceSummary: true,
+            showStoretransferPaymentInfo: false,
+            buyerSignatureEnabled: false,
+            sellerSignatureEnabled: false,
+            showQuotationSection: false,
+            quotationCondition: "ชำระ 100% ก่อนส่งมอบสินค้า",
+            quotationShippingCondition: "จัดส่งฟรีภายใน 1-2 วันหลังจากได้รับการชำระเงิน จัดส่งโดย Flash Express",
+            quotationCredit: "7",
+            quotationExpiredate: quotationExpireformattedDate
           },
           paymentSummary: {
             paymentSummaryEnabled: false,
@@ -188,11 +206,11 @@ export default function DocumentPreview(): JSX.Element {
                 className="w-full p-2 border rounded"
               />
               <datalist id="titleDocumentOptions">
-                <option value="ใบกำกับภาษี/ใบเสร็จรับเงิน" />
+                <option value="ใบเสนอราคา" />
                 <option value="ใบส่งสินค้า" />
+                <option value="ใบกำกับภาษี/ใบเสร็จรับเงิน" />
                 <option value="ใบกำกับภาษี" />
                 <option value="ใบเสร็จรับเงิน" />
-                <option value="ใบวางบิล" />
                 <option value="ใบแจ้งหนี้" />
               </datalist>
               </div>
@@ -203,7 +221,43 @@ export default function DocumentPreview(): JSX.Element {
               >
               <option value="ต้นฉบับ">ต้นฉบับ</option>
               <option value="สำเนา">สำเนา</option>
+              <option value="">ไม่แสดง</option>
               </select>
+              <input
+                type="date"
+                placeholder="วันที่ครบกำหนด"
+                value={(() => {
+                  const thaiDate = documentData.orderInfo.date;
+                  if (!thaiDate) return '';
+                  
+                  // Extract year, month, and day from Thai date format
+                  const parts = thaiDate.split(' ');
+                  if (parts.length !== 3) return '';
+                  
+                  const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 
+                          'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+                  
+                  const day = parts[0];
+                  const month = (thaiMonths.indexOf(parts[1]) + 1).toString().padStart(2, '0');
+                  const year = parseInt(parts[2]) - 543;
+                  
+                  return `${year}-${month}-${day.padStart(2, '0')}`;
+                })()}
+                onChange={(e) => {
+                const date = new Date(e.target.value);
+                const formattedDate = date.toLocaleString('th-TH', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                });
+                handleChange(
+                  { target: { value: formattedDate } } as any,
+                  'orderInfo',
+                  'date'
+                );
+                }}
+                className="w-full p-2 border rounded"
+              />
             </div>
         </div>
         <h3 className="font-medium mb-2">รายการผู้ซื้อ</h3>
@@ -342,9 +396,103 @@ export default function DocumentPreview(): JSX.Element {
             </div>
         </div>
 
+        <h3 className="font-medium mb-2">หมวดใบเสนอราคา</h3>
+        <div className="mb-4">
+            <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.showQuotationSection}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'showQuotationSection'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงเงื่อนไขใบเสนอราคา</label>
+              </div>
+
+            <input
+              type="text"
+              placeholder="เครดิต"
+              value={documentData.orderInfo.quotationCredit}
+              onChange={(e) => handleChange(e, 'orderInfo', 'quotationCredit')}
+              className="w-full p-2 border rounded"
+            />
+              <input
+                type="date"
+                placeholder="วันที่ครบกำหนด"
+                value={(() => {
+                  const thaiDate = documentData.orderInfo.quotationExpiredate;
+                  if (!thaiDate) return '';
+                  
+                  // Extract year, month, and day from Thai date format
+                  const parts = thaiDate.split(' ');
+                  if (parts.length !== 3) return '';
+                  
+                  const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 
+                          'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+                  
+                  const day = parts[0];
+                  const month = (thaiMonths.indexOf(parts[1]) + 1).toString().padStart(2, '0');
+                  const year = parseInt(parts[2]) - 543;
+                  
+                  return `${year}-${month}-${day.padStart(2, '0')}`;
+                })()}
+                onChange={(e) => {
+                const date = new Date(e.target.value);
+                const formattedDate = date.toLocaleString('th-TH', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                });
+                handleChange(
+                  { target: { value: formattedDate } } as any,
+                  'orderInfo',
+                  'quotationExpiredate'
+                );
+                }}
+                className="w-full p-2 border rounded"
+              />
+            <input
+              type="text"
+              placeholder="เงื่อนไขใบเสนอราคา"
+              value={documentData.orderInfo.quotationCondition}
+              onChange={(e) => handleChange(e, 'orderInfo', 'quotationCondition')}
+              className="w-full p-2 border rounded"
+            />
+            <input
+              type="text"
+              placeholder="รายละการจัดส่ง"
+              value={documentData.orderInfo.quotationShippingCondition}
+              onChange={(e) => handleChange(e, 'orderInfo', 'quotationShippingCondition')}
+              className="w-full p-2 border rounded"
+            />
+
+            </div>
+        </div>
+
         <h3 className="font-medium mb-2">อื่นๆ</h3>
         <div className="mb-4">
             <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.showStoretransferPaymentInfo}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'showStoretransferPaymentInfo'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงช่องทางการทำระเงิน</label>
+              </div>
               <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -367,6 +515,36 @@ export default function DocumentPreview(): JSX.Element {
                 className="w-full p-2 border rounded"
                 rows={3}
               />
+              <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.buyerSignatureEnabled}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'buyerSignatureEnabled'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงผู้ซื้อ</label>
+              </div>
+              <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={documentData.orderInfo.sellerSignatureEnabled}
+                onChange={(e) =>
+                handleChange(
+                { target: { value: e.target.checked } } as any,
+                'orderInfo',
+                'sellerSignatureEnabled'
+                )
+                }
+                className="w-4 h-4"
+              />
+              <label>แสดงผู้ขาย</label>
+              </div>
               <div className="flex items-center gap-2">
               <input
                 type="checkbox"

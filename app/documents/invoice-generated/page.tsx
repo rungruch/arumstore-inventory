@@ -83,7 +83,8 @@ export default function DocumentAutoDownload(): JSX.Element {
             address: "299/128 ถนนวิภาวดีรังสิต แขวงตลาดบางเขน เขตหลักสี่ กรุงเทพมหานคร 10210",
             phone: "088-178-8669",
             email: "icesouthmanagers@gmail.com",
-            tax_id: "0105566043410"
+            tax_id: "0105566043410",
+            transferPaymentInfo:`ธนาคารกสิกรไทย ชื่อบัญชี บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด \nเลขที่บัญชี 152-8-24874-4`,
           },
           customerInfo: {
             name: transactionData.client_name || '',
@@ -106,6 +107,14 @@ export default function DocumentAutoDownload(): JSX.Element {
             receiverMoneySignatureEnabled: true,
             approverSignatureEnabled: false,
             showPriceSummary: true,
+            showStoretransferPaymentInfo: false,
+            buyerSignatureEnabled: false,
+            sellerSignatureEnabled: false,
+            showQuotationSection: false,
+            quotationCondition: "",
+            quotationShippingCondition: "",
+            quotationCredit: "7",
+            quotationExpiredate: "",
           },
           paymentSummary: {
             paymentSummaryEnabled: false,

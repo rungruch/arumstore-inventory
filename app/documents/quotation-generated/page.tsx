@@ -68,12 +68,20 @@ export default function DocumentAutoDownload(): JSX.Element {
           acc + (product.quantity || 0) * (product.discount || 0), 0) || 0;
       
         // Format date from Firestore timestamp
-        const formattedDate: string = transactionData.created_date ? 
-          new Date(transactionData.created_date.toDate()).toLocaleString('th-TH', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }) : "-";
+        const formattedDate: string = new Date().toLocaleString('th-TH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        const date = new Date();
+        date.setDate(date.getDate() + 7);
+        const quotationExpireformattedDate: string = date.toLocaleString('th-TH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
 
         // Prepare complete document data
         const documentData: DocumentData = {
@@ -98,24 +106,23 @@ export default function DocumentAutoDownload(): JSX.Element {
           orderInfo: {
             date: formattedDate,
             orderNumber: transactionData.transaction_id || '',
-            titleDocument: "ใบส่งสินค้า",
-            documentType: "ต้นฉบับ",
+            titleDocument: "ใบเสนอราคา",
+            documentType: "",
             documentNote: "",
             paymentMethod: transactionData.payment_method || 'เงินสด',
-            receiverSignatureEnabled: true,
-            senderSignatureEnabled: true,
+            receiverSignatureEnabled: false,
+            senderSignatureEnabled: false,
             receiverMoneySignatureEnabled: false,
             approverSignatureEnabled: true,
-            showPriceSummary: false,
-            showStoretransferPaymentInfo: false,
-            buyerSignatureEnabled: false,
-            sellerSignatureEnabled: false,
-            showQuotationSection: false,
+            showPriceSummary: true,
+            showStoretransferPaymentInfo: true,
+            buyerSignatureEnabled: true,
+            sellerSignatureEnabled: true,
+            showQuotationSection: true,
             quotationCondition: "ชำระ 100% ก่อนส่งมอบสินค้า",
             quotationShippingCondition: "จัดส่งฟรีภายใน 1-2 วันหลังจากได้รับการชำระเงิน จัดส่งโดย Flash Express",
             quotationCredit: "7",
-            quotationExpiredate: ""
-
+            quotationExpiredate: quotationExpireformattedDate
           },
           paymentSummary: {
             paymentSummaryEnabled: false,
@@ -148,7 +155,7 @@ export default function DocumentAutoDownload(): JSX.Element {
         // Create an anchor element and programmatically trigger the download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `DeliveryNote-${documentData.orderInfo.orderNumber}.pdf`;
+        link.download = `quotation-${documentData.orderInfo.orderNumber}.pdf`;
         document.body.appendChild(link);
         link.click();
 

@@ -98,16 +98,16 @@ export default function DocumentAutoDownload(): JSX.Element {
           orderInfo: {
             date: formattedDate,
             orderNumber: transactionData.transaction_id || '',
-            titleDocument: "ใบส่งสินค้า",
+            titleDocument: "ใบกำกับภาษี/ใบเสร็จรับเงิน",
             documentType: "ต้นฉบับ",
             documentNote: "",
             paymentMethod: transactionData.payment_method || 'เงินสด',
-            receiverSignatureEnabled: true,
-            senderSignatureEnabled: true,
+            receiverSignatureEnabled: false,
+            senderSignatureEnabled: false,
             receiverMoneySignatureEnabled: false,
-            approverSignatureEnabled: true,
-            showPriceSummary: false,
-            showStoretransferPaymentInfo: false,
+            approverSignatureEnabled: false,
+            showPriceSummary: true,
+            showStoretransferPaymentInfo: true,
             buyerSignatureEnabled: false,
             sellerSignatureEnabled: false,
             showQuotationSection: false,
@@ -115,7 +115,6 @@ export default function DocumentAutoDownload(): JSX.Element {
             quotationShippingCondition: "จัดส่งฟรีภายใน 1-2 วันหลังจากได้รับการชำระเงิน จัดส่งโดย Flash Express",
             quotationCredit: "7",
             quotationExpiredate: ""
-
           },
           paymentSummary: {
             paymentSummaryEnabled: false,
@@ -148,7 +147,7 @@ export default function DocumentAutoDownload(): JSX.Element {
         // Create an anchor element and programmatically trigger the download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `DeliveryNote-${documentData.orderInfo.orderNumber}.pdf`;
+        link.download = `invoice-${documentData.orderInfo.orderNumber}.pdf`;
         document.body.appendChild(link);
         link.click();
 

@@ -5,6 +5,7 @@ export interface StoreInfo {
     phone: string;
     email: string;
     tax_id: string;
+    transferPaymentInfo: string;
   }
   
   export interface CustomerInfo {
@@ -24,11 +25,19 @@ export interface StoreInfo {
     documentType: string;
     paymentMethod: string;
     documentNote: string;
+    buyerSignatureEnabled: boolean;
+    sellerSignatureEnabled: boolean;
     receiverSignatureEnabled: boolean;
     senderSignatureEnabled: boolean;
     receiverMoneySignatureEnabled: boolean;
     approverSignatureEnabled: boolean;
     showPriceSummary: boolean;
+    showStoretransferPaymentInfo: boolean;
+    showQuotationSection: boolean;
+    quotationCondition: string;
+    quotationShippingCondition: string;
+    quotationCredit: string;
+    quotationExpiredate: string
   }
   
   export interface Item {
