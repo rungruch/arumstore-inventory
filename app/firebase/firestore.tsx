@@ -160,7 +160,6 @@ export async function getProductWarehousePaginated(lastDoc: any = null, pageSize
         } as Warehouse)),
         lastDoc: lastVisible, // Store last document to fetch the next page
       }
-      console.log(d)
     return d
   } catch (error) {
     console.error("Error fetching paginated warehouses:", error);
@@ -206,7 +205,6 @@ export async function createProductWarehouse(name: string, type:string, details:
     
     // Generate a warehouse_id
     const warehouseId = await getNextWarehouseId();
-    console.log(warehouseId)
     
     // Define the new warehouse with the correct type
     const newWarehouse: Omit<Warehouse, 'id'> = {
@@ -602,7 +600,7 @@ export async function getSellTransactionPaginated(lastDoc: any = null, pageSize:
     
     if (statusFilter) {
       if (statusFilter === OrderStatusFilter.COMPLETED)
-        {console.log("inn")
+        {
         conditions.push(where("status", "in", [OrderStatus.PICKED_UP, OrderStatus.SHIPPED]));
         }      
         else if (statusFilter === OrderStatusFilter.ALL)

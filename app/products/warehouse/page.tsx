@@ -27,7 +27,6 @@ export default function ProductWarehousePage() {
         const totalCount = await getTotalWarehouseCount();
         setTotalWarehouses(totalCount); // Update total warehouses
         const { warehouses, lastDoc } = await getProductWarehousePaginated(null, pageSize);
-        console.log(warehouses)
         setWarehouses(warehouses);
         setLastDoc(lastDoc);
       } catch (error) {
