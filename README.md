@@ -2,6 +2,15 @@
 
 arumstore Inventory Management System, Still in Development,
 
+## Checklist
+
+- [x] รายการขาย
+- [x] สินค้า
+- [ ] ลูกต้า
+- [ ] การเงิน
+- [ ] รายการซื้อ
+- [ ] Dashboard
+
 ## Getting Started
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
