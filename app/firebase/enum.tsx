@@ -49,7 +49,8 @@ export enum OrderStatus {
     ],
     [OrderStatus.SHIPPING]: [
       OrderStatus.SHIPPED, 
-      OrderStatus.PICKED_UP
+      OrderStatus.PICKED_UP,
+      OrderStatus.CANCELLED
     ],
     [OrderStatus.SHIPPED]: [
       OrderStatus.FAILED

@@ -27,16 +27,15 @@ interface ProductSectionProps {
   warehouseName: string;
   vatType: VatType;
   shippingCost: number;
+  products: Product[];
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
 }
 
 interface PaginatedResponse {
     [key: string]: any;
 }
 
-const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, warehouseName, vatType, shippingCost }) => {
-  const [products, setProducts] = useState<Product[]>([
-    { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }
-  ]);
+  const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, warehouseName, vatType, shippingCost, products, setProducts }) => {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [searchResults, setSearchResults] = useState<ProductData[]>([]);
@@ -278,6 +277,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
                   <div className="flex flex-col items-center">
                     <input 
                       type="number" 
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       min="1" 
                       max={product.stock}
                       step="1"
@@ -296,6 +296,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
                   <div className="flex justify-center">
                     <input 
                       type="number" 
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       min="0" 
                       step="1"
                       value={product.price} 
@@ -308,6 +309,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
                   <div className="flex justify-center">
                     <input 
                       type="number" 
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       placeholder="จำนวนเงิน"
                       min="0"
                       max={product.price || 0}

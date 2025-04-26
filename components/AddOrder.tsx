@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeduction, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
+import { getProductBySKU, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeduction, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
@@ -59,6 +59,7 @@ interface ModalState {
 interface AddSellOrderFormProps {
   trigger?: boolean;
   setTrigger?: React.Dispatch<React.SetStateAction<boolean>>;
+  ref_transaction_id?: string | null;
 }
 
 interface FormattedOrderData extends OrderState {
@@ -87,9 +88,22 @@ interface Contact {
   branch_id: string;
 }
 
+interface Product {
+  id: string;
+  product_code: string;
+  product_name: string;
+  quantity: number;
+  price: number;
+  discount?: number;
+  total: number;
+  stock?: number;
+  unit_type: string;
+}
+
 export default function AddSellOrderForm({
   trigger,
   setTrigger,
+  ref_transaction_id,
 }: AddSellOrderFormProps) {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const router = useRouter();
@@ -131,8 +145,38 @@ export default function AddSellOrderForm({
   const [contactSuggestions, setContactSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const [products, setProducts] = useState<Product[]>([
+      { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }
+    ]);
+    
+
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
+      if (ref_transaction_id) {
+        let transactionData:any = await getSellTransactionByTransactionId(ref_transaction_id);
+        setOrderState(prev => ({
+          ...prev,
+          transaction_type: transactionData.transaction_type || "",
+          sell_method: transactionData.sell_method || "",
+          vat_type: transactionData.vat_type || "",
+          client_name: transactionData.client_name || "",
+          client_id: transactionData.client_id || "",
+          client_tel: transactionData.client_tel || "",
+          client_email: transactionData.client_email || "",
+          client_address: transactionData.client_address || "",
+          client_description: transactionData.client_description || "",
+          tax_id: transactionData.tax_id || "",
+          branch_name: transactionData.branch_name || "",
+          branch_id: transactionData.branch_id || "",
+          warehouse: transactionData.warehouse || "",
+          shipping_method: transactionData.shipping_method || "",
+          notes: transactionData.notes || "",
+          shipping_cost: transactionData.shipping_cost || 0
+        }));
+        let transformedItemData = await transformItemData(transactionData.items);
+        setProducts(transformedItemData)
+      }
+
       await generateSKU();
       try {
         const warehouseData = await getProductWarehouse();
@@ -145,7 +189,6 @@ export default function AddSellOrderForm({
         });
       }
     };
-    
     fetchData();
   }, []);
 
@@ -179,7 +222,6 @@ export default function AddSellOrderForm({
         };
   
         let address  = await createContact(contact);
-        console.log("Contact created with ID:", address);
 
         setOrderState(prev => ({
           ...prev,
@@ -274,6 +316,23 @@ export default function AddSellOrderForm({
     setShowSuggestions(false);
     setisCreateContactDisabled(true);
   };
+
+  async function transformItemData(originalData: any[]): Promise<Product[]> {
+    return Promise.all(originalData.map(async item => {
+      let leatest_product:any = await getProductBySKU(item.sku);
+      return {
+        id: item.sku,
+        product_code: item.sku,
+        product_name: leatest_product[0].name,
+        quantity: item.quantity ?? 0,
+        price: item.price,
+        discount: item.discount ?? 0,
+        total: item.subtotal ?? 0,
+        stock: leatest_product[0].stocks[orderState.warehouse] ?? 0,
+        unit_type: leatest_product[0].unit_type
+      };
+    }));
+  }
 
   const handleProductsChange = (products: OrderItem[], totalAmount: number, totalAmountNoVat: number, vatAmount: number): void => {
     setOrderItems(products);
@@ -608,6 +667,8 @@ export default function AddSellOrderForm({
             warehouseName={orderState.warehouse}
             vatType={orderState.vat_type}
             shippingCost={orderState.shipping_cost}
+            products={products}
+            setProducts={setProducts}
           />
 
           <div className="mt-4">
@@ -651,10 +712,12 @@ export default function AddSellOrderForm({
                 <h3 className="text-sm font-semibold mb-2">ค่าส่ง</h3>
                 <input 
                 type="number" 
+                inputMode="numeric"
                 min="0" 
                 required
                 name="shipping_cost" 
                 placeholder="ค่าส่ง" 
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
                 value={orderState.shipping_cost} 
                 onChange={handleChange} 
                 className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 

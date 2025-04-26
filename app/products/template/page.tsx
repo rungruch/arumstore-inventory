@@ -59,6 +59,7 @@ const ProductTemplatePage = () => {
           />
           <input
             type="number"
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
             value={newProductQuantity}
             min="1"
             onChange={(e) => setNewProductQuantity(parseInt(e.target.value))}

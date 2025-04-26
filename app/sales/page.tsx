@@ -583,6 +583,9 @@ export default function ProductPage() {
       className="absolute hidden z-10 right-0 mt-2 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
     >
       <div className="py-1">
+      <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+          สร้างรายการซ้ำ
+        </Link>
         <Link href={`/documents/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
           พิมพ์เอกสาร
         </Link>

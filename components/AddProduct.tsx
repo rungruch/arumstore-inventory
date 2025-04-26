@@ -271,9 +271,9 @@ import {
                         </div>
                         <div>
                             <label className="block mb-2 font-bold">ราคาขาย</label>
-                            <input type="number" name="sellingPrice" placeholder="ราคาขาย" min={0} value={productState.sellingPrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
+                            <input type="number"  onWheel={(e) => (e.target as HTMLInputElement).blur()} name="sellingPrice" placeholder="ราคาขาย" min={0} value={productState.sellingPrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">ราคาซื้อ</label>
-                            <input type="number" name="purchasePrice" placeholder="ราคาซื้อ" min={0} value={productState.purchasePrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
+                            <input type="number"  onWheel={(e) => (e.target as HTMLInputElement).blur()} name="purchasePrice" placeholder="ราคาซื้อ" min={0} value={productState.purchasePrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <div className="container mx-auto mt-8 max-w-[560px]">
                         </div>
                         <div className="mt-8 max-w-lg mx-auto">
@@ -338,7 +338,7 @@ import {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block mb-2 font-bold">จำนวน</label>
-                                <input type="number" name="openingStock" placeholder="ยอดยกมา" min={0} value={productState.openingStock} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
+                                <input type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()} name="openingStock" placeholder="ยอดยกมา" min={0} value={productState.openingStock} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             </div>
                             <div>
                             <label className="block mb-2 font-bold">สินค้าเข้าที่</label>
@@ -361,14 +361,14 @@ import {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block mb-2 font-bold">น้ำหนัก (กิโลกรัม)</label>
-                                <input type="number" name="weight" placeholder="น้ำหนัก" min={0} value={productState.weight} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
+                                <input type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()} name="weight" placeholder="น้ำหนัก" min={0} value={productState.weight} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             </div>
                             <div>
                                 <label className="block mb-2 font-bold">ขนาด (กว้างxยาวxสูง) (ซม.)</label>
                                 <div className="grid grid-cols-3 gap-2 mb-4">
-                                    <input type="number" name="width" placeholder="กว้าง" min={0} value={productState.width} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
-                                    <input type="number" name="length" placeholder="ยาว" min={0} value={productState.length} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
-                                    <input type="number" name="height" placeholder="สูง" min={0} value={productState.height} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
+                                    <input type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()} name="width" placeholder="กว้าง" min={0} value={productState.width} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
+                                    <input type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()} name="length" placeholder="ยาว" min={0} value={productState.length} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
+                                    <input type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()} name="height" placeholder="สูง" min={0} value={productState.height} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
                                 </div>
                             </div>
                         </div>
