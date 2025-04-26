@@ -230,10 +230,10 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
   };
 
   return (
-    <div className="mt-6 bg-white p-6 rounded-lg shadow-sm">
+    <div className="mt-6 bg-white p-6 rounded-lg shadow-sm dark:bg-zinc-700">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-medium text-gray-800 flex items-center">
-          <ShoppingCart size={18} className="mr-2 text-blue-600" />
+        <h3 className="text-base font-medium text-gray-800 flex items-center dark:text-white">
+          <ShoppingCart size={18} className="mr-2 text-blue-600 dark:text-blue-400" />
           รายการสินค้า
         </h3>
         <div 
@@ -247,7 +247,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="w-full border-collapse mb-2">
           <thead>
-            <tr className="bg-gray-50 text-xs text-gray-600 uppercase">
+            <tr className="bg-gray-50 text-xs text-gray-600 uppercase dark:bg-zinc-800 dark:text-gray-200">
               <th className="px-4 py-3 border-b border-r border-gray-200 text-left font-medium">รหัส</th>
               <th className="px-4 py-3 border-b border-r border-gray-200 text-left font-medium">ชื่อสินค้า</th>
               <th className="px-4 py-3 border-b border-r border-gray-200 text-center font-medium">จำนวน</th>
@@ -259,7 +259,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
           </thead>
           <tbody>
             {products.map((product, index) => (
-              <tr key={index} className={`hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+              <tr key={index} className={`hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} dark:bg-zinc-700`}>
                 <td className="px-4 py-3 border-b border-r border-gray-200">
                   <div className="flex items-center">
                     <div 
@@ -269,11 +269,11 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
                       <Search size={14} className="mr-1" /> เลือก
                     </div>
                     {product.product_code && (
-                      <span className="ml-2 text-gray-700 text-sm">{product.product_code}</span>
+                      <span className="ml-2 text-gray-700 text-sm dark:text-white">{product.product_code}</span>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 border-b border-r border-gray-200 text-sm text-gray-700">{product.product_name}</td>
+                <td className="px-4 py-3 border-b border-r border-gray-200 text-sm text-gray-700 dark:text-white">{product.product_name}</td>
                 <td className="px-4 py-3 border-b border-r border-gray-200">
                   <div className="flex flex-col items-center">
                     <input 
@@ -353,7 +353,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
             </tr>
             <tr>
               <td colSpan={5} className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium">มูลค่ารวมสุทธิ</td>
-              <td className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium text-blue-700">{formatCurrency(totalAmount)}</td>
+              <td className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium text-blue-700 dark:text-blue-500">{formatCurrency(totalAmount)}</td>
               <td className="px-4 py-3 border-t border-gray-200"></td>
             </tr>
           </tfoot>
@@ -364,8 +364,8 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
       {isSearchModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-gray-900/50">
           <div className="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col shadow-xl animate-fadeIn">
-            <div className="p-4 border-b flex justify-between items-center bg-blue-50">
-              <h3 className="text-lg font-medium text-gray-800 flex items-center">
+            <div className="p-4 border-b flex justify-between items-center bg-blue-50 dark:bg-zinc-700">
+              <h3 className="text-lg font-medium text-gray-800 flex items-center dark:text-white">
                 <ShoppingCart size={18} className="mr-2 text-blue-600" />
                 เลือกสินค้า
               </h3>
@@ -378,8 +378,8 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
               </div>
             </div>
             
-            <div className="p-4 border-b">
-              <div className="relative">
+            <div className="p-4 border-b dark:bg-zinc-700">
+              <div className="relative ">
                 <input
                   type="text"
                   placeholder="ค้นหาสินค้า..."
@@ -394,7 +394,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
             <div className="overflow-y-auto flex-grow">
               <table className="w-full border-collapse">
                 <thead className="bg-gray-50 sticky top-0 z-10">
-                  <tr className="text-xs text-gray-600 uppercase">
+                  <tr className="text-xs text-gray-600 uppercase dark:bg-zinc-800 dark:text-gray-200">
                     <th className="px-4 py-3 text-left font-medium border-b border-gray-200">สินค้า</th>
                     <th className="px-4 py-3 text-center font-medium border-b border-gray-200">คงเหลือ</th>
                     <th className="px-4 py-3 text-center font-medium border-b border-gray-200">พร้อมขาย</th>
@@ -405,7 +405,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
                 <tbody>
                   {searchResults.length > 0 ? (
                     searchResults.map((product, index) => (
-                      <tr key={product.id} className={`border-b hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                      <tr key={product.id} className={`border-b hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} dark:bg-zinc-800`}>
                         <td className="p-3">
                           <div className="flex items-center">
                             <div className="w-12 h-12 bg-gray-100 mr-3 flex items-center justify-center text-gray-400 rounded overflow-hidden">
@@ -423,7 +423,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
                               )}
                             </div>
                             <div>
-                              <div className="font-medium text-gray-800">{product.name}</div>
+                              <div className="font-medium text-gray-800 dark:text-white">{product.name}</div>
                               <div className="text-sm text-gray-500">{product.sku}</div>
                             </div>
                           </div>
@@ -454,14 +454,14 @@ const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, wareh
                               เลือก
                             </button>
                           ) : (
-                            <span className="py-1.5 px-3 bg-gray-100 text-gray-400 rounded text-sm inline-block">สินค้าหมด</span>
+                            <span className="py-1.5 px-3 bg-gray-100 text-gray-400 rounded text-sm inline-block dark:bg-zinc-700">สินค้าหมด</span>
                           )}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-gray-500">
+                      <td colSpan={5} className="p-8 text-center text-gray-500 dark:bg-zinc-800">
                         ไม่พบสินค้า
                       </td>
                     </tr>

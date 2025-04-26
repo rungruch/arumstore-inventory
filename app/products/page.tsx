@@ -139,7 +139,7 @@ export default function ProductPage() {
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">สินค้า</h1>
-        <h2 className="text-1xl font-semibold text-gray-700">จำนวน {totalData} รายการ</h2>
+        <h2 className="text-1xl font-semibold text-gray-700 dark:text-gray-200">จำนวน {totalData} รายการ</h2>
       </div>
       {/* Search and Add */}
       <div className="flex justify-between items-center mb-4">
@@ -188,7 +188,7 @@ export default function ProductPage() {
               </tr>
             }
             customRow={(product, index) => (
-              <tr key={product.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100">
+              <tr key={product.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                 <td className="p-2 w-[50px] ">{product.sku}</td>
                 <td className="p-2 w-[300px] flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function ProductPage() {
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
         <div className="flex items-center space-x-2">
-          <span className="text-gray-700">แถว/หน้า:</span>
+          <span className="text-gray-700 dark:text-white">แถว/หน้า:</span>
           <select
             value={pageSize}
             onChange={handlePageSizeChange}
@@ -273,18 +273,18 @@ export default function ProductPage() {
             onClick={handlePrevPage}
             disabled={currentPage === 1 || search.trim() !== ""}
             className={`px-3 py-2 rounded-md transition ${currentPage === 1 || search.trim() !== ""
-                ? "bg-gray-300 cursor-not-allowed"
+                ? "bg-gray-300 cursor-not-allowed dark:bg-zinc-700"
                 : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
           >
             <ChevronLeft size={16} className="inline-block" />
           </button>
-          <span className="py-2 text-gray-700">{currentPage} / {totalPages}</span>
+          <span className="py-2 text-gray-700 dark:text-white">{currentPage} / {totalPages}</span>
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages || !lastDoc || search.trim() !== ""}
             className={`px-3 py-2 rounded-md transition ${currentPage === totalPages || !lastDoc || search.trim() !== ""
-                ? "bg-gray-300 cursor-not-allowed"
+                ? "bg-gray-300 dark:bg-zinc-700 cursor-not-allowed"
                 : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
           >

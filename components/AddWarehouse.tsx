@@ -89,13 +89,13 @@ export default function AddWarehousePopup({ isOpen, onClose }: AddWarehousePopup
       style={{ backgroundColor: "#00000066" }}
       className="fixed inset-0 flex items-center justify-center z-50"
     >
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4 sm:mx-6 sm:max-w-lg">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4 sm:mx-6 sm:max-w-lg dark:bg-zinc-800">
         <h2 className="text-lg font-semibold mb-4 text-center">เพิ่มคลังสินค้า</h2>
 
         <form onSubmit={handleFormSubmit}>
           {/* Warehouse Name */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อคลัง</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">ชื่อคลัง</label>
             <input
               type="text"
               name="warehouse_name"
@@ -111,7 +111,7 @@ export default function AddWarehousePopup({ isOpen, onClose }: AddWarehousePopup
 
           {/* Warehouse Type */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">ประเภท</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">ประเภท</label>
             <select
               name="type"
               className="w-full border border-gray-300 p-2 rounded-md"
@@ -129,7 +129,7 @@ export default function AddWarehousePopup({ isOpen, onClose }: AddWarehousePopup
 
           {/* Warehouse Details */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">รายละเอียด</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">รายละเอียด</label>
             <textarea
               name="details"
               placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
@@ -150,7 +150,7 @@ export default function AddWarehousePopup({ isOpen, onClose }: AddWarehousePopup
             <button
               type="button"
               onClick={handleClose}
-              className="bg-gray-300 py-2 px-4 rounded-md hover:bg-gray-400 transition"
+              className="bg-gray-300 py-2 px-4 rounded-md hover:bg-gray-400 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition-all"
             >
               ยกเลิก
             </button>

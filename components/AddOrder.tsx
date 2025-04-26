@@ -5,6 +5,7 @@ import { generateRandomSellTransactionId, getProductWarehouse, createSellTransac
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
+import { createContact } from "@/app/firebase/firestore";
 import ProductSection from "./ProductSection";
 import {VatType, TransactionType, DeliveryType} from "@/app/firebase/enum";
 
@@ -119,6 +120,7 @@ export default function AddSellOrderForm({
   const [totalOrderAmountNoVat, setTotalOrderAmountNoVat] = useState<number>(0);
 
   const [validationError, setValidationError] = useState<string>("");
+  const [isCreateContactDisabled, setisCreateContactDisabled] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
@@ -146,6 +148,52 @@ export default function AddSellOrderForm({
     
     fetchData();
   }, []);
+
+    const handleSaveContact = async () => {
+      try {
+        const contact = {
+          name: orderState.client_name,
+          client_id: "",
+          tax_reference: {
+            tax_id: orderState.tax_id || "",
+            branch_name: orderState.branch_name || "",
+            branch_number: orderState.branch_id || ""
+          },
+          contact_info: {
+            name: "",
+            email: orderState.client_email || "",
+            phone: orderState.client_tel || "",
+            home_phone: "",
+            fax: ""
+          },
+          social_media: {
+            facebook: "",
+            line: "",
+            instagram: ""
+          },
+          address: orderState.client_address || "",
+          group: "",
+          notes: "",
+          created_date: Timestamp.now(),
+          updated_date: Timestamp.now()
+        };
+  
+        let address  = await createContact(contact);
+        console.log("Contact created with ID:", address);
+
+        setOrderState(prev => ({
+          ...prev,
+          client_id: address.client_id,
+        }));
+
+      } catch (error) {
+        setModalState({
+          isOpen: true,
+          title: ModalTitle.ERROR,
+          message: `ไม่สามารถสร้างผู้ติดต่อได้: ${error instanceof Error ? error.message : String(error)}`,
+        });
+      }
+    };
 
   const generateSKU = async (): Promise<void> => {
     try {
@@ -176,8 +224,16 @@ export default function AddSellOrderForm({
     const { value } = e.target;
     setOrderState(prev => ({
       ...prev,
-      client_name: value
+      client_name: value,
+      client_id: "",
+      client_tel: "",
+      client_email: "",
+      client_address: "",
+      tax_id: "",
+      branch_name: "",
+      branch_id: ""
     }));
+    setisCreateContactDisabled(false);
 
     if (value.length >= 2) {
       try {
@@ -216,6 +272,7 @@ export default function AddSellOrderForm({
       branch_id: contact.tax_reference.branch_number
     }));
     setShowSuggestions(false);
+    setisCreateContactDisabled(true);
   };
 
   const handleProductsChange = (products: OrderItem[], totalAmount: number, totalAmountNoVat: number, vatAmount: number): void => {
@@ -325,9 +382,31 @@ export default function AddSellOrderForm({
     }
   };
 
-  const handleFormSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleFormSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    handleSave();
+    try {
+      if(orderState.client_id === ""){
+        let contacts: any = await getContactsByName(orderState.client_name);
+        let contactFiltered = contacts.filter((contact: Contact) => contact.name === orderState.client_name);
+        if (contactFiltered.length === 0) {
+          handleSaveContact();
+        }
+        else {
+          setOrderState(prev => ({
+            ...prev,
+            client_id: contacts[0].client_id || "",
+          }));
+        }
+      }
+    } catch (error) {
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: `${error instanceof Error ? error.message : String(error)}`,
+      });
+    } finally {
+      await handleSave();
+    }
   };
 
   const closeModal = (): void => {
@@ -345,7 +424,7 @@ export default function AddSellOrderForm({
         title={modalState.title} 
         message={modalState.message}
       />
-      <div className="p-4 rounded-lg shadow-lg w-full mx-auto bg-white">
+      <div className="p-4 rounded-lg shadow-lg w-full mx-auto bg-white dark:bg-zinc-800">
         <h1 className="text-xl font-semibold mb-4">เพิ่มรายการขาย</h1>
         <form onSubmit={handleFormSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -359,7 +438,7 @@ export default function AddSellOrderForm({
                 value={'สินค้าขายออก'} 
                 disabled={true} 
                 onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm" 
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
               <label className="block mb-1 text-sm">รายการ*</label> 
               <input 
@@ -368,14 +447,14 @@ export default function AddSellOrderForm({
                 placeholder="รหัสรายการ" 
                 value={orderState.transaction_id} 
                 onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm" 
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
               <label className="block mb-1 text-sm">ช่องทางการขาย</label> 
               <select
                 name="sell_method"
                 value={orderState.sell_method}
                 onChange={handleChange}
-                className="w-full border p-2 rounded-md mb-2 text-sm"
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
               >
                 <option value="">เลือกช่องทางการขาย</option>
                 <option value="STORE">ร้านค้า</option>
@@ -390,7 +469,7 @@ export default function AddSellOrderForm({
                 name="vat_type"
                 value={orderState.vat_type}
                 onChange={handleChange}
-                className="w-full border p-2 rounded-md mb-2 text-sm"
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
               >
                 <option value={VatType.VAT0}>รวมภาษีมูลค่าเพิ่ม 7%</option>
                 <option value={VatType.VAT7}>แยกภาษีมูลค่าเพิ่ม 7%</option>
@@ -399,17 +478,18 @@ export default function AddSellOrderForm({
             </div>
             <div>
               <h3 className="text-sm font-semibold mb-2">ข้อมูลลูกค้าจัดส่ง</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div className="relative">
                   <input 
                     type="text" 
                     name="client_name" 
-                    placeholder="ชื่อ" 
+                    placeholder="ชื่อ*" 
                     value={orderState.client_name} 
                     onChange={handleClientNameChange}
                     onClick={handleClientNameClick}  // Add onClick handler
-                    className="w-full border p-2 rounded-md mb-2 text-sm" 
+                    className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
                     autoComplete="off"
+                    required
                   /> 
                     <div ref={(node) => {
                     // Add click outside handler
@@ -429,11 +509,11 @@ export default function AddSellOrderForm({
                     };
                     }}>
                     {showSuggestions && contactSuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto dark:bg-zinc-800">
                       {contactSuggestions.map((contact) => (
                         <div
                         key={contact.id}
-                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        className="p-2 hover:bg-gray-100 cursor-pointer dark:hover:bg-zinc-700"
                         onClick={() => handleContactSelect(contact)}
                         >
                         <div className="font-semibold">{contact.name}</div>
@@ -450,8 +530,21 @@ export default function AddSellOrderForm({
                   placeholder="รหัสลูกค้า" 
                   value={orderState.client_id} 
                   onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-2 text-sm" 
+                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
+                  disabled={true}
                 />
+                <button
+                  type="button"
+                  className={`w-fit h-fit p-2 text-sm rounded-md text-white ${
+                    isCreateContactDisabled
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-black hover:bg-gray-800"
+                  } transition`}
+                  disabled={isCreateContactDisabled}
+                  onClick={handleSaveContact}
+                >
+                  เพิ่มลูกค้า
+                </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <input 
@@ -460,7 +553,7 @@ export default function AddSellOrderForm({
                   placeholder="เบอร์โทร" 
                   value={orderState.client_tel} 
                   onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-2 text-sm" 
+                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
                 />
                 <input 
                   type="text" 
@@ -468,7 +561,7 @@ export default function AddSellOrderForm({
                   placeholder="อีเมล" 
                   value={orderState.client_email} 
                   onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-2 text-sm" 
+                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
                 />
               </div>
               <input 
@@ -477,7 +570,7 @@ export default function AddSellOrderForm({
                 placeholder="ที่อยู่" 
                 value={orderState.client_address} 
                 onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm" 
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
               <label className="block mb-1 text-sm">เลขประจำตัวผู้เสียภาษี</label>
               <input 
@@ -486,7 +579,7 @@ export default function AddSellOrderForm({
                 placeholder="เลขประจำตัวผู้เสียภาษี" 
                 value={orderState.tax_id} 
                 onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm" 
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
               <label className="block mb-1 text-sm">ชื่อสาขา</label>
               <input 
@@ -495,7 +588,7 @@ export default function AddSellOrderForm({
                 placeholder="ชื่อสาขา" 
                 value={orderState.branch_name} 
                 onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm" 
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
               <label className="block mb-1 text-sm">รหัสสาขา</label>
               <input 
@@ -504,7 +597,7 @@ export default function AddSellOrderForm({
                 placeholder="รหัสสาขา" 
                 value={orderState.branch_id} 
                 onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm" 
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
             </div>
           </div>
@@ -525,7 +618,7 @@ export default function AddSellOrderForm({
                 name="shipping_method"
                 value={orderState.shipping_method}
                 onChange={handleChange}
-                className="w-full border p-2 rounded-md mb-2 text-sm"
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
               >
                 <option value={DeliveryType.PICKUP}>หน้าร้าน</option>
                 <option value={DeliveryType.SHIPPING}>ไปรษณีย์</option>
@@ -537,7 +630,7 @@ export default function AddSellOrderForm({
                 placeholder="หมายเหตุ" 
                 value={orderState.notes} 
                 onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm" 
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
               </div>
               <div className="mb-4">
@@ -546,7 +639,7 @@ export default function AddSellOrderForm({
                   name="warehouse" 
                   value={orderState.warehouse} 
                   onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-4 text-sm"
+                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
                 >
                   <option value="" disabled>เลือกคลังสินค้า</option>
                   {warehouses.map((warehouse) => (
@@ -564,7 +657,7 @@ export default function AddSellOrderForm({
                 placeholder="ค่าส่ง" 
                 value={orderState.shipping_cost} 
                 onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm" 
+                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
               </div>
             </div>

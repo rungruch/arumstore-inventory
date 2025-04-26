@@ -158,7 +158,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
       style={{ backgroundColor: "#00000066" }}
       className="fixed inset-0 flex items-center justify-center z-50"
     >
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4 sm:mx-6 sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4 sm:mx-6 sm:max-w-lg max-h-[90vh] overflow-y-auto dark:bg-zinc-800">
         <h2 className="text-lg font-semibold mb-4 text-center">เพิ่มผู้ติดต่อ</h2>
 
         <form onSubmit={handleFormSubmit}>
@@ -168,7 +168,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
               <h3 className="font-medium mb-2">ข้อมูลพื้นฐาน</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">ชื่อ *</label>
                   <input
                     type="text"
                     name="name"
@@ -189,7 +189,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
               <h3 className="font-medium mb-2">ข้อมูลภาษี</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">เลขประจำตัวผู้เสียภาษี</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">เลขประจำตัวผู้เสียภาษี</label>
                   <input
                     type="text"
                     name="tax_reference.tax_id"
@@ -200,7 +200,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อสาขา</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">ชื่อสาขา</label>
                   <input
                     type="text"
                     name="tax_reference.branch_name"
@@ -211,7 +211,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">เลขที่สาขา</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">เลขที่สาขา</label>
                   <input
                     type="text"
                     name="tax_reference.branch_number"
@@ -229,7 +229,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
               <h3 className="font-medium mb-2">ข้อมูลการติดต่อ</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ผู้ติดต่อ</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">ผู้ติดต่อ</label>
                   <input
                     type="text"
                     name="contact_info.name"
@@ -241,7 +241,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">เบอร์มือถือ</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">เบอร์มือถือ</label>
                     <input
                       type="tel"
                       name="contact_info.phone"
@@ -252,7 +252,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">เบอร์บ้าน</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">เบอร์บ้าน</label>
                     <input
                       type="tel"
                       name="contact_info.home_phone"
@@ -265,7 +265,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">อีเมล</label>
                     <input
                       type="email"
                       name="contact_info.email"
@@ -276,7 +276,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">แฟกซ์</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">แฟกซ์</label>
                     <input
                       type="tel"
                       name="contact_info.fax"
@@ -296,7 +296,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">Facebook</label>
                     <input
                       type="text"
                       name="social_media.facebook"
@@ -307,7 +307,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Line</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">Line</label>
                     <input
                       type="text"
                       name="social_media.line"
@@ -318,7 +318,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">Instagram</label>
                     <input
                       type="text"
                       name="social_media.instagram"
@@ -337,7 +337,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
               <h3 className="font-medium mb-2">ข้อมูลเพิ่มเติม</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">ที่อยู่</label>
                   <textarea
                     name="address"
                     className="w-full border border-gray-300 p-2 rounded-md"
@@ -348,7 +348,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">กลุ่ม</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">กลุ่ม</label>
                   <input
                     type="text"
                     name="group"
@@ -359,7 +359,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">หมายเหตุ</label>
                   <textarea
                     name="notes"
                     className="w-full border border-gray-300 p-2 rounded-md"
@@ -383,7 +383,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
             <button
               type="button"
               onClick={handleClose}
-              className="bg-gray-300 py-2 px-4 rounded-md hover:bg-gray-400 transition"
+              className="bg-gray-300 py-2 px-4 rounded-md hover:bg-gray-400 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition-all"
             >
               ยกเลิก
             </button>

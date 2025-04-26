@@ -86,7 +86,7 @@ export default function ShippingDetailsForm({
         shipping_date: new Date(shippingDate),
         shipping_method: shippingMethod,
         recipient_name: recipientName,
-        tracking_number: trackingNumber || undefined,
+        tracking_number: trackingNumber || "",
         image: uploaded || "",
       });
 
@@ -127,8 +127,8 @@ export default function ShippingDetailsForm({
     <div 
     style={{ backgroundColor: "#00000066" }}
     className="fixed inset-0 flex justify-center items-center z-50">
-      <div ref={modalRef} className="bg-white p-6 rounded-lg w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4 top-0 bg-white">แก้ไขข้อมูลการจัดส่ง</h2>
+      <div ref={modalRef} className="bg-white p-6 rounded-lg w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto dark:bg-zinc-800">
+        <h2 className="text-xl font-bold mb-4 top-0">แก้ไขข้อมูลการจัดส่ง</h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -145,7 +145,7 @@ export default function ShippingDetailsForm({
               value={transactionId}
               disabled
               required 
-              className="w-full p-2 border rounded bg-gray-100 text-gray-500 cursor-not-allowed"
+              className="w-full p-2 border rounded bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-zinc-600"
               placeholder="ข้อมูลตัวอย่าง 6"
             />
           </div>    
@@ -158,20 +158,20 @@ export default function ShippingDetailsForm({
               value={shippingDate}
               onChange={(e) => setShippingDate(e.target.value)}
               required 
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded dark:border-gray-300"
             />
           </div>
           
           <div>
-            <label htmlFor="shipping_method" className="block mb-2">ช่องทางจัดส่ง</label>
+            <label htmlFor="shipping_method" className="block mb-2">ช่องทางจัดส่ง*</label>
             <select 
               id="shipping_method" 
               value={shippingMethod}
               onChange={(e) => setShippingMethod(e.target.value)}
               required 
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded dark:border-gray-300"
             >
-              <option value="">เลือกช่องทางจัดส่ง</option>
+              <option value="">เลือกช่องทางจัดส่ง*</option>
               <option value="Kerry">Kerry</option>
               <option value="Thailand Post">Thailand Post</option>
               <option value="Flash Express">Flash Express</option>
@@ -181,32 +181,30 @@ export default function ShippingDetailsForm({
           </div>
           
           <div>
-            <label htmlFor="recipient_name" className="block mb-2">ชื่อผู้รับ</label>
+            <label htmlFor="recipient_name" className="block mb-2">ชื่อผู้รับ*</label>
             <input 
               type="text" 
               id="recipient_name" 
               value={recipientName}
               onChange={(e) => setRecipientName(e.target.value)}
               required 
-              className="w-full p-2 border rounded"
-              placeholder="ข้อมูลตัวอย่าง 6"
+              className="w-full p-2 border rounded dark:border-gray-300"
             />
           </div>
           
           <div>
-            <label htmlFor="tracking_number" className="block mb-2">Tracking No.</label>
+            <label htmlFor="tracking_number" className="block mb-2">เลขพัสดุ</label>
             <input 
               type="text" 
               id="tracking_number" 
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
-              className="w-full p-2 border rounded"
-              placeholder="หากมี"
+              className="w-full p-2 border rounded dark:border-gray-300"
             />
           </div>
 
           <div className="mt-8">
-            <label className="block mb-2 font-bold text-gray-700">รูปสินค้า</label>
+            <label className="block mb-2 font-bold text-gray-700 dark:text-gray-400">รูปสินค้า</label>
 
             <div
                 className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition"
@@ -269,23 +267,23 @@ export default function ShippingDetailsForm({
             )}
         </div>
           
-          <div className="flex justify-end space-x-2 mt-4 bottom-0 bg-white py-4">
+          <div className="flex justify-end space-x-2 mt-4 bottom-0 py-4">
             <button 
               type="button" 
               onClick={onCancel} 
-              className="px-4 py-2 bg-gray-300 hover:bg-gray-200 text-gray-600 rounded"
-              disabled={isLoading}
+              className="px-4 py-2 bg-gray-300 hover:bg-gray-200 rounded dark:bg-zinc-700 dark:hover:bg-zinc-600 transition-all"
+              disabled={isLoading || imageUploading}
             >
               ยกเลิก
             </button>
             <button 
               type="submit" 
               className={`px-4 py-2 rounded ${
-                isLoading 
-                  ? 'bg-blue-300 cursor-not-allowed' 
+                isLoading || imageUploading
+                  ? 'bg-grey-400 cursor-not-allowed' 
                   : 'text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition'
               }`}
-              disabled={isLoading}
+              disabled={isLoading || imageUploading}
             >
               {isLoading ? 'กำลังบันทึก...' : 'บันทึก'}
             </button>

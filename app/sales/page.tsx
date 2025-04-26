@@ -392,6 +392,7 @@ export default function ProductPage() {
           <p><span className="font-semibold">มูลค่า:</span> {data.total_amount} บาท</p>
           <p><span className="font-semibold">หมายเหตุ:</span> {data.notes}</p>
           <div className="mt-2 border-t pt-2">
+          <p className="font-semibold">คลังสินค้า: {data.warehouse}</p>
             <p className="font-semibold">รายการสินค้า:</p>
             {data.items.map((item:any, idx:any) => (
                 <div key={idx} className="pl-2 mt-1 break-words">
@@ -483,7 +484,7 @@ export default function ProductPage() {
                     })}
                     {hoveredShipping === data.transaction_id && (
                       <div 
-                      className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 tooltip-container"
+                      className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 tooltip-container dark:bg-zinc-800"
                       style={{ 
                       transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
                       maxWidth: window.innerWidth <= 768 ? '90vw' : '350px',
@@ -492,7 +493,7 @@ export default function ProductPage() {
                       position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
                       }}
                       >
-                      <h3 className="font-bold text-gray-800 border-b pb-1 mb-2">รายละเอียดการจัดส่ง</h3>
+                      <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white">รายละเอียดการจัดส่ง</h3>
                       <div className="text-sm space-y-1">
                       <p><span className="font-semibold">วิธีการจัดส่ง:</span> {data.shipping_details.shipping_method}</p>
                       <p><span className="font-semibold">วันที่ส่ง:</span> {
@@ -516,7 +517,7 @@ export default function ProductPage() {
                       </div>
                     )}
                     </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 dark:text-zinc-300">
                     {data.shipping_details.shipping_method}
                   </div>
                 </div>

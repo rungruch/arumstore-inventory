@@ -241,19 +241,19 @@ import {
             title={modalState.title} 
             message={modalState.message}
         />
-            <div className="p-6 rounded-lg shadow-lg w-full mx-auto bg-white">
+            <div className="p-6 rounded-lg shadow-lg w-full mx-auto bg-white dark:bg-zinc-800">
                 <h1 className="text-2xl font-bold mb-4">เพิ่มสินค้า</h1>
                 <form onSubmit={handleFormSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block mb-2 font-bold">ชื่อสินค้า *</label>
-                            <input type="text" name="productName" placeholder="ชื่อสินค้า" value={productState.productName} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <input type="text" name="productName" placeholder="ชื่อสินค้า" value={productState.productName} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">หมวดหมู่</label>
                             <select 
                                 name="productCategory" 
                                 value={productState.productCategory} 
                                 onChange={handleChange} 
-                                className="w-full border p-2 rounded-md mb-4"
+                                className="w-full border p-2 rounded-md mb-4 dark:border-gray-700"
                             >
                             <option value="">เลือกหมวดหมู่</option>
                                 {categories.map((category: any) => (
@@ -261,23 +261,23 @@ import {
                                 ))}
                             </select>
                             <label className="block mb-2 font-bold">หน่วย *</label>
-                            <input type="text" name="unit" placeholder="หน่วย (ชิ้น, ตัว)" value={productState.unit} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <input type="text" name="unit" placeholder="หน่วย (ชิ้น, ตัว)" value={productState.unit} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">รหัสสินค้า</label>
-                            <input type="text" name="productCode" placeholder="รหัสสินค้า" value={productState.productCode} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <input type="text" name="productCode" placeholder="รหัสสินค้า" value={productState.productCode} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">บาร์โค้ด</label>
-                            <input type="text" name="qrBarcode" placeholder="รหัสคิวอาร์โค้ดและบาร์โค้ด" value={productState.qrBarcode} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <input type="text" name="qrBarcode" placeholder="รหัสคิวอาร์โค้ดและบาร์โค้ด" value={productState.qrBarcode} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">รายละเอียด</label>
-                            <input type="text" name="description" placeholder="รายละเอียด" value={productState.description} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <input type="text" name="description" placeholder="รายละเอียด" value={productState.description} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                         </div>
                         <div>
                             <label className="block mb-2 font-bold">ราคาขาย</label>
-                            <input type="number" name="sellingPrice" placeholder="ราคาขาย" min={0} value={productState.sellingPrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <input type="number" name="sellingPrice" placeholder="ราคาขาย" min={0} value={productState.sellingPrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">ราคาซื้อ</label>
-                            <input type="number" name="purchasePrice" placeholder="ราคาซื้อ" min={0} value={productState.purchasePrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                            <input type="number" name="purchasePrice" placeholder="ราคาซื้อ" min={0} value={productState.purchasePrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <div className="container mx-auto mt-8 max-w-[560px]">
                         </div>
                         <div className="mt-8 max-w-lg mx-auto">
-            <label className="block mb-2 font-bold text-gray-700">รูปสินค้า</label>
+            <label className="block mb-2 font-bold text-gray-700 dark:text-gray-400">รูปสินค้า</label>
 
             <div
                 className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition"
@@ -338,7 +338,7 @@ import {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block mb-2 font-bold">จำนวน</label>
-                                <input type="number" name="openingStock" placeholder="ยอดยกมา" min={0} value={productState.openingStock} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                                <input type="number" name="openingStock" placeholder="ยอดยกมา" min={0} value={productState.openingStock} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             </div>
                             <div>
                             <label className="block mb-2 font-bold">สินค้าเข้าที่</label>
@@ -346,7 +346,7 @@ import {
                                 name="warehouse" 
                                 value={productState.warehouse} 
                                 onChange={handleChange} 
-                                className="w-full border p-2 rounded-md mb-4"
+                                className="w-full border p-2 rounded-md mb-4 dark:border-gray-700"
                             >
                             <option value="" disabled>เลือกคลังสินค้า</option>
                                 {warehouses.map((warehouse: any) => (
@@ -361,14 +361,14 @@ import {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block mb-2 font-bold">น้ำหนัก (กิโลกรัม)</label>
-                                <input type="number" name="weight" placeholder="น้ำหนัก" min={0} value={productState.weight} onChange={handleChange} className="w-full border p-2 rounded-md mb-4" />
+                                <input type="number" name="weight" placeholder="น้ำหนัก" min={0} value={productState.weight} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             </div>
                             <div>
                                 <label className="block mb-2 font-bold">ขนาด (กว้างxยาวxสูง) (ซม.)</label>
                                 <div className="grid grid-cols-3 gap-2 mb-4">
-                                    <input type="number" name="width" placeholder="กว้าง" min={0} value={productState.width} onChange={handleChange} className="border p-2 rounded-md" />
-                                    <input type="number" name="length" placeholder="ยาว" min={0} value={productState.length} onChange={handleChange} className="border p-2 rounded-md" />
-                                    <input type="number" name="height" placeholder="สูง" min={0} value={productState.height} onChange={handleChange} className="border p-2 rounded-md" />
+                                    <input type="number" name="width" placeholder="กว้าง" min={0} value={productState.width} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
+                                    <input type="number" name="length" placeholder="ยาว" min={0} value={productState.length} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
+                                    <input type="number" name="height" placeholder="สูง" min={0} value={productState.height} onChange={handleChange} className="border p-2 rounded-md dark:border-gray-700" />
                                 </div>
                             </div>
                         </div>
