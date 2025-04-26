@@ -335,7 +335,7 @@ export default function ProductPage() {
                 </tr>
               }
               customRow={(data, index) => (
-                <tr key={data.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100">
+                <tr key={data.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                 <td className="p-2 w-[15%] whitespace-nowrap overflow-hidden text-ellipsis">
                   {data.created_date ? 
@@ -367,7 +367,7 @@ export default function ProductPage() {
     {data.transaction_id}
     {hoveredRow === data.transaction_id && (
       <div 
-        className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50"
+        className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 dark:bg-zinc-800"
         style={{ 
           top: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.y - 90}px`,
           left: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.x + 20}px`,
@@ -378,9 +378,9 @@ export default function ProductPage() {
           position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
         }}
       >
-        <h3 className="font-bold text-gray-800 border-b pb-1 mb-2">{data.transaction_id}</h3>
+        <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white">{data.transaction_id}</h3>
         <div className="text-sm space-y-1">
-          <p><span className="font-semibold">วันที่:</span> {data.created_date ? 
+          <p><span className="font-semibold dark:text-gray-200">วันที่:</span> {data.created_date ? 
             new Date(data.created_date.toDate()).toLocaleString('th-TH', {
               year: 'numeric',
               month: 'long',
@@ -524,11 +524,11 @@ export default function ProductPage() {
               ) : (
                 <button 
                   onClick={() => openShippingDetailsModal(data.transaction_id)}
-                  className="text-blue-900 hover:text-blue-600 flex items-center gap-1"
+                  className="text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 flex items-center gap-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                   </svg>
                   แก้ไข
                 </button>
@@ -566,7 +566,7 @@ export default function ProductPage() {
           }
         }
       }}
-      className="flex items-center text-blue-900 hover:text-blue-600 whitespace-nowrap text-sm"
+      className="flex items-center text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 whitespace-nowrap text-sm"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="6 9 6 2 18 2 18 9"></polyline>
@@ -580,28 +580,28 @@ export default function ProductPage() {
     
     <div 
       id={`print-dropdown-${data.transaction_id}`} 
-      className="absolute hidden z-10 right-0 mt-2 w-56 bg-white shadow-lg rounded-md border border-gray-200"
+      className="absolute hidden z-10 right-0 mt-2 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
     >
       <div className="py-1">
-        <Link href={`/documents/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <Link href={`/documents/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
           พิมพ์เอกสาร
         </Link>
-        <Link href={`/documents/invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" target="_blank" rel="noopener noreferrer">
+        <Link href={`/documents/invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
           พิมพ์ใบกำกับภาษี/ใบเสร็จรับเงิน
         </Link>
-        <Link href={`/documents/quotation-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" target="_blank" rel="noopener noreferrer">
+        <Link href={`/documents/quotation-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
           พิมพ์ใบเสนอราคา
         </Link>
-        <Link href={`/documents/simplify-invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" target="_blank" rel="noopener noreferrer">
+        <Link href={`/documents/simplify-invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
           พิมพ์ใบแจ้งหนี้
         </Link>
-        <Link href={`/documents/shipping-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" target="_blank" rel="noopener noreferrer">
+        <Link href={`/documents/shipping-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
           พิมพ์ใบส่งสินค้า
         </Link>
-        <Link href={`/documents/delivery?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <Link href={`/documents/delivery?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
           พิมพ์ใบหน้าจ่าหมาย/กล่อง
         </Link>
-        <Link href={`/documents/label?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <Link href={`/documents/label?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
           พิมพ์ฉลากจัดส่ง
         </Link>
       </div>
@@ -617,7 +617,7 @@ export default function ProductPage() {
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
         <div className="flex items-center space-x-2">
-          <span className="text-gray-700">แถว/หน้า:</span>
+          <span className="text-gray-700 dark:text-white">แถว/หน้า:</span>
           <select
             value={pageSize}
             onChange={handlePageSizeChange}
@@ -636,18 +636,18 @@ export default function ProductPage() {
             onClick={handlePrevPage}
             disabled={currentPage === 1 || search.trim() !== ""}
             className={`px-3 py-2 rounded-md transition ${currentPage === 1 || search.trim() !== ""
-                ? "bg-gray-300 cursor-not-allowed"
+                ? "bg-gray-300 dark:bg-zinc-700 cursor-not-allowed"
                 : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
           >
             <ChevronLeft size={16} className="inline-block" />
           </button>
-          <span className="py-2 text-gray-700">{currentPage} / {totalPages}</span>
+          <span className="py-2 text-gray-700 dark:text-white">{currentPage} / {totalPages}</span>
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages || !lastDoc || search.trim() !== ""}
             className={`px-3 py-2 rounded-md transition ${currentPage === totalPages || !lastDoc || search.trim() !== ""
-                ? "bg-gray-300 cursor-not-allowed"
+                ? "bg-gray-300 dark:bg-zinc-700 cursor-not-allowed"
                 : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
           >

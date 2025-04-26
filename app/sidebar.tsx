@@ -17,7 +17,7 @@ const menuItems: MenuItem[] = [
     title: "Dashboard",
     icon: <FaChartBar />,
     subMenu: [
-      { title: "ภาพรวม", path: "/dashboard" },
+      { title: "ภาพรวม", path: "/dashboard"},
       { title: "ยอดขาย", path: "/dashboard/sales" },
       { title: "ยอดซื้อ", path: "/dashboard/purchases" },
       { title: "สินค้า", path: "/dashboard/products" },
