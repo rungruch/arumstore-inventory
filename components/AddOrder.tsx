@@ -171,7 +171,7 @@ export default function AddSellOrderForm({
           warehouse: transactionData.warehouse || "",
           shipping_method: transactionData.shipping_method || "",
           notes: transactionData.notes || "",
-          shipping_cost: transactionData.shipping_cost || 0
+          shipping_cost: Number(transactionData.shipping_cost) || 0
         }));
         let transformedItemData = await transformItemData(transactionData.items);
         setProducts(transformedItemData)
@@ -369,6 +369,7 @@ export default function AddSellOrderForm({
 
     const formattedTransactionData: FormattedOrderData = {
         ...orderState,
+        shipping_cost: Number(orderState.shipping_cost),
         status: "PENDING",
         items: orderItems.filter(item => item.id !== '').map(item => ({
             name: item.product_name,
@@ -391,7 +392,6 @@ export default function AddSellOrderForm({
         created_date: Timestamp.now(),
         updated_date: Timestamp.now(),
       };
-
 
       await createSellTransactionWithStockDeduction(formattedTransactionData);
 

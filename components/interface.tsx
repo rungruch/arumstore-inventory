@@ -128,7 +128,7 @@ export interface StoreInfo {
     tax_id: string;
     client_name: string;
     branch_id: string;
-    shipping_cost: string;
+    shipping_cost: number;
     total_vat: number;
     sell_method: string;
     updated_by: string;
@@ -160,9 +160,9 @@ export interface StoreInfo {
     'ชื่อ': string;
     'วันที่': string;
     'เลขที่ผู้เสียภาษี': string;
-    'ค่าส่ง': string;
-    'ยอดรวม': string;
-    'ภาษีมูลค่าเพิ่ม': string;
-    'ยอดสุทธิ': string;
+    'ค่าส่ง':  number | { f: string };
+    'ยอดรวม': number | { f: string };
+    'ภาษีมูลค่าเพิ่ม': number | { f: string };
+    'ยอดสุทธิ': number | { f: string };
     'สถานะ': string;
   }

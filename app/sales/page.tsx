@@ -1,6 +1,6 @@
 "use client";
 
-import { getSellTransactionPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus, getAllSellTransactions } from "@/app/firebase/firestore";
+import { getSellTransactionPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus, getSellTransactionsByDate } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -11,7 +11,7 @@ import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS, OrderStatusFilter 
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ShippingDetailsForm from "@/components/AddShippingDetail";
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 import { newTransaction, ExcelExportRow } from '@/components/interface';
 
 
@@ -50,6 +50,10 @@ export default function ProductPage() {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>(OrderStatusFilter.ALL);
   const [hoveredShipping, setHoveredShipping] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(),
+    endDate: new Date()
+  });
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -62,6 +66,7 @@ export default function ProductPage() {
           setDatas(data);
           setLastDoc(lastDoc);
           setTotalData(count);
+          setShowPopup(false);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -240,9 +245,11 @@ export default function ProductPage() {
   const handleExportToExcel = async () => {
     try {
       setLoading(true);
-      const allTransactions:any = await getAllSellTransactions();
-      console.log(allTransactions)
-    
+      // Use the selected date range instead of hardcoded dates
+      const allTransactions = await getSellTransactionsByDate(
+        dateRange.startDate,
+        dateRange.endDate
+      );
 
       const excelData: ExcelExportRow[] = (allTransactions as newTransaction[]).map((transaction, idx) => ({
         'ลำดับ': (idx + 1).toString(),
@@ -250,36 +257,75 @@ export default function ProductPage() {
         'ชื่อ': transaction.client_name,
         'วันที่': transaction.created_date
           ? new Date(transaction.created_date.toDate()).toLocaleDateString('th-TH', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        })
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            })
           : '-',
         'เลขที่ผู้เสียภาษี': transaction.tax_id,
-        'ค่าส่ง': transaction.shipping_cost !== undefined && transaction.shipping_cost !== null
-          ? Number(transaction.shipping_cost).toFixed(2)
-          : '',
-        'ยอดรวม': transaction.total_amount_no_vat !== undefined && transaction.total_amount_no_vat !== null
-          ? Number(transaction.total_amount_no_vat).toFixed(2)
-          : '',
-        'ภาษีมูลค่าเพิ่ม': transaction.total_vat !== undefined && transaction.total_vat !== null
-          ? Number(transaction.total_vat).toFixed(2)
-          : '',
-        'ยอดสุทธิ': transaction.total_amount !== undefined && transaction.total_amount !== null
-          ? Number(transaction.total_amount).toFixed(2)
-          : '',
+        'ค่าส่ง': Number(transaction.shipping_cost.toFixed(2)),
+        'ยอดรวม': Number(transaction.total_amount_no_vat.toFixed(2)),
+        'ภาษีมูลค่าเพิ่ม': Number(transaction.total_vat.toFixed(2)),
+        'ยอดสุทธิ': Number(transaction.total_amount.toFixed(2)),
         'สถานะ': OrderStatusDisplay[transaction.status as keyof typeof OrderStatusDisplay] || transaction.status
       }));
 
+      // Create worksheet from data
       const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Add a summary row with Excel SUM formula for 'ยอดสุทธิ'
+      const totalRows = excelData.length + 1; // +1 for header row
+
+      excelData.push({
+        'ลำดับ': '',
+        'รหัสรายการ': '',
+        'ชื่อ': 'รวมทั้งหมด',
+        'วันที่': '',
+        'เลขที่ผู้เสียภาษี': '',
+        'ค่าส่ง': { f: `SUM(F3:F${totalRows + 1})` },
+        'ยอดรวม': { f: `SUM(G3:G${totalRows + 1})` },
+        'ภาษีมูลค่าเพิ่ม': { f: `SUM(H3:H${totalRows + 1})`},
+        'ยอดสุทธิ': { f: `SUM(I3:I${totalRows + 1})` },
+        'สถานะ': ''
+      });
+
+      // Move the table data below
+      XLSX.utils.sheet_add_json(ws, excelData, { origin: "A2", skipHeader: false });  
+
+      // add header and merge
+      ws['A1'] = {
+        t: 's',
+        v: `รายการขายระหว่าง ${dateRange.startDate.toLocaleDateString('th-TH')} ถึง ${dateRange.endDate.toLocaleDateString('th-TH')}`,
+        s: {
+          font: { bold: true, sz: 11 },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } }
+        }
+      };
+      ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: Object.keys(excelData[0] || {}).length - 1} }];
+ 
+        const colWidths = [
+          { wch: 5 },
+          { wch: 15 },
+          { wch: 60 },
+          { wch: 10 }, 
+          { wch: 30 },  
+          { wch: 10 },  
+          { wch: 15 }, 
+          { wch: 15 },  
+          { wch: 15 }, 
+          { wch: 20 }, 
+        ];
+        ws['!cols'] = colWidths;
+
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Sales");
+      XLSX.utils.book_append_sheet(wb, ws, "รายการขาย");
 
       // Generate filename with current date
-      const fileName = `sales_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const fileName = `รายงานยอดขาย_${dateRange.startDate.toLocaleDateString('th-TH')}_${dateRange.endDate.toLocaleDateString('th-TH')}.xlsx`;
 
       // Save file
-     XLSX.writeFile(wb, fileName);
+      XLSX.writeFile(wb, fileName);
     } catch (error) {
       console.error("Error exporting to Excel:", error);
       setModalState({
@@ -323,55 +369,89 @@ export default function ProductPage() {
         />
       )}
     <div className="container mx-auto p-5">
-      <div className="flex flex-col items-start mb-4">
-        <h1 className="text-2xl font-bold">รายการขาย</h1>
-        <h2 className="text-1xl font-semibold text-gray-700 dark:text-gray-200">จำนวน {totaAllData} รายการ</h2>
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">รายการขาย</h1>
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+        จำนวน {totaAllData} รายการ
+          </h2>
+        </div>
+        <button
+          onClick={togglePopup}
+          className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full sm:w-auto"
+        >
+          เพิ่มรายการขาย
+        </button>
       </div>
-      {/* Search and Add */}
+
+      {/* Status Filter Buttons */}
       <div className="flex flex-wrap gap-2 mb-4">
         {statusButtons.map(({ value, label }) => (
-            <button
-            key={value}
-            onClick={() => handleStatusFilterChange(value)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              statusFilter === value 
-              ? "bg-gray-900 text-white" 
-              : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-            }`}
-            >
-            {label}{statusFilter === value ? ` (${totalData})` : ''}
-            </button>
+          <button
+        key={value}
+        onClick={() => handleStatusFilterChange(value)}
+        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          statusFilter === value
+            ? "bg-gray-900 text-white"
+            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+        }`}
+          >
+        {label}
+        {statusFilter === value ? ` (${totalData})` : ""}
+          </button>
         ))}
       </div>
 
-      <div className="flex justify-between items-center mb-4">
+      {/* Search, Date Range, Export */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
         <input
           type="text"
           placeholder="ค้นหาโดยชื่อลูกค้า"
-          className="border p-2 rounded-md w-1/3"
+          className="border p-2 rounded-md w-full md:w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleSearch();
-            }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleSearch();
+        }
           }}
         />
-        <div className="flex gap-2">
-          <button
-            onClick={handleExportToExcel}
-            disabled={loading}
-            className="text-white py-2 px-4 rounded-md bg-green-600 hover:bg-green-700 transition disabled:bg-gray-400"
-          >
-            {loading ? 'กำลังส่งออก...' : 'ส่งออก Excel'}
-          </button>
-          <button
-            onClick={togglePopup}
-            className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
-          >
-            เพิ่มรายการขาย
-          </button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full">
+        <input
+          type="date"
+          value={dateRange.startDate.toISOString().split("T")[0]}
+          onChange={(e) =>
+            setDateRange((prev) => ({
+          ...prev,
+          startDate: new Date(e.target.value),
+            }))
+          }
+          className="border rounded-md p-2 w-full sm:w-auto"
+        />
+        <span className="hidden sm:inline">ถึง</span>
+        <span className="sm:hidden">-</span>
+        <input
+          type="date"
+          value={dateRange.endDate.toISOString().split("T")[0]}
+          onChange={(e) =>
+            setDateRange((prev) => ({
+          ...prev,
+          endDate: new Date(e.target.value),
+            }))
+          }
+          className="border rounded-md p-2 w-full sm:w-auto"
+        />
+        <button
+          onClick={handleExportToExcel}
+          disabled={loading}
+          className="text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full disabled:bg-gray-400 w-full sm:w-auto"
+        >
+          {loading ? "กำลังส่งออก..." : "ส่งออก Excel"}
+        </button>
+          </div>
         </div>
       </div>
 
@@ -632,26 +712,30 @@ export default function ProductPage() {
           }
         }
       }}
-      className="flex items-center text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 whitespace-nowrap text-sm"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-        <rect x="6" y="14" width="12" height="8"></rect>
-      </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="6 9 12 15 18 9"></polyline>
+      className="flex items-center text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 whitespace-nowrap text-sm hover:bg-gray-300 dark:hover:bg-zinc-700 rounded transition-colors duration-200"
+        >
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="5" r="1.5" fill="currentColor"/>
+        <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+        <circle cx="12" cy="19" r="1.5" fill="currentColor"/>
       </svg>
     </button>
     
     <div 
       id={`print-dropdown-${data.transaction_id}`} 
-      className="absolute hidden z-10 right-0 mt-2 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
+      className="fixed hidden z-50 right-4 mt-2 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
+      style={{
+        top: 'auto',
+        bottom: 'auto',
+        maxHeight: '80vh',
+        overflowY: 'auto'
+      }}
     >
       <div className="py-1">
-      <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+       <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
           สร้างรายการซ้ำ
         </Link>
+        <div className="border-t border-gray-200 my-1" />
         <Link href={`/documents/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
           พิมพ์เอกสาร
         </Link>

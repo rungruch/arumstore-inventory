@@ -37,6 +37,7 @@ export default function ProductPage() {
         } else {
           console.error("Invalid data returned from getProductPaginated");
         }
+        setShowPopup(false);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {

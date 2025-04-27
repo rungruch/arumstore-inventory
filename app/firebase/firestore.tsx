@@ -1011,21 +1011,27 @@ export async function getAllContacts() {
   }
 }
 
-export async function getAllSellTransactions() {
+export async function getSellTransactionsByDate(startDate: Date, endDate: Date) {
+  startDate.setHours(0, 0, 0, 0)
+  endDate.setHours(23, 59, 59, 999)
   try {
     const q = query(
       collection(db, "transactions"),
       where("transaction_type", "==", TransactionType.SELL),
+      where("status", "!=", OrderStatus.CANCELLED),
+      where("created_date", ">=", startDate),
+      where("created_date", "<", endDate),
+      orderBy("status"),
       orderBy("created_date", "desc")
     );
-    
+
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     }));
   } catch (error) {
-    console.error("Error fetching all sell transactions:", error);
+    console.error("Error fetching sell transactions by date:", error);
     return [];
   }
 }
