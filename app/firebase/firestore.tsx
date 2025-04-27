@@ -1010,3 +1010,22 @@ export async function getAllContacts() {
     return [];
   }
 }
+
+export async function getAllSellTransactions() {
+  try {
+    const q = query(
+      collection(db, "transactions"),
+      where("transaction_type", "==", TransactionType.SELL),
+      orderBy("created_date", "desc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching all sell transactions:", error);
+    return [];
+  }
+}

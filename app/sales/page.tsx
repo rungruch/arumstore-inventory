@@ -1,6 +1,6 @@
 "use client";
 
-import { getSellTransactionPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus } from "@/app/firebase/firestore";
+import { getSellTransactionPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus, getAllSellTransactions } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -11,6 +11,8 @@ import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS, OrderStatusFilter 
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ShippingDetailsForm from "@/components/AddShippingDetail";
+import * as XLSX from 'xlsx';
+import { newTransaction, ExcelExportRow } from '@/components/interface';
 
 
 interface ModalState {
@@ -235,6 +237,61 @@ export default function ProductPage() {
     { value: OrderStatusFilter.CANCELLED, label: OrderStatusDisplay.CANCELLED },
   ];
 
+  const handleExportToExcel = async () => {
+    try {
+      setLoading(true);
+      const allTransactions:any = await getAllSellTransactions();
+      console.log(allTransactions)
+    
+
+      const excelData: ExcelExportRow[] = (allTransactions as newTransaction[]).map((transaction, idx) => ({
+        'ลำดับ': (idx + 1).toString(),
+        'รหัสรายการ': transaction.transaction_id,
+        'ชื่อ': transaction.client_name,
+        'วันที่': transaction.created_date
+          ? new Date(transaction.created_date.toDate()).toLocaleDateString('th-TH', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+          : '-',
+        'เลขที่ผู้เสียภาษี': transaction.tax_id,
+        'ค่าส่ง': transaction.shipping_cost !== undefined && transaction.shipping_cost !== null
+          ? Number(transaction.shipping_cost).toFixed(2)
+          : '',
+        'ยอดรวม': transaction.total_amount_no_vat !== undefined && transaction.total_amount_no_vat !== null
+          ? Number(transaction.total_amount_no_vat).toFixed(2)
+          : '',
+        'ภาษีมูลค่าเพิ่ม': transaction.total_vat !== undefined && transaction.total_vat !== null
+          ? Number(transaction.total_vat).toFixed(2)
+          : '',
+        'ยอดสุทธิ': transaction.total_amount !== undefined && transaction.total_amount !== null
+          ? Number(transaction.total_amount).toFixed(2)
+          : '',
+        'สถานะ': OrderStatusDisplay[transaction.status as keyof typeof OrderStatusDisplay] || transaction.status
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sales");
+
+      // Generate filename with current date
+      const fileName = `sales_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      // Save file
+     XLSX.writeFile(wb, fileName);
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: "เกิดข้อผิดพลาดในการส่งออกข้อมูล"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
     <Modal 
@@ -301,13 +358,22 @@ export default function ProductPage() {
             }
           }}
         />
-        <button
-          onClick={togglePopup}
-          className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
-        >
-          เพิ่มรายการขาย
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportToExcel}
+            disabled={loading}
+            className="text-white py-2 px-4 rounded-md bg-green-600 hover:bg-green-700 transition disabled:bg-gray-400"
+          >
+            {loading ? 'กำลังส่งออก...' : 'ส่งออก Excel'}
+          </button>
+          <button
+            onClick={togglePopup}
+            className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
+          >
+            เพิ่มรายการขาย
+          </button>
         </div>
+      </div>
 
       {/* Data Table with Loading State */}
       {loading ? (

@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface StoreInfo {
     name: string;
     branch_name: string;
@@ -106,4 +108,61 @@ export interface StoreInfo {
     total_vat?: number;
     shipping_cost?: number;
     payment_method?: string;
+  }
+
+  export interface newTransactionItem {
+    initial_quantity: number;
+    subtotal: number;
+    price: number;
+    quantity: number;
+    unit_type: string;
+    warehouse_id: string;
+    sku: string;
+    name: string;
+    discount?: number;
+  }
+  
+  export interface newTransaction {
+    id?: string;
+    notes: string;
+    tax_id: string;
+    client_name: string;
+    branch_id: string;
+    shipping_cost: string;
+    total_vat: number;
+    sell_method: string;
+    updated_by: string;
+    total_amount: number;
+    payment_method: string;
+    warehouse: string;
+    client_address: string;
+    shipping_method: string;
+    client_id: string;
+    vat_type: string;
+    status: string;
+    created_date: Timestamp;
+    payment_status: string;
+    client_description: string;
+    transaction_id: string;
+    client_email: string;
+    transaction_type: string;
+    created_by: string;
+    branch_name: string;
+    client_tel: string;
+    items: newTransactionItem[];
+    total_amount_no_vat: number;
+    updated_date: Timestamp;
+  }
+
+  export interface ExcelExportRow {
+    'ลำดับ': string;
+    'รหัสรายการ': string;
+    'ชื่อ': string;
+    'วันที่': string;
+    'เลขที่ผู้เสียภาษี': string;
+    'ค่าส่ง': string;
+    'ยอดรวม': string;
+    'ภาษีมูลค่าเพิ่ม': string;
+    'ยอดสุทธิ': string;
+    'สถานะ': string;
   }
