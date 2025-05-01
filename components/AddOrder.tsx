@@ -362,6 +362,17 @@ export default function AddSellOrderForm({
       return;
     }
 
+    // Validation for total calculation
+    const shippingCost = Number(orderState.shipping_cost);
+    if (Math.abs((shippingCost + totalOrderAmountNoVat + totalVatAmount) - totalOrderAmount) > 1) {
+      setValidationError("ยอดรวมไม่ถูกต้อง กรุณาลองอีกครั้ง");
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: "ยอดรวมไม่ถูกต้อง กรุณาลองอีกครั้ง",
+      });
+      return;
+    }
 
     try {
       setIsSubmitting(true);

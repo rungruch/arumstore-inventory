@@ -419,38 +419,40 @@ export default function ProductPage() {
           }}
         />
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-          <div className="flex items-center gap-2 w-full">
-        <input
+          <div className="flex flex-col xs:flex-row items-center gap-2 w-full">
+            <div className="flex items-center gap-2 w-full">
+              <input
           type="date"
           value={dateRange.startDate.toISOString().split("T")[0]}
           onChange={(e) =>
             setDateRange((prev) => ({
-          ...prev,
-          startDate: new Date(e.target.value),
+              ...prev,
+              startDate: new Date(e.target.value),
             }))
           }
-          className="border rounded-md p-2 w-full sm:w-auto"
-        />
-        <span className="hidden sm:inline">ถึง</span>
-        <span className="sm:hidden">-</span>
-        <input
+          className="border rounded-md p-2 w-full"
+              />
+              <span className="hidden xs:inline">ถึง</span>
+              <span className="xs:hidden">-</span>
+              <input
           type="date"
           value={dateRange.endDate.toISOString().split("T")[0]}
           onChange={(e) =>
             setDateRange((prev) => ({
-          ...prev,
-          endDate: new Date(e.target.value),
+              ...prev,
+              endDate: new Date(e.target.value),
             }))
           }
-          className="border rounded-md p-2 w-full sm:w-auto"
-        />
-        <button
-          onClick={handleExportToExcel}
-          disabled={loading}
-          className="text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full disabled:bg-gray-400 w-full sm:w-auto"
-        >
-          {loading ? "กำลังส่งออก..." : "ส่งออก Excel"}
-        </button>
+          className="border rounded-md p-2 w-full"
+              />
+            </div>
+            <button
+              onClick={handleExportToExcel}
+              disabled={loading}
+              className="text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition disabled:bg-gray-400 w-full xs:w-auto"
+            >
+              {loading ? "กำลังส่งออก..." : "ส่งออกรายการ"}
+            </button>
           </div>
         </div>
       </div>
@@ -680,17 +682,17 @@ export default function ProductPage() {
                 </button>
               )}
             </td>
-            <td className="p-2 w-[5%] relative">
+<td className="p-2 w-[5%] relative">
   <div className="relative inline-block">
     <button 
       onClick={(e) => {
         e.stopPropagation(); // Prevent event from bubbling up
         // Toggle dropdown visibility
-        const dropdown = document.getElementById(`print-dropdown-${data.transaction_id}`);
+        const dropdown = document.getElementById(`more-dropdown-${data.transaction_id}`);
         
         // Close all other dropdowns first
-        document.querySelectorAll('[id^="print-dropdown-"]').forEach(el => {
-          if (el.id !== `print-dropdown-${data.transaction_id}`) {
+        document.querySelectorAll('[id^="more-dropdown-"]').forEach(el => {
+          if (el.id !== `more-dropdown-${data.transaction_id}`) {
             el.classList.add('hidden');
           }
         });
@@ -698,11 +700,32 @@ export default function ProductPage() {
         if (dropdown) {
           dropdown.classList.toggle('hidden');
           
-          // Add click event listener to document to close dropdown when clicking outside
+          // Position the dropdown relative to the button
           if (!dropdown.classList.contains('hidden')) {
+            const button = e.currentTarget;
+            const rect = button.getBoundingClientRect();
+            const scrollY = window.scrollY || document.documentElement.scrollTop;
+            const scrollX = window.scrollX || document.documentElement.scrollLeft;
+            
+            // Calculate position - default to right-aligned
+            let topPosition = rect.bottom + scrollY;
+            let leftPosition = rect.right + scrollX - dropdown.offsetWidth;
+            
+            // Check if dropdown would go off right edge
+            if (leftPosition < 0) {
+              leftPosition = rect.left + scrollX;
+            }
+            
+            // Set position styles
+            dropdown.style.position = 'fixed';
+            dropdown.style.top = `${rect.bottom}px`;
+            dropdown.style.left = `${rect.left - dropdown.offsetWidth + button.offsetWidth}px`;
+            dropdown.style.zIndex = '9999';
+            
+            // Add click event listener to document to close dropdown when clicking outside
             setTimeout(() => {
               const clickHandler = (event: MouseEvent) => {
-                if (!dropdown.contains(event.target as Node)) {
+                if (!dropdown.contains(event.target as Node) && event.target !== button) {
                   dropdown.classList.add('hidden');
                   document.removeEventListener('click', clickHandler);
                 }
@@ -713,7 +736,7 @@ export default function ProductPage() {
         }
       }}
       className="flex items-center text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 whitespace-nowrap text-sm hover:bg-gray-300 dark:hover:bg-zinc-700 rounded transition-colors duration-200"
-        >
+    >
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <circle cx="12" cy="5" r="1.5" fill="currentColor"/>
         <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
@@ -721,18 +744,13 @@ export default function ProductPage() {
       </svg>
     </button>
     
+    {/* Move dropdown to portal root to avoid table containment issues */}
     <div 
-      id={`print-dropdown-${data.transaction_id}`} 
-      className="fixed hidden z-50 right-4 mt-2 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
-      style={{
-        top: 'auto',
-        bottom: 'auto',
-        maxHeight: '80vh',
-        overflowY: 'auto'
-      }}
+      id={`more-dropdown-${data.transaction_id}`} 
+      className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
     >
       <div className="py-1">
-       <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+        <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
           สร้างรายการซ้ำ
         </Link>
         <div className="border-t border-gray-200 my-1" />
