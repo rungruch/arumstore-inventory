@@ -815,6 +815,32 @@ export const updateShippingDetails = async (
   });
 };
 
+export const updatePaymentDetails = async (
+  transactionId: string, 
+  payment_status: string,
+  payment_method: string,
+  PaymentDetails: {
+    payment_date: Date,
+    payment_amount: number,
+    image: string
+  }
+) => {
+  const transactionsCollection = collection(db, "transactions");
+  const transactionQuery = query(transactionsCollection, where("transaction_id", "==", transactionId));
+  const transactionSnapshot = await getDocs(transactionQuery);
+  
+  if (transactionSnapshot.empty) {
+    throw new Error(`Transaction with ID "${transactionId}" not found`);
+  }
+  
+  const transactionRef = transactionSnapshot.docs[0].ref;
+  await updateDoc(transactionRef, {
+    payment_status: payment_status,
+    payment_method: payment_method,
+    payment_details: PaymentDetails
+  });
+};
+
 
 // Get paginated contacts
 export async function getContactsPaginated(lastDoc: any = null, pageSize: number = 10) {

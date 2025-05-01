@@ -11,6 +11,7 @@ import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS, OrderStatusFilter 
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ShippingDetailsForm from "@/components/AddShippingDetail";
+import PaymentDetailsForm from "@/components/AddPaymentDetail";
 import * as XLSX from 'xlsx-js-style';
 import { newTransaction, ExcelExportRow } from '@/components/interface';
 
@@ -54,6 +55,22 @@ export default function ProductPage() {
     startDate: new Date(),
     endDate: new Date()
   });
+  const [paymentDetailsModal, setPaymentDetailsModal] = useState<{
+    isOpen: boolean;
+    transactionId: string | null;
+    shouldPayAmount: number;
+    currentPaymentStatus?: string;
+    currentPaymentMethod?: string;
+    currentPaymentDetails?: any;
+  }>({
+    isOpen: false,
+    transactionId: null,
+    shouldPayAmount: 0,
+    currentPaymentStatus: undefined,
+    currentPaymentMethod: undefined,
+    currentPaymentDetails: undefined
+  });
+  const [hoveredPayment, setHoveredPayment] = useState<string | null>(null);
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -221,6 +238,28 @@ export default function ProductPage() {
     });
   };
 
+  const openPaymentDetailsModal = (transactionId: string, shouldPayAmount: number, currentPaymentStatus: string, currentPaymentMethod: string,currentPaymentDetails: any) => {
+    setPaymentDetailsModal({
+      isOpen: true,
+      transactionId: transactionId,
+      shouldPayAmount: shouldPayAmount,
+      currentPaymentStatus: currentPaymentStatus,
+      currentPaymentMethod: currentPaymentMethod,
+      currentPaymentDetails: currentPaymentDetails
+    });
+  };
+
+  const closePaymentDetailsModal = () => {
+    setPaymentDetailsModal({
+      isOpen: false,
+      transactionId: null,
+      shouldPayAmount: 0,
+      currentPaymentStatus: undefined,
+      currentPaymentMethod: undefined,
+      currentPaymentDetails: undefined
+    });
+  };
+
   // Toggle Add Category Popup
   const togglePopup = () => setShowPopup(!showPopup);
 
@@ -368,6 +407,31 @@ export default function ProductPage() {
           onCancel={closeShippingDetailsModal}
         />
       )}
+
+      {paymentDetailsModal.isOpen && paymentDetailsModal.transactionId && (
+        <PaymentDetailsForm
+          transactionId={paymentDetailsModal.transactionId}
+          shouldPayAmount={paymentDetailsModal.shouldPayAmount || 0}
+          currentPaymentStatus={paymentDetailsModal.currentPaymentStatus || "NONE"} 
+          currentPaymentMethod={paymentDetailsModal.currentPaymentMethod || ""}  
+          currentPaymentDetails={paymentDetailsModal.currentPaymentDetails}
+          onSubmitSuccess={() => {
+            // Close the modal
+            closePaymentDetailsModal();
+
+            // Show success modal
+            setModalState({
+              isOpen: true,
+              title: ModalTitle.SUCCESS,
+              message: "บันทึกข้อมูลการชำระสำเร็จ"
+            });
+
+            // Refresh data
+            setTrigger(prev => !prev);
+          } }
+          onCancel={closePaymentDetailsModal}      />
+      )}
+
       <div className="container mx-auto p-5">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
@@ -477,6 +541,7 @@ export default function ProductPage() {
                   <th className="p-2 flex-1">มูลค่า</th>
                   <th className="p-2 flex-1">สถานะ</th>
                   <th className="p-2 flex-1">วันส่งสินค้า</th>
+                  <th className="p-2 flex-1">ชำระเงิน</th>
                   <th className="p-2 w-[5%]"> </th>
                 </tr>
               }
@@ -678,6 +743,75 @@ export default function ProductPage() {
                           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                         แก้ไข
+                      </button>
+                    )}
+                  </td>
+                  <td className="p-2">
+                    {data.payment_details ? (
+                      <div
+                        onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
+                      >
+                        <div
+                          className="cursor-pointer hover:underline"
+                          onMouseEnter={(e) => {
+                            setHoveredPayment(data.transaction_id);
+                          }}
+                          onMouseLeave={(e) => {
+                            setHoveredPayment(null);
+                          }}
+                        >
+                          {new Date(data.payment_details.payment_date.toDate()).toLocaleString('th-TH', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                          {hoveredPayment === data.transaction_id && (
+                            <div
+                              className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 tooltip-container dark:bg-zinc-800"
+                              style={{
+                                transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
+                                maxWidth: window.innerWidth <= 768 ? '90vw' : '350px',
+                                maxHeight: '80vh',
+                                overflow: 'auto',
+                                position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
+                              }}
+                            >
+                              <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white">รายละเอียดการชำระเงิน</h3>
+                              <div className="text-sm space-y-1">
+                                <p><span className="font-semibold">สถานะ:</span> {data.payment_status === 'PAID' ? 'ชำระแล้ว' : 'รอชำระ'}</p>
+                                <p><span className="font-semibold">ยอดรวม:</span> {data.payment_details.payment_amount} บาท</p>
+                                <p><span className="font-semibold">วิธีการชำระเงิน:</span> {data.payment_method}</p>
+                                <p><span className="font-semibold">วันที่ชำระ:</span> {
+                                  new Date(data.payment_details.payment_date.toDate()).toLocaleString('th-TH', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+
+                                  })
+                                }</p>
+                                {data.payment_details.image && (
+                                  <img
+                                    src={data.payment_details.image}
+                                    alt="Payment proof"
+                                    className="mt-4 w-48 h-48 object-cover rounded-md shadow-md"
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-zinc-300">
+                          {data.payment_details.payment_method}
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
+                        className="text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 flex items-center gap-1"
+                      >
+                        รอชำระ
                       </button>
                     )}
                   </td>
