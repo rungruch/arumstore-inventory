@@ -510,7 +510,7 @@ export default function AddSellOrderForm({
                 onChange={handleChange} 
                 className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
-              <label className="block mb-1 text-sm">รายการ*</label> 
+              <label className="block mb-1 text-sm">รายการ<span className="text-red-500">*</span></label> 
               <input 
                 type="text" 
                 name="transaction_id" 

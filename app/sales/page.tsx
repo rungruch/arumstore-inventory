@@ -275,7 +275,7 @@ export default function ProductPage() {
 
   const statusButtons: Array<{ value: OrderStatusFilter; label: string }> = [
     { value: OrderStatusFilter.ALL, label: 'ทั้งหมด' },
-    { value: OrderStatusFilter.PENDING, label: OrderStatusDisplay.PENDING },
+    { value: OrderStatusFilter.PENDING, label: OrderStatusDisplay.PENDING  },
     { value: OrderStatusFilter.SHIPPING, label: OrderStatusDisplay.SHIPPING },
     { value: OrderStatusFilter.COMPLETED, label: 'เสร็จสิ้น' },
     { value: OrderStatusFilter.CANCELLED, label: OrderStatusDisplay.CANCELLED },
@@ -642,16 +642,16 @@ export default function ProductPage() {
                   <td className="p-2 flex-1">{data.total_amount}</td>
                   <td className="p-2">
                     <div className="relative" style={{ width: "120px" }}>
-                      <select
+                        <select
                         value={data.status}
                         onChange={(e) => handleStatusChange(
                           data.transaction_id,
                           data.status,
                           e.target.value as OrderStatus
                         )}
-                        className="w-full px-3 py-2 text-sm appearance-none rounded-md bg-white dark:bg-gray-800 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors"
+                        className={`w-full px-3 py-2 text-sm appearance-none rounded-md bg-white dark:bg-gray-800 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors ${data.status === OrderStatus.SHIPPING ? 'text-yellow-600 dark:text-yellow-500' : ''} ${data.status === OrderStatus.SHIPPED || data.status === OrderStatus.PICKED_UP ? 'text-green-600' : ''} ${data.status === OrderStatus.CANCELLED ? 'text-red-500 dark:text-red-600' : ''}`}
                         style={{ paddingRight: "2.5rem" }}
-                      >
+                        >
                         <option value={OrderStatus.PENDING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PENDING)}>
                           {OrderStatusDisplay.PENDING}
                         </option>
@@ -667,7 +667,7 @@ export default function ProductPage() {
                         <option value={OrderStatus.CANCELLED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.CANCELLED)}>
                           {OrderStatusDisplay.CANCELLED}
                         </option>
-                      </select>
+                        </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                         <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                           <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
@@ -698,8 +698,10 @@ export default function ProductPage() {
                             <div
                               className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 tooltip-container dark:bg-zinc-800"
                               style={{
+                                top: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.y - 90}px`,
+                                left: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.x + 20}px`,
                                 transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
-                                maxWidth: window.innerWidth <= 768 ? '90vw' : '350px',
+                                maxWidth: window.innerWidth <= 768 ? '90vw' : '450px',
                                 maxHeight: '80vh',
                                 overflow: 'auto',
                                 position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
@@ -755,10 +757,18 @@ export default function ProductPage() {
                           className="cursor-pointer hover:underline"
                           onMouseEnter={(e) => {
                             setHoveredPayment(data.transaction_id);
+                            setTooltipPosition({
+                              x: e.clientX,
+                              y: e.clientY
+                            });
                           }}
-                          onMouseLeave={(e) => {
-                            setHoveredPayment(null);
+                          onMouseMove={(e) => {
+                            setTooltipPosition({
+                              x: e.clientX,
+                              y: e.clientY
+                            });
                           }}
+                          onMouseLeave={() => setHoveredPayment(null)}
                         >
                           {new Date(data.payment_details.payment_date.toDate()).toLocaleString('th-TH', {
                             year: 'numeric',
@@ -771,9 +781,10 @@ export default function ProductPage() {
                               style={{
                                 transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
                                 maxWidth: window.innerWidth <= 768 ? '90vw' : '350px',
+                                minWidth: '190px',
                                 maxHeight: '80vh',
                                 overflow: 'auto',
-                                position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
+                                position: window.innerWidth <= 768 ? 'fixed' : 'absolute',
                               }}
                             >
                               <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white">รายละเอียดการชำระเงิน</h3>
@@ -803,7 +814,7 @@ export default function ProductPage() {
                           )}
                         </div>
                         <div className="text-sm text-gray-600 dark:text-zinc-300">
-                          {data.payment_details.payment_method}
+                          {data.payment_method}
                         </div>
                       </div>
                     ) : (

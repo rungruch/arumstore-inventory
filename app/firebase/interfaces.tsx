@@ -20,11 +20,21 @@ export interface Products {
   price: {
     buy_price: number;
     sell_price: number;
+    buy_price_average: number;
   };
   stocks: { [key: string]: number }; // Ensure `stocks` is an object with numerical values
   pending_stock: { [key: string]: number }; // Similarly define pending_stock
   updated_date: { toDate: () => Date } | null; // Adjust if needed for your actual structure
   created_date: { toDate: () => Date } | null;
+  sku_image: string;
+  unit_type: string;
+  barcode: string;
+  delivery_details: {
+    height_cm: number;
+    weight_kg: number;
+    length_cm: number;
+    width_cm: number;
+  };
 }
 
 export interface SellTransaction {

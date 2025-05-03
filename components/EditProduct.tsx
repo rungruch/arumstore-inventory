@@ -1,27 +1,31 @@
 "use client";
 import { useRef,useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { generateRandomSKU, createProduct, getProductCategory, getProductWarehouse } from "@/app/firebase/firestore";
+import {getProductBySKU, updateProductbySKU, getProductCategory } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum'
 import { getFile, uploadFile } from "@/app/firebase/storage";
 import {
+    or,
     Timestamp
   } from "firebase/firestore";
+import { Products } from "@/app/firebase/interfaces";
 
   export default function AddProductForm({
     trigger,
     setTrigger,
+    sku
   }: {
     trigger?: boolean;
     setTrigger?: React.Dispatch<React.SetStateAction<boolean>>;
+    sku: string;
   }) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploaded, setUploaded] = useState("");
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [imageUploading, setimageUploading] = useState(false);
     const [categories, setCategories] = useState<any>([]);
-    const [warehouses, setWarehouses] = useState<any>([]);
+    const [originalProductData, setOriginalProductData] = useState<Products | null>(null);
 
 
 
@@ -40,8 +44,6 @@ import {
         width: 0,
         length: 0,
         height: 0,
-        openingStock: 0,
-        warehouse: "คลังสินค้าหลัก",
     });
 
     const [validationError, setValidationError] = useState("");
@@ -56,42 +58,47 @@ import {
 
 
     useEffect(() => {
+        if (!sku) {
+            setModalState({
+                isOpen: true,
+                title: ModalTitle.ERROR,
+                message: `เกิดข้อผิดพลาด: ไม่พบรหัสสินค้า`,
+            });
+        };
         async function fetchSKU() {
-            await generateSKU();
             try {
+                const skudata = await getProductBySKU(sku)
+                const currentsku = skudata[0] as Products;
+                setOriginalProductData(currentsku);
+
+                setProductState(prev => ({
+                    ...prev,
+                    productName: currentsku?.name || "",
+                    productCategory: currentsku?.category || "",
+                    unit: currentsku?.unit_type || "",
+                    productCode: currentsku?.sku || "",
+                    description: currentsku?.description || "",
+                    sellingPrice: currentsku?.price?.sell_price || 0,
+                    purchasePrice: currentsku?.price?.buy_price || 0,
+                    weight: currentsku?.delivery_details?.weight_kg || 0,
+                    width: currentsku?.delivery_details?.width_cm || 0,
+                    length: currentsku?.delivery_details?.length_cm || 0,
+                    height: currentsku?.delivery_details?.height_cm || 0,
+                    qrBarcode: currentsku?.sku || "",
+                }));
+
                 const categories = await getProductCategory();
-                const warehouses = await getProductWarehouse();
                 setCategories(categories);
-                setWarehouses(warehouses);
-              } catch (error) {
+            } catch (error) {
                 setModalState({
                     isOpen: true,
                     title: ModalTitle.ERROR,
                     message: `เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : String(error)}`,
                 });
-              }
+            }
         }
         fetchSKU();
-    }, []);
-
-    const generateSKU = async () => {
-        try {
-            const sku = await generateRandomSKU();
-            setProductState(prev => ({
-                ...prev,
-                productCode: sku,
-                qrBarcode: sku
-            }));
-        } catch (error) {
-            console.error("Error generating SKU:", error);
-            // Open modal with error message
-            setModalState({
-                isOpen: true,
-                title: ModalTitle.ERROR,
-                message: `ไม่สามารถสร้างรหัสสินค้าได้: ${error instanceof Error ? error.message : String(error)}`,
-            });
-        }
-    };
+    }, [sku]); // Remove originalProductData from dependencies
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -130,36 +137,24 @@ import {
             setIsSubmitting(true);
             setValidationError("");
     
-            const formattedProductData = {
-                sku: productState.productCode,
-                sku_image: uploaded || "",
-                barcode: productState.qrBarcode,
-                name: productState.productName,
-                description: productState.description,
-                category: productState.productCategory || "others",
-                unit_type: productState.unit,
-                price: {
-                    buy_price: productState.purchasePrice,
-                    sell_price: productState.sellingPrice,
-                    buy_price_average: productState.purchasePrice,
-                },
-                stocks: {
-                    [productState.warehouse]: productState.openingStock, // Warehouse stock mapping
-                },
-                pending_stock: {
-                    [productState.warehouse]: 0,
-                },
-                delivery_details: {
-                    height_cm: productState.height,
-                    length_cm: productState.length,
-                    width_cm: productState.width,
-                    weight_kg: productState.weight,
-                },
-                created_date: Timestamp.now(),
-                updated_date: Timestamp.now(),
-            };
+            let newProductData = originalProductData;
+            if (newProductData) {
+                newProductData.name = productState.productName;
+                newProductData.category = productState.productCategory;
+                newProductData.unit_type = productState.unit;
+                newProductData.description = productState.description;
+                newProductData.price.sell_price = productState.sellingPrice;
+                newProductData.price.buy_price = productState.purchasePrice;
+                newProductData.price.buy_price_average = productState.purchasePrice;
+                newProductData.delivery_details.weight_kg = productState.weight;
+                newProductData.delivery_details.width_cm = productState.width;
+                newProductData.delivery_details.length_cm = productState.length;
+                newProductData.delivery_details.height_cm = productState.height;
+                newProductData.sku_image = uploaded;
+                newProductData.barcode = productState.qrBarcode;
+            }
     
-            await createProduct(formattedProductData);
+            await updateProductbySKU(sku, newProductData);
     
             // Reset form
             setProductState({
@@ -175,12 +170,7 @@ import {
                 width: 0,
                 length: 0,
                 height: 0,
-                openingStock: 0,
-                warehouse: "คลังสินค้าหลัก",
             });
-    
-            // Generate a new SKU for the next product
-            generateSKU();
     
         } catch (error) {
             setValidationError("เกิดข้อผิดพลาด: " + String(error));
@@ -243,7 +233,7 @@ import {
             message={modalState.message}
         />
             <div className="p-6 rounded-lg shadow-lg w-full mx-auto bg-white dark:bg-zinc-800">
-                <h1 className="text-2xl font-bold mb-4">เพิ่มสินค้า</h1>
+                <h1 className="text-2xl font-bold mb-4">แก้ไขรายละเอียดสินค้า</h1>
                 <form onSubmit={handleFormSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -264,7 +254,7 @@ import {
                             <label className="block mb-2 font-bold">หน่วย <span className="text-red-500">*</span></label>
                             <input type="text" name="unit" placeholder="หน่วย (ชิ้น, ตัว)" value={productState.unit} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">รหัสสินค้า</label>
-                            <input type="text" name="productCode" placeholder="รหัสสินค้า" value={productState.productCode} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
+                            <input type="text" name="productCode" placeholder="รหัสสินค้า"  disabled value={productState.productCode} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700 text-gray-400" />
                             <label className="block mb-2 font-bold">บาร์โค้ด</label>
                             <input type="text" name="qrBarcode" placeholder="รหัสคิวอาร์โค้ดและบาร์โค้ด" value={productState.qrBarcode} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">รายละเอียด</label>
@@ -328,33 +318,16 @@ import {
                 </button>
             )}
 
-            {uploaded && (
-                <p className="mt-4 text-green-600 font-medium">อัปโหลดสำเร็จ!</p>
+            {originalProductData?.sku_image && !uploaded && (
+                <>
+                <img
+                        src={originalProductData?.sku_image}
+                        alt="Uploaded preview"
+                        className="mt-4 w-48 h-48 object-cover rounded-md shadow-md transition duration-500 "
+                    />
+                </>
             )}
         </div>
-                        </div>
-                    </div>
-                    <div className="mt-6">
-                        <h3 className="text-md font-semibold mb-4">ข้อมูลเพิ่มเติม</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block mb-2 font-bold">จำนวน</label>
-                                <input type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()} name="openingStock" placeholder="ยอดยกมา" min={0} value={productState.openingStock} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
-                            </div>
-                            <div>
-                            <label className="block mb-2 font-bold">สินค้าเข้าที่</label>
-                            <select 
-                                name="warehouse" 
-                                value={productState.warehouse} 
-                                onChange={handleChange} 
-                                className="w-full border p-2 rounded-md mb-4 dark:border-gray-700"
-                            >
-                            <option value="" disabled>เลือกคลังสินค้า</option>
-                                {warehouses.map((warehouse: any) => (
-                                <option key={warehouse.warehouse_name} value={warehouse.warehouse_name}>{warehouse.warehouse_name}</option>
-                                ))}
-                            </select>
-                            </div>
                         </div>
                     </div>
                     <div className="mt-6">

@@ -178,6 +178,34 @@ export async function createProduct(productData: any) {
   }
 }
 
+
+export async function updateProductbySKU(sku: string, updateData: any) {
+  try {
+    const productsRef = collection(db, "products");
+    const q = query(productsRef, where("sku", "==", sku));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      throw new Error(`Product with SKU ${sku} not found`);
+    }
+
+    const productDoc = querySnapshot.docs[0];
+    await updateDoc(productDoc.ref, {
+      ...updateData,
+      updated_date: Timestamp.now()
+    });
+
+    return {
+      id: productDoc.id,
+      ...productDoc.data(),
+      ...updateData
+    };
+  } catch (error) {
+    console.error("Error updating product:", error);
+    throw error;
+  }
+}
+
 export async function getTotalWarehouseCount() {
   try {
     const warehouseCollection = collection(db, "product_warehouse");
@@ -354,6 +382,11 @@ export async function getProductBySKU(sku: string) {
     const querySnapshot = await getDocs(
       query(collection(db, 'products'), where('sku', '==', sku), limit(1))
     );
+
+    // Check if the SKU exists
+    if (querySnapshot.empty) {
+      throw new Error(`Product with SKU ${sku} not found`);
+    }
 
     // Map the results into an array of category objects
     return querySnapshot.docs.map((doc) => ({
