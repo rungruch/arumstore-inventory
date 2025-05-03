@@ -59,6 +59,37 @@ export interface SellTransaction {
   updated_date: Timestamp;
 }
 
+export interface TransferTransaction {
+  transaction_id: string;
+  transaction_type: string;
+  status: string;
+  items: {
+    sku: string;
+    quantity: number;
+    subtotal: number;
+  }[];
+  warehouse: string;
+  to_warehouse: string;
+  notes: string;
+  created_by: string;
+  updated_by: string;
+  created_date: Timestamp;
+  updated_date: Timestamp;
+}
+export interface TransferTransactionImport {
+  transaction_id: string;
+  items: {
+    sku: string;
+    quantity: number;
+
+  }[];
+  warehouse: string;
+  to_warehouse: string;
+  notes: string;
+  created_by: string;
+  updated_by: string;
+}
+
 export interface Contact {
   client_id: string;
   name: string;

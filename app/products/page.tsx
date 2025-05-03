@@ -251,16 +251,17 @@ export default function ProductPage() {
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                 <td className="p-2 w-[50px] ">{product.sku}</td>
                 <td className="p-2 w-[300px] flex items-center gap-2">
-                  {product.sku_image && (
+                    {product.sku_image && (
                     <Image
+                      priority={true}
                       src={product.sku_image}
-                      alt="Product"
+                      alt={product.name}
                       width={100}
                       height={100}
-                      className="transition-opacity duration-500 ease-in-out opacity-0 max-h-[100px] max-w-[100px] rounded-md"
-                      onLoadingComplete={(img) => img.classList.remove("opacity-0")}
+                      className="transition-opacity duration-500 ease-in-out opacity-0 w-auto h-auto max-h-[100px] rounded-md"
+                      onLoad={(img) => (img.currentTarget as HTMLImageElement).classList.remove("opacity-0")}
                     />
-                  )}
+                    )}
                   <div>
                     <Link
                       href={`/products/details?psku=${product.sku}`}
@@ -402,7 +403,7 @@ export default function ProductPage() {
                         <Link href={`/documents/tax?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                           ปรับจำนวน
                         </Link>
-                        <Link href={`/documents/invoice-generated?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                        <Link href={`/products/addtransfer?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                           โอนสินค้า
                         </Link>
                         <Link href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">

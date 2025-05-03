@@ -300,45 +300,41 @@ export async function getProductWarehouseByName(partialName: string): Promise<Wa
     throw error;
   }
 }
-
 async function getNextWarehouseId(): Promise<string> {
-    try {
-      const counterDocRef = doc(db, 'counters', 'warehouse');
-      
-      return await runTransaction(db, async (transaction) => {
-        const counterDoc = await transaction.get(counterDocRef);
-        
-        // Default starting ID
-        let nextId = 1;
-        
-        if (counterDoc.exists()) {
-          const data = counterDoc.data();
-          // Make sure we have a valid currentId value before incrementing
-          nextId = (typeof data.currentId === 'number' && !isNaN(data.currentId))
-            ? data.currentId + 1
-            : 1;
-        }
-        
-        // Format the ID as a string with WH prefix and padded zeros
-        const formattedId = `WH${nextId.toString().padStart(5, '0')}`;
-        
-        // Update the counter document
-        transaction.set(counterDocRef, { currentId: nextId });
-        
-        return formattedId;
-      });
-    } catch (error) {
-      console.error("Error generating warehouse ID:", error);
-      
-      // In case of transaction failure, generate a unique fallback ID
-      // Using timestamp to ensure uniqueness
-      const timestamp = new Date().getTime();
-      const fallbackId = `WH${timestamp.toString().slice(-5).padStart(5, '0')}`;
-      
-      console.warn(`Transaction failed, using fallback warehouse ID: ${fallbackId}`);
-      return fallbackId;
+  const warehouseCollection = collection(db, "product_warehouse");
+
+  return runTransaction(db, async (transaction) => {
+    // Query to find the latest warehouse
+    const warehouseQuery = query(
+      warehouseCollection,
+      orderBy("warehouse_id", "desc"),
+      limit(1)
+    );
+
+    const warehouseSnapshot = await getDocs(warehouseQuery);
+    let nextId: number;
+
+    if (!warehouseSnapshot.empty) {
+      // Extract the numeric part from the latest warehouse_id
+      const latestWarehouse = warehouseSnapshot.docs[0].data();
+      const match = latestWarehouse.warehouse_id.match(/WH(\d+)/);
+      nextId = match ? parseInt(match[1], 10) + 1 : 1;
+    } else {
+      // If no warehouses exist, start with 1
+      nextId = 1;
     }
-  }
+
+    // Format the new warehouse_id with padding
+    const formattedId = `WH${nextId.toString().padStart(5, '0')}`;
+
+    return formattedId;
+  }).catch(error => {
+    console.error("Error generating warehouse ID:", error);
+    // Fallback to timestamp-based ID in case of failure
+    const timestamp = Date.now();
+    return `WH${timestamp.toString().slice(-5).padStart(5, '0')}`;
+  });
+}
 
   export async function generateRandomSKU(): Promise<string> {
     const productsCollection = collection(db, 'products');

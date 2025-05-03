@@ -7,6 +7,12 @@ export enum OrderStatus {
     FAILED = "FAILED"
   }
 
+  export enum TransferStatus {
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
+    FAILED = "FAILED"
+  }
+
   export enum ProductStatus {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE",
@@ -34,7 +40,8 @@ export enum OrderStatus {
   export enum TransactionType {
     BUY = "BUY",
     SELL = "SELL",
-    REFUND = "REFUND"
+    REFUND = "REFUND",
+    TRANFER = "TRANSFER",
   }
 
   export enum VatType {

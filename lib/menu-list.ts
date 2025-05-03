@@ -107,10 +107,10 @@ export function getMenuList(pathname: string): Group[] {
             href: "/products/add",
             label: "เพิ่มสินค้า"
           },
-          {
-            href: "/products/template",
-            label: "กลุ่มสินค้า"
-          },
+          // {
+          //   href: "/products/template",
+          //   label: "กลุ่มสินค้า"
+          // },
           {
             href: "/products/categories",
             label: "หมวดหมู่"
@@ -118,7 +118,12 @@ export function getMenuList(pathname: string): Group[] {
           {
             href: "/products/warehouse",
             label: "คลังสินค้า"
+          },
+          {
+            href: "/products/addtransfer",
+            label: "โอนสินค้า"
           }
+
         ]
         },
         {

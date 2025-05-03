@@ -46,9 +46,10 @@ const menuItems: MenuItem[] = [
     subMenu: [
       { title: "สินค้า", path: "/products" },
       { title: "เพิ่มสินค้า", path: "/products/add" },
-      { title: "กลุ่มสินค้า", path: "/products/template" },
+      // { title: "กลุ่มสินค้า", path: "/products/template" },
       { title: "หมวดหมู่", path: "/products/categories" },
-      { title: "คลังสินค้า", path: "/products/warehouse" }
+      { title: "คลังสินค้า", path: "/products/warehouse" },
+      { title: "โอนสินค้า", path: "/products/addtransfer" }
     ]
   },
   {
