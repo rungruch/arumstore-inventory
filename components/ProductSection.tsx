@@ -4,6 +4,7 @@ import { getProductPaginated, getProductByName } from "@/app/firebase/firestore"
 import {VatType} from "@/app/firebase/enum";
 import { X, Plus, Search, ShoppingCart } from 'lucide-react';
 import Image from "next/image";
+import { ProductStatus } from '@/app/firebase/enum';
 
 // Define TypeScript interfaces
 interface Product {
@@ -148,7 +149,7 @@ interface PaginatedResponse {
 
   const openSearchModal = async (index: number): Promise<void> => {
     try {
-      const { data }: PaginatedResponse = await getProductPaginated(null, 10);
+      const { data }: PaginatedResponse = await getProductPaginated(null, 10, ProductStatus.ACTIVE);
       setSearchResults(data);
       setSelectedProductIndex(index);
       setIsSearchModalOpen(true);
@@ -170,11 +171,11 @@ interface PaginatedResponse {
 
     try {
       if (search.trim() === "") {
-        const { data }: PaginatedResponse = await getProductPaginated(null, 10);
+        const { data }: PaginatedResponse = await getProductPaginated(null, 10, ProductStatus.ACTIVE);
         setSearchResults(data);
       } else {
         // Perform search and reset pagination
-        const filteredProduct: ProductData[] = await getProductByName(search);
+        const filteredProduct: ProductData[] = await getProductByName(search, ProductStatus.ACTIVE);
         setSearchResults(filteredProduct);
       }
     } catch (error) {
@@ -365,7 +366,7 @@ interface PaginatedResponse {
       {/* Product Search Modal */}
       {isSearchModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-gray-900/50">
-          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col shadow-xl animate-fadeIn">
+          <div className="bg-white dark:bg-zinc-800 rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col shadow-xl animate-fadeIn">
             <div className="p-4 border-b flex justify-between items-center bg-blue-50 dark:bg-zinc-700">
               <h3 className="text-lg font-medium text-gray-800 flex items-center dark:text-white">
                 <ShoppingCart size={18} className="mr-2 text-blue-600" />

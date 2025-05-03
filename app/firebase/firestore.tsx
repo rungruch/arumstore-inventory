@@ -22,7 +22,7 @@ import {
 
 import { db } from "@/app/firebase/clientApp";
 import { Warehouse, Contact } from "@/app/firebase/interfaces";
-import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS } from "@/app/firebase/enum";
+import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus } from "@/app/firebase/enum";
 
 // Existing code from your file...
 
@@ -206,6 +206,33 @@ export async function updateProductbySKU(sku: string, updateData: any) {
   }
 }
 
+export async function deleteProductBySKU(sku: string) {
+  try {
+    const productsRef = collection(db, "products");
+    const q = query(productsRef, where("sku", "==", sku));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      throw new Error(`Product with SKU ${sku} not found`);
+    }
+
+    const productDoc = querySnapshot.docs[0];
+    await updateDoc(productDoc.ref, {
+      status: ProductStatus.DELETED,
+      updated_date: Timestamp.now()
+    });
+
+    return {
+      id: productDoc.id,
+      sku: sku,
+      deleted: true
+    };
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    throw error;
+  }
+}
+
 export async function getTotalWarehouseCount() {
   try {
     const warehouseCollection = collection(db, "product_warehouse");
@@ -336,13 +363,13 @@ async function getNextWarehouseId(): Promise<string> {
   }
 
 // New warehouse functions
-export async function getProductPaginated(lastDoc: any = null, pageSize: number = 10) {
+export async function getProductPaginated(lastDoc: any = null, pageSize: number = 10, statusFilter: ProductStatus) {
   try {
-    let q = query(collection(db, "products"), orderBy("created_date", "desc"), limit(pageSize));
+    let q = query(collection(db, "products"), where("status", "==", statusFilter), orderBy("created_date", "desc"), limit(pageSize));
 
     // If there's a last document (for next page), start after it
     if (lastDoc) {
-      q = query(collection(db, "products"), orderBy("created_date", "desc"), startAfter(lastDoc), limit(pageSize));
+      q = query(collection(db, "products"), where("status", "==", statusFilter), orderBy("created_date", "desc"), startAfter(lastDoc), limit(pageSize));
     }
 
     const querySnapshot = await getDocs(q);
@@ -364,7 +391,8 @@ export async function getProductPaginated(lastDoc: any = null, pageSize: number 
 // Get the total count of products for pagination
 export const getTotalProductCount = async () => {
   const productsRef = collection(db, "products");
-  const snapshot = await getCountFromServer(productsRef);
+  const q = query(productsRef, where("status", "==", ProductStatus.ACTIVE));
+  const snapshot = await getCountFromServer(q);
   return snapshot.data().count;
 }
 
@@ -399,14 +427,16 @@ export async function getProductBySKU(sku: string) {
   }
 }
 
-export async function getProductByName(partialName: string): Promise<Warehouse[]> {
+export async function getProductByName(partialName: string, statusFilter: ProductStatus): Promise<Warehouse[]> {
   try {
     // Execute the query
     const querySnapshot = await getDocs(
-      startsWith(
+      query(
         collection(db, 'products'),
-        'name',
-        partialName
+        orderBy('name'),
+        startAt(partialName),
+        endAt(partialName + '\uf8ff'),
+        where("status", "==", statusFilter)
       )
     );
 

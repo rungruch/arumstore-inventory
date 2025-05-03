@@ -8,6 +8,7 @@ import { getFile, uploadFile } from "@/app/firebase/storage";
 import {
     Timestamp
   } from "firebase/firestore";
+import { ProductStatus } from "@/app/firebase/enum";
 
   export default function AddProductForm({
     trigger,
@@ -155,6 +156,7 @@ import {
                     width_cm: productState.width,
                     weight_kg: productState.weight,
                 },
+                status: ProductStatus.ACTIVE,
                 created_date: Timestamp.now(),
                 updated_date: Timestamp.now(),
             };

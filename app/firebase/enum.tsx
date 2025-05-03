@@ -7,6 +7,12 @@ export enum OrderStatus {
     FAILED = "FAILED"
   }
 
+  export enum ProductStatus {
+    ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE",
+    DELETED = "DELETED"
+  }
+
   export enum OrderStatusFilter {
     ALL = "ALL",
     PENDING = "PENDING",

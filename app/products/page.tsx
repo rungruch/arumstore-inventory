@@ -1,6 +1,6 @@
 "use client";
 
-import { getProductPaginated, getTotalProductCount, getProductByName } from "@/app/firebase/firestore";
+import { getProductPaginated, getTotalProductCount, getProductByName, deleteProductBySKU } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -9,6 +9,16 @@ import { Warehouse } from "@/app/firebase/interfaces";
 import Image from "next/image";
 import Link from "next/link";
 import StockDetailsPopup from "@/components/StockDetailsPopup";
+import { ProductStatus } from "../firebase/enum";
+import Modal from "@/components/modal";
+import { ModalTitle } from '@/components/enum';
+
+interface ModalState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  sku: string;
+}
 
 export default function ProductPage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -26,6 +36,13 @@ export default function ProductPage() {
     stocks: Record<string, number>;
     pendingStocks: Record<string, number>;
   } | null>(null);
+    const [modalState, setModalState] = useState<ModalState>({
+      isOpen: false,
+      title: "",
+      message: "",
+      sku: ""
+    });
+
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -35,8 +52,7 @@ export default function ProductPage() {
         setLoading(true);
         const totalCount = await getTotalProductCount();
         setTotalData(totalCount); // Update total categories
-        const { data, lastDoc } = await getProductPaginated(null, pageSize);
-
+        const { data, lastDoc } = await getProductPaginated(null, pageSize, ProductStatus.ACTIVE);
         // Ensure categories and lastDoc are correctly set
         if (data && lastDoc !== undefined) {
           setDatas(data);
@@ -66,7 +82,7 @@ export default function ProductPage() {
       setLoading(true);
       const totalCount = await getTotalProductCount();
       setTotalData(totalCount);
-      const { data, lastDoc } = await getProductPaginated(null, newSize);
+      const { data, lastDoc } = await getProductPaginated(null, newSize, ProductStatus.ACTIVE);
       setDatas(data);
       setLastDoc(lastDoc);
     } catch (error) {
@@ -86,12 +102,12 @@ export default function ProductPage() {
         setLastDoc(null);
         const totalCount = await getTotalProductCount(); // Recalculate total categories
         setTotalData(totalCount);
-        const { data, lastDoc } = await getProductPaginated(null, pageSize);
+        const { data, lastDoc } = await getProductPaginated(null, pageSize, ProductStatus.ACTIVE);
         setDatas(data);
         setLastDoc(lastDoc);
       } else {
         // Perform search and reset pagination
-        const filteredCategories = await getProductByName(search);
+        const filteredCategories = await getProductByName(search, ProductStatus.ACTIVE);
         setDatas(filteredCategories);
         setCurrentPage(1);
         setTotalData(filteredCategories.length); // Set total to match filtered results
@@ -109,7 +125,7 @@ export default function ProductPage() {
     if (!lastDoc || currentPage === Math.ceil(totalData / pageSize)) return; // Prevent invalid navigation
     try {
       setLoading(true);
-      const { data: nextData, lastDoc: newLastDoc } = await getProductPaginated(lastDoc, pageSize);
+      const { data: nextData, lastDoc: newLastDoc } = await getProductPaginated(lastDoc, pageSize, ProductStatus.ACTIVE);
 
       setDatas(nextData); // Update categories to the next page
       setLastDoc(newLastDoc); // Update lastDoc
@@ -127,7 +143,7 @@ export default function ProductPage() {
     try {
       setLoading(true);
       setCurrentPage(currentPage - 1); // Decrement page
-      const { data, lastDoc } = await getProductPaginated(null, pageSize); // Re-fetch for the page
+      const { data, lastDoc } = await getProductPaginated(null, pageSize, ProductStatus.ACTIVE); // Re-fetch for the page
       setDatas(data);
       setLastDoc(lastDoc);
     } catch (error) {
@@ -143,7 +159,41 @@ export default function ProductPage() {
   // Calculate total pages
   const totalPages = Math.ceil(totalData / pageSize);
 
+  const closeModal = (): void => {
+    setModalState(prev => ({
+      ...prev,
+      isOpen: false
+    }));
+  };
+
+  const handleDeleteProduct = async (sku: string) => {
+    try {
+      await deleteProductBySKU(sku);
+      setTrigger(!trigger); // Refresh the product list
+      closeModal();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: "เกิดข้อผิดพลาดในการลบสินค้า",
+        sku: ""
+      });
+    }
+  };
+
+
+
+
   return (
+<>
+<Modal
+  isOpen={modalState.isOpen}
+  onClose={closeModal}
+  title={modalState.title}
+  message={modalState.message}
+  onConfirm={() => handleDeleteProduct(modalState.sku)}
+/>
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">สินค้า</h1>
@@ -248,7 +298,14 @@ export default function ProductPage() {
                   </span>
                 </td>
                 <td className="p-2 w-[10%] text-left">
-                  <span className={`cursor-pointer hover:opacity-80 ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
+                  <span 
+                      onClick={() => setSelectedStock({
+                      productName: product.name,
+                      productSKU: product.sku,
+                      stocks: product.stocks,
+                      pendingStocks: product.pending_stock
+                    })}
+                    className={`cursor-pointer hover:opacity-80 ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
                       ? 'text-red-500' // red if stock is 0 or less
                       : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
                         ? 'text-yellow-500' // yellow if stock is less than 5
@@ -351,9 +408,19 @@ export default function ProductPage() {
                         <Link href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                           แก้ไข
                         </Link>
-                        <Link href={`/documents/simplify-invoice-generated?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                        <button 
+                          onClick={() => {
+                            setModalState({
+                                isOpen: true,
+                                title: ModalTitle.DELETE,
+                                message: `คุณต้องการลบสินค้า ${product.name} ใช่หรือไม่?`,
+                                sku: product.sku
+                            });
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                        >
                           ลบ
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -416,5 +483,6 @@ export default function ProductPage() {
         />
       )}
     </div>
+    </>
   );
 }
