@@ -675,19 +675,31 @@ export default function ProductPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="p-2">
+                  <td 
+                  className="p-2 whitespace-nowrap"
+                  onMouseEnter={(e) => {
+                    setHoveredShipping(data.transaction_id);
+                    setTooltipPosition({
+                      x: e.clientX,
+                      y: e.clientY
+                    });
+                  }}
+                  onMouseMove={(e) => {
+                    setTooltipPosition({
+                      x: e.clientX,
+                      y: e.clientY
+                    });
+                  }}
+                  onMouseLeave={(e) => {
+                    setHoveredShipping(null)
+                  }}
+                  >
                     {data.shipping_details ? (
                       <div
                         onClick={() => openShippingDetailsModal(data.transaction_id, data)}
                       >
                         <div
                           className="cursor-pointer hover:underline"
-                          onMouseEnter={(e) => {
-                            setHoveredShipping(data.transaction_id);
-                          }}
-                          onMouseLeave={(e) => {
-                            setHoveredShipping(null);
-                          }}
                         >
                           {new Date(data.shipping_details.shipping_date.toDate()).toLocaleString('th-TH', {
                             year: 'numeric',
@@ -698,7 +710,7 @@ export default function ProductPage() {
                             <div
                               className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 tooltip-container dark:bg-zinc-800"
                               style={{
-                                top: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.y - 90}px`,
+                                top: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.y}px`,
                                 left: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.x + 20}px`,
                                 transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
                                 maxWidth: window.innerWidth <= 768 ? '90vw' : '450px',
@@ -748,27 +760,29 @@ export default function ProductPage() {
                       </button>
                     )}
                   </td>
-                  <td className="p-2">
+                  <td 
+                  className="p-2 whitespace-nowrap"
+                  onMouseEnter={(e) => {
+                    setHoveredPayment(data.transaction_id);
+                    setTooltipPosition({
+                      x: e.clientX,
+                      y: e.clientY
+                    });
+                  }}
+                  onMouseMove={(e) => {
+                    setTooltipPosition({
+                      x: e.clientX,
+                      y: e.clientY
+                    });
+                  }}
+                  onMouseLeave={() => setHoveredPayment(null)}
+                  >
                     {data.payment_details ? (
                       <div
                         onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
-                      >
+                     >
                         <div
                           className="cursor-pointer hover:underline"
-                          onMouseEnter={(e) => {
-                            setHoveredPayment(data.transaction_id);
-                            setTooltipPosition({
-                              x: e.clientX,
-                              y: e.clientY
-                            });
-                          }}
-                          onMouseMove={(e) => {
-                            setTooltipPosition({
-                              x: e.clientX,
-                              y: e.clientY
-                            });
-                          }}
-                          onMouseLeave={() => setHoveredPayment(null)}
                         >
                           {new Date(data.payment_details.payment_date.toDate()).toLocaleString('th-TH', {
                             year: 'numeric',
@@ -779,12 +793,14 @@ export default function ProductPage() {
                             <div
                               className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 tooltip-container dark:bg-zinc-800"
                               style={{
+                                top: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.y}px`,
+                                left: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.x - 240}px`,
                                 transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
-                                maxWidth: window.innerWidth <= 768 ? '90vw' : '350px',
-                                minWidth: '190px',
+                                minHeight: '100px',
+                                maxWidth: window.innerWidth <= 768 ? '90vw' : '450px',
                                 maxHeight: '80vh',
                                 overflow: 'auto',
-                                position: window.innerWidth <= 768 ? 'fixed' : 'absolute',
+                                position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
                               }}
                             >
                               <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white">รายละเอียดการชำระเงิน</h3>
