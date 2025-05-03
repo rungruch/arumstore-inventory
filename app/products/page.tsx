@@ -31,7 +31,7 @@ export default function ProductPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        
+
         setLoading(true);
         const totalCount = await getTotalProductCount();
         setTotalData(totalCount); // Update total categories
@@ -39,7 +39,7 @@ export default function ProductPage() {
 
         // Ensure categories and lastDoc are correctly set
         if (data && lastDoc !== undefined) {
-            setDatas(data);
+          setDatas(data);
           setLastDoc(lastDoc);
         } else {
           console.error("Invalid data returned from getProductPaginated");
@@ -53,7 +53,7 @@ export default function ProductPage() {
     };
 
     fetchData();
-  }, [pageSize,trigger]);
+  }, [pageSize, trigger]);
 
   // Handle page size change
   const handlePageSizeChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -110,7 +110,7 @@ export default function ProductPage() {
     try {
       setLoading(true);
       const { data: nextData, lastDoc: newLastDoc } = await getProductPaginated(lastDoc, pageSize);
-      
+
       setDatas(nextData); // Update categories to the next page
       setLastDoc(newLastDoc); // Update lastDoc
       setCurrentPage(currentPage + 1); // Increment page
@@ -201,165 +201,163 @@ export default function ProductPage() {
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                 <td className="p-2 w-[50px] ">{product.sku}</td>
                 <td className="p-2 w-[300px] flex items-center gap-2">
-                {product.sku_image && (
+                  {product.sku_image && (
                     <Image
-        src={product.sku_image}
-        alt="Product"
-        width={100}
-        height={100}
-        className="transition-opacity duration-500 ease-in-out opacity-0 max-h-[100px] max-w-[100px] rounded-md"
-        onLoadingComplete={(img) => img.classList.remove("opacity-0")}
-    />
-)}
-                                <div>
-                                <Link
-      href={`/products/details?psku=${product.sku}`}
-      passHref
-    >
-      <span className="text-blue-500 hover:underline cursor-pointer">
-        {product.name}
-      </span>
-    </Link>
-                                    <div className="text-sm text-gray-500">{product.description}</div>
-                                    {product.category && (
-                                    <div className="text-sm text-gray-500">{'หมวดหมู่: ' + product.category}</div>
-                                    )}
-                                </div>
-                            </td>
+                      src={product.sku_image}
+                      alt="Product"
+                      width={100}
+                      height={100}
+                      className="transition-opacity duration-500 ease-in-out opacity-0 max-h-[100px] max-w-[100px] rounded-md"
+                      onLoadingComplete={(img) => img.classList.remove("opacity-0")}
+                    />
+                  )}
+                  <div>
+                    <Link
+                      href={`/products/details?psku=${product.sku}`}
+                      passHref
+                    >
+                      <span className="text-blue-500 hover:underline cursor-pointer">
+                        {product.name}
+                      </span>
+                    </Link>
+                    <div className="text-sm text-gray-500">{product.description}</div>
+                    {product.category && (
+                      <div className="text-sm text-gray-500">{'หมวดหมู่: ' + product.category}</div>
+                    )}
+                  </div>
+                </td>
                 <td className="p-2">{product.price.buy_price.toLocaleString()}</td>
                 <td className="p-2">{product.price.sell_price.toLocaleString()}</td>
                 <td className="p-2">
-  <span
-    onClick={() => setSelectedStock({
-      productName: product.name,
-      productSKU: product.sku,
-      stocks: product.stocks,
-      pendingStocks: product.pending_stock
-    })}
-    className={`cursor-pointer hover:opacity-80 text-left ${
-      Object.values(product.stocks as Record<string, number> ).reduce((a, b) => a + b, 0)+(Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)) <= 0
-        ? 'text-red-500' // red if stock is 0 or less
-        : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)+(Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)) < 5
-        ? 'text-yellow-500' // yellow if stock is less than 5
-        : 'text-green-500' // green if stock is greater than 5
-    }`}
-  >
-    {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)+(Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0))}
-    {" "+ product.unit_type}
-  </span>
-</td>
+                  <span
+                    onClick={() => setSelectedStock({
+                      productName: product.name,
+                      productSKU: product.sku,
+                      stocks: product.stocks,
+                      pendingStocks: product.pending_stock
+                    })}
+                    className={`cursor-pointer hover:opacity-80 text-left ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) + (Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)) <= 0
+                        ? 'text-red-500' // red if stock is 0 or less
+                        : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) + (Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)) < 5
+                          ? 'text-yellow-500' // yellow if stock is less than 5
+                          : 'text-green-500' // green if stock is greater than 5
+                      }`}
+                  >
+                    {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) + (Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0))}
+                    {" " + product.unit_type}
+                  </span>
+                </td>
                 <td className="p-2 w-[10%] text-left">
-                    <span className={`cursor-pointer hover:opacity-80 ${
-                    Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
-                    ? 'text-red-500' // red if stock is 0 or less
-                    : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
-                    ? 'text-yellow-500' // yellow if stock is less than 5
-                    : 'text-green-500' // green if stock is greater than 5
+                  <span className={`cursor-pointer hover:opacity-80 ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
+                      ? 'text-red-500' // red if stock is 0 or less
+                      : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
+                        ? 'text-yellow-500' // yellow if stock is less than 5
+                        : 'text-green-500' // green if stock is greater than 5
                     }`}>
                     {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)}
-                    {" "+ product.unit_type}
-                    </span>
+                    {" " + product.unit_type}
+                  </span>
                 </td>
                 <td className="p-2 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
-                    {product.updated_date ? 
-                        new Date(product.updated_date.toDate()).toLocaleString('th-TH', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    }) 
+                  {product.updated_date ?
+                    new Date(product.updated_date.toDate()).toLocaleString('th-TH', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false
+                    })
                     : "-"}
                 </td>
                 <td className="p-2 w-[5%] relative">
-                    <div className="relative inline-block">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent event from bubbling up
-                          // Toggle dropdown visibility
-                          const dropdown = document.getElementById(`more-dropdown-${product.sku}`);
+                  <div className="relative inline-block">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent event from bubbling up
+                        // Toggle dropdown visibility
+                        const dropdown = document.getElementById(`more-dropdown-${product.sku}`);
 
-                          // Close all other dropdowns first
-                          document.querySelectorAll('[id^="more-dropdown-"]').forEach(el => {
-                            if (el.id !== `more-dropdown-${product.sku}`) {
-                              el.classList.add('hidden');
-                            }
-                          });
-
-                          if (dropdown) {
-                            dropdown.classList.toggle('hidden');
-
-                            // Position the dropdown relative to the button
-                            if (!dropdown.classList.contains('hidden')) {
-                              const button = e.currentTarget;
-                              const rect = button.getBoundingClientRect();
-                              const scrollY = window.scrollY || document.documentElement.scrollTop;
-                              const scrollX = window.scrollX || document.documentElement.scrollLeft;
-
-                              // Calculate position - default to right-aligned
-                              let topPosition = rect.bottom + scrollY;
-                              let leftPosition = rect.right + scrollX - dropdown.offsetWidth;
-
-                              // Check if dropdown would go off right edge
-                              if (leftPosition < 0) {
-                                leftPosition = rect.left + scrollX;
-                              }
-
-                              // Set position styles
-                              dropdown.style.position = 'fixed';
-                              dropdown.style.top = `${rect.bottom}px`;
-                              dropdown.style.left = `${rect.left - dropdown.offsetWidth + button.offsetWidth}px`;
-                              dropdown.style.zIndex = '9999';
-
-                              // Add click event listener to document to close dropdown when clicking outside
-                              setTimeout(() => {
-                                const clickHandler = (event: MouseEvent) => {
-                                  if (!dropdown.contains(event.target as Node) && event.target !== button) {
-                                    dropdown.classList.add('hidden');
-                                    document.removeEventListener('click', clickHandler);
-                                  }
-                                };
-                                document.addEventListener('click', clickHandler);
-                              }, 0);
-                            }
+                        // Close all other dropdowns first
+                        document.querySelectorAll('[id^="more-dropdown-"]').forEach(el => {
+                          if (el.id !== `more-dropdown-${product.sku}`) {
+                            el.classList.add('hidden');
                           }
-                        }}
-                        className="flex items-center text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 whitespace-nowrap text-sm hover:bg-gray-300 dark:hover:bg-zinc-700 rounded transition-colors duration-200"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <circle cx="12" cy="5" r="1.5" fill="currentColor" />
-                          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                          <circle cx="12" cy="19" r="1.5" fill="currentColor" />
-                        </svg>
-                      </button>
+                        });
 
-                      {/* Move dropdown to portal root to avoid table containment issues */}
-                      <div
-                        id={`more-dropdown-${product.sku}`}
-                        className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
-                      >
-                        <div className="py-1">
-                          <Link href={`/products/details?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-                            ดูภาพรวม
-                          </Link>
-                          <div className="border-t border-gray-200 my-1" />
-                          <Link href={`/documents/tax?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-                            ปรับจำนวน
-                          </Link>
-                          <Link href={`/documents/invoice-generated?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-                            โอนสินค้า
-                          </Link>
-                          <Link href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-                            แก้ไข
-                          </Link>
-                          <Link href={`/documents/simplify-invoice-generated?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-                            ลบ
-                          </Link>
-                        </div>
+                        if (dropdown) {
+                          dropdown.classList.toggle('hidden');
+
+                          // Position the dropdown relative to the button
+                          if (!dropdown.classList.contains('hidden')) {
+                            const button = e.currentTarget;
+                            const rect = button.getBoundingClientRect();
+                            const scrollY = window.scrollY || document.documentElement.scrollTop;
+                            const scrollX = window.scrollX || document.documentElement.scrollLeft;
+
+                            // Calculate position - default to right-aligned
+                            let topPosition = rect.bottom + scrollY;
+                            let leftPosition = rect.right + scrollX - dropdown.offsetWidth;
+
+                            // Check if dropdown would go off right edge
+                            if (leftPosition < 0) {
+                              leftPosition = rect.left + scrollX;
+                            }
+
+                            // Set position styles
+                            dropdown.style.position = 'fixed';
+                            dropdown.style.top = `${rect.bottom}px`;
+                            dropdown.style.left = `${rect.left - dropdown.offsetWidth + button.offsetWidth}px`;
+                            dropdown.style.zIndex = '9999';
+
+                            // Add click event listener to document to close dropdown when clicking outside
+                            setTimeout(() => {
+                              const clickHandler = (event: MouseEvent) => {
+                                if (!dropdown.contains(event.target as Node) && event.target !== button) {
+                                  dropdown.classList.add('hidden');
+                                  document.removeEventListener('click', clickHandler);
+                                }
+                              };
+                              document.addEventListener('click', clickHandler);
+                            }, 0);
+                          }
+                        }
+                      }}
+                      className="flex items-center text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 whitespace-nowrap text-sm hover:bg-gray-300 dark:hover:bg-zinc-700 rounded transition-colors duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+                        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                        <circle cx="12" cy="19" r="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
+
+                    {/* Move dropdown to portal root to avoid table containment issues */}
+                    <div
+                      id={`more-dropdown-${product.sku}`}
+                      className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
+                    >
+                      <div className="py-1">
+                        <Link href={`/products/details?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          ดูภาพรวม
+                        </Link>
+                        <div className="border-t border-gray-200 my-1" />
+                        <Link href={`/documents/tax?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          ปรับจำนวน
+                        </Link>
+                        <Link href={`/documents/invoice-generated?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          โอนสินค้า
+                        </Link>
+                        <Link href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          แก้ไข
+                        </Link>
+                        <Link href={`/documents/simplify-invoice-generated?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          ลบ
+                        </Link>
                       </div>
                     </div>
-                  </td>
+                  </div>
+                </td>
 
               </tr>
             )}
@@ -389,8 +387,8 @@ export default function ProductPage() {
             onClick={handlePrevPage}
             disabled={currentPage === 1 || search.trim() !== ""}
             className={`px-3 py-2 rounded-md transition ${currentPage === 1 || search.trim() !== ""
-                ? "bg-gray-300 cursor-not-allowed dark:bg-zinc-700"
-                : "bg-gray-800 text-white hover:bg-gray-700"
+              ? "bg-gray-300 cursor-not-allowed dark:bg-zinc-700"
+              : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
           >
             <ChevronLeft size={16} className="inline-block" />
@@ -400,8 +398,8 @@ export default function ProductPage() {
             onClick={handleNextPage}
             disabled={currentPage === totalPages || !lastDoc || search.trim() !== ""}
             className={`px-3 py-2 rounded-md transition ${currentPage === totalPages || !lastDoc || search.trim() !== ""
-                ? "bg-gray-300 dark:bg-zinc-700 cursor-not-allowed"
-                : "bg-gray-800 text-white hover:bg-gray-700"
+              ? "bg-gray-300 dark:bg-zinc-700 cursor-not-allowed"
+              : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
           >
             <ChevronRight size={16} className="inline-block" />
