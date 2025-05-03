@@ -21,8 +21,8 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/app/firebase/clientApp";
-import { Warehouse, Contact } from "@/app/firebase/interfaces";
-import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus } from "@/app/firebase/enum";
+import { Warehouse, Contact, TransferTransaction } from "@/app/firebase/interfaces";
+import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus, TransferStatus } from "@/app/firebase/enum";
 
 // Existing code from your file...
 
@@ -581,6 +581,100 @@ export async function getProductWarehouse() {
     });
   }
 
+  export async function generateRandomBuyTransactionId(): Promise<string> {
+    const transactionsCollection = collection(db, "transactions");
+  
+    return runTransaction(db, async (transaction) => {
+      // Query to find the latest 'SELL' transaction
+      const sellQuery = query(
+        transactionsCollection,
+        where("transaction_type", "==", TransactionType.BUY),
+        orderBy("created_date", "desc"), // Assuming 'createdAt' is a timestamp field
+        limit(1)
+      );
+  
+      const sellSnapshot = await getDocs(sellQuery);
+      let newTransactionId: string;
+  
+      if (!sellSnapshot.empty) {
+        // Extract the latest transaction_id
+        const latestTransaction = sellSnapshot.docs[0].data();
+        const latestTransactionId = latestTransaction.transaction_id;
+  
+        // Extract the numeric part from the latestTransactionId (e.g., 'SELL-YYMMDD-1' -> 1)
+        const match = latestTransactionId.match(/B-\d{6}-(\d+)/);
+        const lastNumber = match ? parseInt(match[1], 10) : 0;
+  
+        // Generate the new transaction_id
+        const today = new Date();
+        const yy = today.getFullYear().toString().slice(-2);
+        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
+        const dd = today.getDate().toString().padStart(2, "0");
+        const datePart = `${yy}${mm}${dd}`;
+  
+        newTransactionId = `B-${datePart}-${lastNumber + 1}`;
+      } else {
+        // If no transactions exist, start with 'SELL-YYMMDD-1'
+        const today = new Date();
+        const yy = today.getFullYear().toString().slice(-2);
+        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
+        const dd = today.getDate().toString().padStart(2, "0");
+        const datePart = `${yy}${mm}${dd}`;
+  
+        newTransactionId = `B-${datePart}-1`;
+      }
+  
+      return newTransactionId;
+    });
+  }
+
+  export async function generateRandomTransferTransactionId(): Promise<string> {
+    const transactionsCollection = collection(db, "transactions");
+  
+    return runTransaction(db, async (transaction) => {
+      // Query to find the latest 'SELL' transaction
+      const sellQuery = query(
+        transactionsCollection,
+        where("transaction_type", "==", TransactionType.TRANFER),
+        orderBy("created_date", "desc"), // Assuming 'createdAt' is a timestamp field
+        limit(1)
+      );
+  
+      const sellSnapshot = await getDocs(sellQuery);
+      let newTransactionId: string;
+  
+      if (!sellSnapshot.empty) {
+        // Extract the latest transaction_id
+        const latestTransaction = sellSnapshot.docs[0].data();
+        const latestTransactionId = latestTransaction.transaction_id;
+  
+        // Extract the numeric part from the latestTransactionId (e.g., 'SELL-YYMMDD-1' -> 1)
+        const match = latestTransactionId.match(/T-\d{6}-(\d+)/);
+        const lastNumber = match ? parseInt(match[1], 10) : 0;
+  
+        // Generate the new transaction_id
+        const today = new Date();
+        const yy = today.getFullYear().toString().slice(-2);
+        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
+        const dd = today.getDate().toString().padStart(2, "0");
+        const datePart = `${yy}${mm}${dd}`;
+  
+        newTransactionId = `T-${datePart}-${lastNumber + 1}`;
+      } else {
+        // If no transactions exist, start with 'SELL-YYMMDD-1'
+        const today = new Date();
+        const yy = today.getFullYear().toString().slice(-2);
+        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
+        const dd = today.getDate().toString().padStart(2, "0");
+        const datePart = `${yy}${mm}${dd}`;
+  
+        newTransactionId = `T-${datePart}-1`;
+      }
+  
+      return newTransactionId;
+    });
+  }
+
   export async function createSellTransactionWithStockDeduction(transactionData: any) {
     try {
       // Run a transaction to ensure atomic updates
@@ -851,6 +945,99 @@ async function handleCancelledOrderStockUpdate(
       stocks: updatedStocks,
       pending_stock: updatedPendingStocks
     });
+  }
+}
+
+export async function createTransferTransactionCompleted(
+  transaction_id: string,
+  items: { sku: string; quantity: number }[],
+  warehouse: string,
+  to_warehouse: string,
+  notes: string = "",
+  createdBy: string,
+  updated_by: string,
+  status: TransferStatus = TransferStatus.COMPLETED
+): Promise<TransferTransaction> {
+  try {
+    return await runTransaction(db, async (transaction) => {
+      if (warehouse === to_warehouse) {
+        throw new Error("ไม่สามารถโอนย้ายสินค้าภายในคลังเดียวกันได้");
+      }
+
+      const productsRef = collection(db, "products");
+      const transactionRef = collection(db, "transactions");
+      
+      // Generate transaction ID (you might want to implement your own logic)
+      const transferItems = [];
+
+      // Process each item
+      for (const item of items) {
+        // Find the product by SKU
+        const productQuery = query(productsRef, where("sku", "==", item.sku));
+        const productSnapshot = await getDocs(productQuery);
+
+        if (productSnapshot.empty) {
+          throw new Error(`Product with SKU ${item.sku} not found`);
+        }
+
+        const productDoc = productSnapshot.docs[0];
+        const productData = productDoc.data();
+
+        // Initialize or get current stocks
+        const currentStocks = productData.stocks || {};
+        const fromStock = currentStocks[warehouse] || 0;
+
+        // Validate stock availability
+        if (fromStock < item.quantity) {
+          throw new Error(`Insufficient stock for SKU ${item.sku} in warehouse ${warehouse}`);
+        }
+
+        // Calculate new stock values
+        const updatedStocks = {
+          ...currentStocks,
+          [warehouse]: fromStock - item.quantity,
+          [to_warehouse]: (currentStocks[to_warehouse] || 0) + item.quantity
+        };
+
+        // Update the product document
+        transaction.update(productDoc.ref, {
+          stocks: updatedStocks,
+          updated_date: Timestamp.now()
+        });
+
+        // Add to transfer items
+        transferItems.push({
+          sku: productDoc.id,
+          quantity: item.quantity,
+          subtotal: item.quantity * (productData.price || 0)
+        });
+      }
+
+      // Create transfer transaction document
+      const transferTransaction: TransferTransaction = {
+        transaction_id: transaction_id,
+        transaction_type: TransactionType.TRANFER,
+        status: status,
+        items: transferItems,
+        warehouse: warehouse,
+        to_warehouse: to_warehouse,
+        notes: notes,
+        created_by: createdBy,
+        updated_by: updated_by,
+        created_date: Timestamp.now(),
+        updated_date: Timestamp.now()
+      };
+
+      const transferDoc = await addDoc(transactionRef, transferTransaction);
+
+      return {
+        id: transferDoc.id,
+        ...transferTransaction
+      } as TransferTransaction;
+    });
+  } catch (error) {
+    console.error("Error updating stock batch:", error);
+    throw error;
   }
 }
 
