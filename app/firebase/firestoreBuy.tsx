@@ -327,7 +327,7 @@ export const getTotalPurchaseTransactionCount = async () => {
         };
   
         // Special handling for cancelled purchase orders
-        if (next_status === PurchaseStatus.CANCELLED && current_status === PurchaseStatus.COMPLETED) {
+        if (next_status === PurchaseStatus.CANCELLED && current_status === PurchaseStatus.PENDING) {
           // Reverse the stock addition when canceling a completed purchase
           await handleCancelledPurchaseStockUpdate(transaction, transactionData.items);
         }

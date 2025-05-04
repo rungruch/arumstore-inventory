@@ -7,7 +7,7 @@ import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
 import { createContact } from "@/app/firebase/firestore";
 import PurchaseProductSection from "./ProductSectionPurchase";
-import {VatType, TransactionType} from "@/app/firebase/enum";
+import {VatType, TransactionType, PurchaseStatus} from "@/app/firebase/enum";
 import { getPurchaseTransactionByTransactionId, createPurchaseTransactionWithStockAddition, generateRandomBuyTransactionId } from "@/app/firebase/firestoreBuy";
 
 // Define types for the component
@@ -373,7 +373,7 @@ export default function AddPurchaseForm({
 
     const formattedTransactionData: FormattedOrderData = {
         ...orderState,
-        status: "PENDING",
+        status: PurchaseStatus.COMPLETED,
         items: orderItems.filter(item => item.id !== '').map(item => ({
             name: item.product_name,
             sku: item.product_code,
