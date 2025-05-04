@@ -6,7 +6,7 @@ const addProductpage = () => {
   const searchParams = useSearchParams();
   const ref_product_id = searchParams.get("psku");
   return (
-  <AddTransfer ref_product_id={ref_product_id}></AddTransfer>
+    <AddTransfer ref_product_id={ref_product_id} ></AddTransfer>
   )
 }
 export default addProductpage

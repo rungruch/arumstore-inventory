@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { getProductBySKU, getSellTransactionByTransactionId, generateRandomTransferTransactionId, getProductWarehouse, createTransferTransactionCompleted} from "@/app/firebase/firestore";
+import { getProductBySKU, generateRandomTransferTransactionId, getProductWarehouse, createTransferTransactionCompleted} from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ProductSection from "./ProductTransferSection";
@@ -131,24 +131,6 @@ export default function AddSellOrderForm({
     setValidationError("");
   };
 
-
-  async function transformItemData(originalData: any[]): Promise<Product[]> {
-    return Promise.all(originalData.map(async item => {
-      let leatest_product:any = await getProductBySKU(item.sku);
-      return {
-        id: item.sku,
-        product_code: item.sku,
-        product_name: leatest_product[0].name,
-        quantity: item.quantity ?? 0,
-        price: item.price,
-        discount: item.discount ?? 0,
-        total: item.subtotal ?? 0,
-        stock: leatest_product[0].stocks[orderState.warehouse] ?? 0,
-        unit_type: leatest_product[0].unit_type
-      };
-    }));
-  }
-
   const handleProductsChange = (products: OrderItem[]): void => {
     setOrderItems(products);
   };
@@ -252,7 +234,7 @@ export default function AddSellOrderForm({
         title={modalState.title} 
         message={modalState.message}
       />
-      <div className="p-4 rounded-lg shadow-lg w-full mx-auto bg-white dark:bg-zinc-800">
+      <div className="p-4 rounded-lg shadow-lg mt-4  w-fit mx-auto bg-white dark:bg-zinc-800">
         <h1 className="text-xl font-semibold mb-4">เพิ่มรายการโอนสินค้า</h1>
         <form onSubmit={handleFormSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -277,9 +259,11 @@ export default function AddSellOrderForm({
                 onChange={handleChange} 
                 className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
               />
-              <div className="mb-4">
-              <h3 className="text-sm font-semibold mb-2">ออกจากคลังสินค้า</h3>
-                <select 
+            </div>
+            <div>
+              <div className="text-sm font-semibold mb-2">ย้ายสินค้า<span className="text-red-500">*</span></div>
+              <label className="block mb-1 text-sm">ออกจากคลังสินค้า</label>
+              <select 
                   name="warehouse" 
                   value={orderState.warehouse} 
                   onChange={handleChange} 
@@ -292,8 +276,8 @@ export default function AddSellOrderForm({
                     </option>
                   ))}
                 </select>
-                <h3 className="text-sm font-semibold mb-2">ไปสู่คลังสินค้า</h3>
-                <select 
+              <label className="block mb-1 text-sm">ไปสู่คลังสินค้า<span className="text-red-500">*</span></label> 
+              <select 
                   name="to_warehouse" 
                   value={orderState.to_warehouse} 
                   onChange={handleChange} 
@@ -306,7 +290,6 @@ export default function AddSellOrderForm({
                     </option>
                   ))}
                 </select>
-              </div>
             </div>
           </div>
 

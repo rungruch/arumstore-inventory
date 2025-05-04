@@ -116,3 +116,27 @@ export interface Contact {
   created_date: Timestamp;
   updated_date: Timestamp;
 }
+
+export interface MonthlyIncome {
+  str_date: string; // date in format yyyy-mm // 2025-04
+  date: Timestamp; //calculate date
+  created_date: Timestamp;
+  allIncome:number
+  skus: {
+    name:string,
+    sku:string,
+    quantity:number,
+    totalIncome:number
+  }[]
+}
+export interface YearlyIncome {
+  date: Timestamp;
+  created_date: Timestamp;
+  allIncome:number
+  skus: {
+    name:string,
+    sku:string,
+    quantity:number,
+    totalIncome:number
+  }[]
+}

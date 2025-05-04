@@ -1037,6 +1037,95 @@ export async function createTransferTransactionCompleted(
   }
 }
 
+export async function createAdjustStockTransaction(
+  transaction_id: string,
+  item: { sku: string; quantity: number, newBuyPrice: number },
+  to_warehouse: string,
+  notes: string = "",
+  createdBy: string,
+  updated_by: string,
+  status: TransferStatus = TransferStatus.COMPLETED
+): Promise<TransferTransaction> {
+  try {
+    return await runTransaction(db, async (transaction) => {
+      const productsRef = collection(db, "products");
+      const transactionRef = collection(db, "transactions");
+
+      // Find the product by SKU
+      const productQuery = query(productsRef, where("sku", "==", item.sku));
+      const productSnapshot = await getDocs(productQuery);
+
+      if (productSnapshot.empty) {
+        throw new Error(`Product with SKU ${item.sku} not found`);
+      }
+
+      const productDoc = productSnapshot.docs[0];
+      const productData = productDoc.data();
+
+      // Initialize or get current stocks
+      const currentStocks = productData.stocks || {};
+
+      // Replace stock value for the warehouse instead of adding
+      const updatedStocks = {
+        ...currentStocks,
+        [to_warehouse]: item.quantity // Direct replacement instead of addition
+      };
+
+      // Calculate new average buy price considering existing stock and new stock
+      const currentBuyPrice = productData.price?.buy_price_average || 0;
+      const currentTotalStock = Object.values(currentStocks).reduce<number>((sum, qty) => sum + (Number(qty) || 0), 0);
+      const currentTotalValue = currentBuyPrice * currentTotalStock;
+
+      if (item.newBuyPrice == 0) {
+        item.newBuyPrice = currentBuyPrice;
+      }
+
+      // Calculate new total value including new stock
+      const newStockValue = item.newBuyPrice * item.quantity;
+      const newTotalStock = Object.values(updatedStocks).reduce<number>((sum, qty) => sum + (Number(qty) || 0), 0);
+      const newAverageBuyPrice = (currentTotalValue + newStockValue) / (newTotalStock + currentTotalStock);
+
+      // Update the product document
+      transaction.update(productDoc.ref, {
+        stocks: updatedStocks,
+        updated_date: Timestamp.now(),
+        price: {
+          ...productData.price,
+          buy_price_average: newAverageBuyPrice
+        }
+      });
+      // Create adjust transaction document
+      const adjustTransaction: TransferTransaction = {
+        transaction_id: transaction_id,
+        transaction_type: TransactionType.TRANFER,
+        status: status,
+        items: [{
+          sku: productDoc.id,
+          quantity: item.quantity,
+          subtotal: item.quantity * (productData.price || 0)
+        }],
+        warehouse: "",
+        to_warehouse: to_warehouse,
+        notes: notes,
+        created_by: createdBy,
+        updated_by: updated_by,
+        created_date: Timestamp.now(),
+        updated_date: Timestamp.now()
+      };
+
+      const adjustDoc = await addDoc(transactionRef, adjustTransaction);
+
+      return {
+        id: adjustDoc.id,
+        ...adjustTransaction
+      } as TransferTransaction;
+    });
+  } catch (error) {
+    console.error("Error updating stock batch:", error);
+    throw error;
+  }
+}
+
 export const updateShippingDetails = async (
   transactionId: string, 
   shippingDetails: {

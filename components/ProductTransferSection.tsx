@@ -226,8 +226,8 @@ interface PaginatedResponse {
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 text-xs text-gray-600 uppercase dark:bg-zinc-800 dark:text-gray-200">
-              <th className="px-4 py-3 border-b border-r border-gray-200 text-left font-medium">รหัส</th>
-              <th className="px-4 py-3 border-b border-r border-gray-200 text-left font-medium">ชื่อสินค้า</th>
+              <th className="px-4 py-3 border-b border-r border-gray-200 text-left font-medium  w-[20%]">รหัส</th>
+              <th className="px-4 py-3 border-b border-r border-gray-200 text-left font-medium  w-[60%]">ชื่อสินค้า</th>
               <th className="px-4 py-3 border-b border-r border-gray-200 text-center font-medium">จำนวน</th>
               <th className="px-4 py-3 border-b border-gray-200 text-center font-medium">จัดการ</th>
             </tr>

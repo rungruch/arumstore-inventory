@@ -273,7 +273,7 @@ import { ProductStatus } from "@/app/firebase/enum";
                             <input type="text" name="description" placeholder="รายละเอียด" value={productState.description} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                         </div>
                         <div>
-                            <label className="block mb-2 font-bold">ราคาขาย</label>
+                            <label className="block mb-2 font-bold">ราคาขาย <span className="text-red-500">*</span></label>
                             <input type="number"  onWheel={(e) => (e.target as HTMLInputElement).blur()} name="sellingPrice" placeholder="ราคาขาย" min={0} value={productState.sellingPrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />
                             <label className="block mb-2 font-bold">ราคาซื้อ <span className="text-red-500">*</span></label>
                             <input type="number"  onWheel={(e) => (e.target as HTMLInputElement).blur()} name="purchasePrice" placeholder="ราคาซื้อ" min={0} value={productState.purchasePrice} onChange={handleChange} className="w-full border p-2 rounded-md mb-4 dark:border-gray-700" />

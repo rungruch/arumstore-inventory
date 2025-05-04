@@ -400,9 +400,16 @@ export default function ProductPage() {
                           ดูภาพรวม
                         </Link>
                         <div className="border-t border-gray-200 my-1" />
-                        <Link href={`/documents/tax?transaction_id=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                        <button
+                          onClick={() => setSelectedStock({
+                          productName: product.name,
+                          productSKU: product.sku,
+                          stocks: product.stocks,
+                          pendingStocks: product.pending_stock
+                          })}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                           ปรับจำนวน
-                        </Link>
+                        </button>
                         <Link href={`/products/addtransfer?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                           โอนสินค้า
                         </Link>
@@ -481,6 +488,7 @@ export default function ProductPage() {
           stocks={selectedStock.stocks}
           pendingStocks={selectedStock.pendingStocks}
           onClose={() => setSelectedStock(null)}
+          onUpdate={() => setTrigger(!trigger)} // Add this line
         />
       )}
     </div>
