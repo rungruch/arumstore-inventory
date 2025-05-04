@@ -103,7 +103,6 @@ export enum OrderStatus {
       PurchaseStatus.CANCELLED
     ],
     [PurchaseStatus.COMPLETED]: [
-      PurchaseStatus.CANCELLED
     ],
     [PurchaseStatus.CANCELLED]: [],
     [PurchaseStatus.FAILED]: []

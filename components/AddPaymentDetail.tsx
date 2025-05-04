@@ -125,7 +125,7 @@ export default function PaymentDetailsForm({
     };
 
     return (
-        <div className="fixed inset-0 flex justify-center items-center z-50 bg-[#00000066] dark:bg-[#00000099">
+        <div className="fixed inset-0 flex justify-center items-center z-50 bg-[#00000066] dark:bg-[#00000099]">
             <div ref={modalRef} className="bg-white p-6 rounded-lg w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto dark:bg-zinc-800">
           <h2 className="text-xl font-bold mb-4 top-0">แก้ไขข้อมูลการชำระเงิน</h2>
           

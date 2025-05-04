@@ -56,8 +56,7 @@ export default function AddCategoryPopup({ isOpen, onClose }: AddCategoryPopupPr
       onClick={(e) => {
         if ((e.target as HTMLElement).id === "popup-overlay") handleClose(); // Close on clicking outside
       }}
-      style={{ backgroundColor: "#00000066" }}
-      className="fixed inset-0 flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-50 bg-[#00000066] dark:bg-[#00000099]"
     >
       <div
         className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4 sm:mx-6 sm:max-w-lg dark:bg-zinc-900"

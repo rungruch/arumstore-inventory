@@ -750,7 +750,7 @@ export default function ProductPage() {
                     ) : (
                       <button
                         onClick={() => openShippingDetailsModal(data.transaction_id)}
-                        className="text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 flex items-center gap-1"
+                        className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -836,7 +836,7 @@ export default function ProductPage() {
                     ) : (
                       <button
                         onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
-                        className="text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 flex items-center gap-1"
+                        className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
                       >
                         รอชำระ
                       </button>
