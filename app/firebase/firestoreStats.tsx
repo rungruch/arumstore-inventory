@@ -289,6 +289,16 @@ import {
             quantity: Number(skuData.quantity)
           };
         }
+        else{
+          return {
+            str_date:monthlyIncome.str_date,
+            date:monthlyIncome.date,
+            sku: sku,
+            name: "Unknown Product or no transaction in this month",
+            totalIncome: 0,
+            quantity: 0
+          }
+        }
       }
 
       // If document doesn't exist or SKU not found, calculate from transactions
