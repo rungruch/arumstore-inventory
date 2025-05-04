@@ -92,7 +92,7 @@ const Modal: React.FC<ModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-60"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
     >
       <div 

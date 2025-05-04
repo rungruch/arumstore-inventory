@@ -13,6 +13,28 @@ export enum OrderStatus {
     FAILED = "FAILED"
   }
 
+  export enum PurchaseStatus {
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
+    CANCELLED = "CANCELLED",
+    FAILED = "FAILED"
+  }
+
+  export enum PurchaseStatusDisplay {
+    PENDING = "รอดำเนินการ",
+    COMPLETED = "เสร็จสมบูรณ์",
+    CANCELLED = "ยกเลิก",
+    FAILED = "ล้มเหลว"
+  }
+
+  export enum PurchaseStatusFilter {
+    ALL = "ALL",
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
+    CANCELLED = "CANCELLED",
+    FAILED = "FAILED"
+  }
+
   export enum ProductStatus {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE",
@@ -73,4 +95,16 @@ export enum OrderStatus {
     ],
     [OrderStatus.CANCELLED]: [],
     [OrderStatus.FAILED]: []
+  };
+  
+  export const PURCHASE_STATUS_TRANSITIONS: { [key in PurchaseStatus]: PurchaseStatus[] } = {
+    [PurchaseStatus.PENDING]: [
+      PurchaseStatus.COMPLETED, 
+      PurchaseStatus.CANCELLED
+    ],
+    [PurchaseStatus.COMPLETED]: [
+      PurchaseStatus.CANCELLED
+    ],
+    [PurchaseStatus.CANCELLED]: [],
+    [PurchaseStatus.FAILED]: []
   };

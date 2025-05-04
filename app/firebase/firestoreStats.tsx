@@ -257,7 +257,7 @@ import {
           // Get updated data
           const updatedIncome = await getMonthlyIncomeByDate(date, excludeCancelled);
           
-          // Update the document
+          // Update the document to product_monthly_income_summary
           await setDoc(doc(docRef, dateString), {
             str_date: updatedIncome.str_date,
             date: updatedIncome.date,
@@ -301,7 +301,7 @@ import {
         }
       }
 
-      // If document doesn't exist or SKU not found, calculate from transactions
+      // If document doesn't exist, calculate from transactions
 
       const monthlyIncome = await getMonthlyIncomeByDate(date, excludeCancelled);
 

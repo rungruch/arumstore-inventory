@@ -59,6 +59,41 @@ export interface SellTransaction {
   updated_date: Timestamp;
 }
 
+export interface PurchaseTransaction {
+  id: string;
+  transaction_id: string;
+  supplier_id: string;
+  supplier_name: string;
+  status: string;
+  items: {
+    sku: string;
+    name: string;
+    quantity: number;
+    price: number;
+    discount: number;
+    subtotal: number;
+    unit_type: string;
+    warehouse_id: string;
+  }[];
+  total_amount: number;
+  total_vat: number;
+  total_amount_no_vat: number;
+  payment_method: string;
+  payment_status: string;
+  warehouse: string;
+  tax_id: string;
+  branch_name: string;
+  branch_id: string;
+  supplier_address: string;
+  supplier_tel: string;
+  supplier_email: string;
+  notes: string;
+  created_by: string;
+  updated_by: string;
+  created_date: Timestamp;
+  updated_date: Timestamp;
+}
+
 export interface TransferTransaction {
   transaction_id: string;
   transaction_type: string;
@@ -139,4 +174,52 @@ export interface YearlyIncome {
     quantity:number,
     totalIncome:number
   }[]
+}
+
+export interface User {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: 'admin' | 'manager' | 'staff';
+  permissions: {
+    sales: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    products: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    customers: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    purchases: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    finance: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    users: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+  };
+  lastLogin: Timestamp;
+  created_date: Timestamp;
+  updated_date: Timestamp;
 }

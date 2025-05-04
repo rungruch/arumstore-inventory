@@ -256,8 +256,8 @@ export default function ProductPage() {
                       priority={true}
                       src={product.sku_image}
                       alt={product.name}
-                      width={100}
-                      height={100}
+                      width={50}
+                      height={50}
                       className="transition-opacity duration-500 ease-in-out opacity-0 w-auto h-auto max-h-[100px] rounded-md"
                       onLoad={(img) => (img.currentTarget as HTMLImageElement).classList.remove("opacity-0")}
                     />

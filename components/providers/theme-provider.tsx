@@ -1,10 +1,29 @@
 "use client";
 
-import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { useState, useEffect, ReactNode } from "react";
+import { ThemeProvider } from "next-themes";
 
-type ThemeProviderProps = React.ComponentProps<typeof NextThemesProvider>;
+export function ClientThemeProvider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  // Only render theme content when mounted on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Return children without theme provider during SSR
+    return <>{children}</>;
+  }
+
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      {children}
+    </ThemeProvider>
+  );
 }

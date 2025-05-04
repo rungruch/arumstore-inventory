@@ -234,7 +234,7 @@ export default function AddSellOrderForm({
         title={modalState.title} 
         message={modalState.message}
       />
-      <div className="p-4 rounded-lg shadow-lg mt-4  w-fit mx-auto bg-white dark:bg-zinc-800">
+      <div className="p-4 rounded-lg shadow-lg mx-auto bg-white dark:bg-zinc-800 w-full md:w-fit min-h-screen md:min-h-auto md:mt-16">
         <h1 className="text-xl font-semibold mb-4">เพิ่มรายการโอนสินค้า</h1>
         <form onSubmit={handleFormSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">

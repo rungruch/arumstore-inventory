@@ -24,7 +24,6 @@ import { db } from "@/app/firebase/clientApp";
 import { Warehouse, Contact, TransferTransaction } from "@/app/firebase/interfaces";
 import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus, TransferStatus } from "@/app/firebase/enum";
 
-// Existing code from your file...
 
 export async function getProducts() {
   try {
@@ -571,53 +570,6 @@ export async function getProductWarehouse() {
         const datePart = `${yy}${mm}${dd}`;
   
         newTransactionId = `S-${datePart}-1`;
-      }
-  
-      return newTransactionId;
-    });
-  }
-
-  export async function generateRandomBuyTransactionId(): Promise<string> {
-    const transactionsCollection = collection(db, "transactions");
-  
-    return runTransaction(db, async (transaction) => {
-      // Query to find the latest 'SELL' transaction
-      const sellQuery = query(
-        transactionsCollection,
-        where("transaction_type", "==", TransactionType.BUY),
-        orderBy("created_date", "desc"), // Assuming 'createdAt' is a timestamp field
-        limit(1)
-      );
-  
-      const sellSnapshot = await getDocs(sellQuery);
-      let newTransactionId: string;
-  
-      if (!sellSnapshot.empty) {
-        // Extract the latest transaction_id
-        const latestTransaction = sellSnapshot.docs[0].data();
-        const latestTransactionId = latestTransaction.transaction_id;
-  
-        // Extract the numeric part from the latestTransactionId (e.g., 'SELL-YYMMDD-1' -> 1)
-        const match = latestTransactionId.match(/B-\d{6}-(\d+)/);
-        const lastNumber = match ? parseInt(match[1], 10) : 0;
-  
-        // Generate the new transaction_id
-        const today = new Date();
-        const yy = today.getFullYear().toString().slice(-2);
-        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
-        const dd = today.getDate().toString().padStart(2, "0");
-        const datePart = `${yy}${mm}${dd}`;
-  
-        newTransactionId = `B-${datePart}-${lastNumber + 1}`;
-      } else {
-        // If no transactions exist, start with 'SELL-YYMMDD-1'
-        const today = new Date();
-        const yy = today.getFullYear().toString().slice(-2);
-        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
-        const dd = today.getDate().toString().padStart(2, "0");
-        const datePart = `${yy}${mm}${dd}`;
-  
-        newTransactionId = `B-${datePart}-1`;
       }
   
       return newTransactionId;
