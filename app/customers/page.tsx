@@ -7,6 +7,7 @@ import { Timestamp } from "firebase/firestore";
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Contact } from "@/app/firebase/interfaces";
 import AddContactPopup from "@/components/AddContact";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function ContactsPage() {
   const [search, setSearch] = useState("");
@@ -119,6 +120,8 @@ export default function ContactsPage() {
   const totalPages = Math.ceil(totalContacts / pageSize);
 
   return (
+    <>
+    <ProtectedRoute module='customers' action="view">
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">ผู้ติดต่อ</h1>
@@ -233,5 +236,7 @@ export default function ContactsPage() {
 
       <AddContactPopup isOpen={showPopup} onClose={togglePopup} />
     </div>
+    </ProtectedRoute>
+    </>
   );
 }

@@ -10,6 +10,7 @@ import { ModalTitle } from '@/components/enum';
 import { getWallets } from "@/app/firebase/firestoreFinance";
 import { WalletCollection } from "@/app/finance/interface";
 import { getFile, uploadFile } from "@/app/firebase/storage";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function OtherOutcomePage() {
   const [transactions, setTransactions] = useState<ExpenseTransaction[]>([]);
@@ -185,6 +186,8 @@ export default function OtherOutcomePage() {
   };
 
   return (
+    <>
+    <ProtectedRoute module='finance' action="view">
     <div className="container mx-auto px-4 py-6">
       <Modal
         isOpen={modalState.isOpen}
@@ -447,5 +450,7 @@ export default function OtherOutcomePage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
+    </>
   );
 }

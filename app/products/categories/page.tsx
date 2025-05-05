@@ -6,7 +6,7 @@ import FlexTable from "@/components/FlexTable";
 import AddCategoryPopup from "@/components/AddCategory";
 import { Timestamp, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { ChevronLeft, ChevronRight } from "lucide-react"
-
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function ProductCategoryPage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -126,6 +126,8 @@ export default function ProductCategoryPage() {
   const totalPages = Math.ceil(totalCategories / pageSize);
 
   return (
+    <>
+    <ProtectedRoute module='products' action="view">
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">หมวดหมู่</h1>
@@ -233,5 +235,7 @@ export default function ProductCategoryPage() {
       {/* Add Category Popup */}
       <AddCategoryPopup isOpen={showPopup} onClose={togglePopup} />
     </div>
+    </ProtectedRoute>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import { WalletCollection } from "@/app/finance/interface";
 import { payment_status, finance_transaction_type } from "@/app/finance/enum";
 import Link from "next/link";
 import { Timestamp } from "firebase/firestore";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function FinancePage() {
   const [wallets, setWallets] = useState<WalletCollection[]>([]);
@@ -67,6 +68,8 @@ export default function FinancePage() {
   };
 
   return (
+    <>
+    <ProtectedRoute module='finance' action="view">
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-6">การเงิน</h1>
 
@@ -241,5 +244,8 @@ export default function FinancePage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
+   </>
+    
   );
 }

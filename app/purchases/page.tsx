@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx-js-style';
 import { getPurchaseTransactionPaginated, getTotalPurchaseTransactionCount, getPurchaseTransactionbyName, getPurchaseTransactionsByDate, updatePurchaseTransactionStatus } from "@/app/firebase/firestoreBuy";
 import { PurchaseStatusDisplay, PURCHASE_STATUS_TRANSITIONS, PurchaseStatus } from "../firebase/enum";
 import AddPurchase from "@/components/AddPurchase";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface ModalState {
   isOpen: boolean;
@@ -309,6 +310,7 @@ export default function PurchasePage() {
 
   return (
     <>
+    <ProtectedRoute action="view" module="purchases">
       <Modal
         isOpen={modalState.isOpen}
         onClose={closeModal}
@@ -629,6 +631,7 @@ export default function PurchasePage() {
           </div>
         </div>
       </div>
+      </ProtectedRoute>
     </>
   );
 }

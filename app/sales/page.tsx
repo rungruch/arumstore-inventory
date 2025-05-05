@@ -14,6 +14,7 @@ import ShippingDetailsForm from "@/components/AddShippingDetail";
 import PaymentDetailsForm from "@/components/AddPaymentDetail";
 import * as XLSX from 'xlsx-js-style';
 import { newTransaction, ExcelExportRow } from '@/components/interface';
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 
 interface ModalState {
@@ -379,6 +380,7 @@ export default function ProductPage() {
 
   return (
     <>
+    <ProtectedRoute module="sales" action="view">
       <Modal
         isOpen={modalState.isOpen}
         onClose={closeModal}
@@ -984,6 +986,7 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
-    </>
+      </ProtectedRoute>
+    </> 
   );
 }

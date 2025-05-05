@@ -6,6 +6,7 @@ import { User } from '@/app/firebase/interfaces';
 import AddUserPopup from '@/components/AddNewUser';
 import Modal from '@/components/modal';
 import { ModalTitle } from '@/components/enum';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -30,7 +31,6 @@ export default function UsersPage() {
       const userSnapshot = await getDocs(userCollection);
       const userList = userSnapshot.docs.map(doc => doc.data() as User);
       setUsers(userList);
-      console.log(userList);
     } catch (error) {
       console.error("Error fetching users:", error);
       setModalState({
@@ -80,6 +80,7 @@ export default function UsersPage() {
   };
 
   return (
+    <ProtectedRoute module='users' action="view">
     <div className="container mx-auto p-5">
       <Modal
         isOpen={modalState.isOpen}
@@ -188,5 +189,6 @@ export default function UsersPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

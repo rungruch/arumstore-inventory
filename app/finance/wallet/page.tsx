@@ -4,7 +4,7 @@ import { getWallets, createWallet, updateWallet, deleteWallet } from "@/app/fire
 import { WalletCollection } from "../interface";
 import { wallet_type, wallet_type_display } from "../enum";
 import { v4 as uuidv4 } from "uuid";
-import { Timestamp } from "firebase/firestore";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const WalletPage = () => {
   const [wallets, setWallets] = useState<WalletCollection[]>([]);
@@ -107,6 +107,7 @@ const WalletPage = () => {
   const totalBalance = wallets.reduce((sum, wallet) => sum + (wallet.total || 0), 0);
 
   return (
+    <ProtectedRoute module='finance' action="view">
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">กระเป๋าเงิน</h1>
@@ -407,6 +408,7 @@ const WalletPage = () => {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 };
 

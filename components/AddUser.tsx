@@ -6,6 +6,7 @@ import { auth, db } from '@/app/firebase/clientApp';
 import Modal from '@/components/modal';
 import { ModalTitle } from '@/components/enum';
 import { useRouter } from 'next/navigation';
+import { getPermissionModulesAndActions } from '@/lib/menu-list';
 
 interface AddUserPopupProps {
   isOpen: boolean;
@@ -14,10 +15,22 @@ interface AddUserPopupProps {
 
 export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
   const router = useRouter();
+  const permissionModules = getPermissionModulesAndActions();
   const [userData, setUserData] = useState({
     email: '',
     password: '',
     displayName: '',
+  });
+  const [permissions, setPermissions] = useState(() => {
+    // Default: all false
+    const perms: any = {};
+    permissionModules.forEach(mod => {
+      perms[mod.key] = {};
+      mod.actions.forEach(action => {
+        perms[mod.key][action] = false;
+      });
+    });
+    return perms;
   });
   
   const [validationError, setValidationError] = useState('');
@@ -35,6 +48,16 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
       [name]: value
     }));
     setValidationError('');
+  };
+
+  const handlePermissionChange = (module: string, action: string, checked: boolean) => {
+    setPermissions((prev: any) => ({
+      ...prev,
+      [module]: {
+        ...prev[module],
+        [action]: checked
+      }
+    }));
   };
 
   const validateForm = () => {
@@ -92,7 +115,7 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
         email: userData.email,
         displayName: userData.displayName,
         role: 'staff', // Default role for new users
-        permissions: getDefaultPermissions(),
+        permissions: permissions,
         lastLogin: serverTimestamp(),
         created_date: serverTimestamp(),
         updated_date: serverTimestamp()
@@ -110,6 +133,18 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
         email: '',
         password: '',
         displayName: '',
+      });
+
+      // Reset permissions
+      setPermissions(() => {
+        const perms: any = {};
+        permissionModules.forEach(mod => {
+          perms[mod.key] = {};
+          mod.actions.forEach(action => {
+            perms[mod.key][action] = false;
+          });
+        });
+        return perms;
       });
       
     } catch (error: any) {
@@ -221,6 +256,38 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
                   onChange={handleChange}
                   disabled={isSubmitting}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">สิทธิ์การใช้งาน</label>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-collapse text-xs">
+                    <thead>
+                      <tr>
+                        <th className="border px-2 py-1">โมดูล</th>
+                        {permissionModules[0].actions.map(action => (
+                          <th key={action} className="border px-2 py-1 text-center">{action}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {permissionModules.map(mod => (
+                        <tr key={mod.key}>
+                          <td className="border px-2 py-1">{mod.label}</td>
+                          {mod.actions.map(action => (
+                            <td key={action} className="border px-2 py-1 text-center">
+                              <input
+                                type="checkbox"
+                                checked={permissions[mod.key]?.[action] || false}
+                                onChange={e => handlePermissionChange(mod.key, action, e.target.checked)}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 

@@ -12,6 +12,7 @@ import StockDetailsPopup from "@/components/StockDetailsPopup";
 import { ProductStatus } from "../firebase/enum";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface ModalState {
   isOpen: boolean;
@@ -187,6 +188,7 @@ export default function ProductPage() {
 
   return (
 <>
+<ProtectedRoute action="view" module="products">
 <Modal
   isOpen={modalState.isOpen}
   onClose={closeModal}
@@ -492,6 +494,7 @@ export default function ProductPage() {
         />
       )}
     </div>
+    </ProtectedRoute>
     </>
   );
 }

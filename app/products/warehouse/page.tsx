@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Warehouse } from "@/app/firebase/interfaces";
 import AddWarehousePopup from "@/components/AddWarehouse";
 import { getProductCountByWarehouse as getTotalProductsofWarehouse } from "@/app/firebase/firestoreStats";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function ProductWarehousePage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -133,6 +134,7 @@ export default function ProductWarehousePage() {
   const totalPages = Math.ceil(totalWarehouses / pageSize);
 
   return (
+    <ProtectedRoute module='products' action="view">
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">คลังสินค้า</h1>
@@ -251,5 +253,6 @@ export default function ProductWarehousePage() {
       {/* Add Category Popup - You'll need to create an AddWarehousePopup component */}
       <AddWarehousePopup isOpen={showPopup} onClose={togglePopup} />
     </div>
+    </ProtectedRoute>
   );
 }

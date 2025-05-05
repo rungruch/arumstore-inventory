@@ -171,15 +171,43 @@ export function getMenuList(pathname: string): Group[] {
       menus: [
         {
           href: "/users",
-          label: "Users",
+          label: "บัญชี",
           icon: Users
         },
         {
-          href: "/account",
-          label: "Account",
+          href: "/settings",
+          label: "ตั้งค่า",
           icon: Settings
         }
       ]
     }
   ];
+}
+
+// Helper to extract permission modules and actions from menu-list
+export function getPermissionModulesAndActions() {
+  // Define standard actions for all modules
+  const standardActions = ['view', 'create', 'edit', 'delete'];
+  // Map menu labels to permission keys
+  const menuToPermissionKey: Record<string, string> = {
+    'รายการซื้อ': 'purchases',
+    'รายการขาย': 'sales',
+    'สินค้า': 'products',
+    'ลูกค้า': 'customers',
+    'การเงิน': 'finance',
+    'บัญชี': 'users',
+    'ตั้งค่า': 'settings',
+    'Dashboard': 'dashboard',
+  };
+  const groups = getMenuList('');
+  const modules: { key: string; label: string; actions: string[] }[] = [];
+  groups.forEach(group => {
+    group.menus.forEach(menu => {
+      const key = menuToPermissionKey[menu.label] || menu.label.toLowerCase();
+      if (!modules.find(m => m.key === key)) {
+        modules.push({ key, label: menu.label, actions: standardActions });
+      }
+    });
+  });
+  return modules;
 }

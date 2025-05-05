@@ -182,41 +182,8 @@ export interface User {
   displayName: string;
   role: 'admin' | 'manager' | 'staff';
   permissions: {
-    sales: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    products: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    customers: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    purchases: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    finance: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    users: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
+    [module: string]: {
+      [action: string]: boolean;
     };
   };
   lastLogin: Timestamp;

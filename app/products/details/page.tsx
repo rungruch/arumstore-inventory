@@ -21,6 +21,7 @@ import { PieChart as ResponsivePieChart, Pie, Cell } from "recharts";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import StockDetailsPopup from "@/components/StockDetailsPopup";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface ModalState {
   isOpen: boolean;
@@ -148,6 +149,7 @@ export default function ProductDetails() {
 
   return (
     <>
+      <ProtectedRoute module='products' action="view">
       <Modal
         isOpen={modalState.isOpen}
         onClose={closeModal}
@@ -482,6 +484,8 @@ export default function ProductDetails() {
           </div>
         </div>
       </div>
+      </ProtectedRoute>
     </>
+
   );
 }

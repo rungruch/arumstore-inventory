@@ -6,6 +6,8 @@ import { db } from '@/app/firebase/clientApp';
 import { User } from '@/app/firebase/interfaces';
 import Modal from '@/components/modal';
 import { ModalTitle } from '@/components/enum';
+import { getPermissionModulesAndActions } from '@/lib/menu-list';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -20,6 +22,8 @@ export default function EditUserPage() {
     title: '',
     message: ''
   });
+
+  const permissionModules = getPermissionModulesAndActions();
 
   useEffect(() => {
     fetchUserData();
@@ -63,11 +67,10 @@ export default function EditUserPage() {
 
   const handlePermissionChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    module: keyof User['permissions'],
-    action: keyof User['permissions'][keyof User['permissions']]
+    module: string,
+    action: string
   ) => {
     if (!userData) return;
-    
     setUserData({
       ...userData,
       permissions: {
@@ -136,6 +139,7 @@ export default function EditUserPage() {
   }
 
   return (
+    <ProtectedRoute module='users' action="edit">
     <div className="container mx-auto p-5">
       <Modal
         isOpen={modalState.isOpen}
@@ -197,161 +201,30 @@ export default function EditUserPage() {
           
           {/* Permissions Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse">
+            <table className="min-w-full border-collapse text-xs">
               <thead>
-                <tr className="bg-gray-50 dark:bg-zinc-700">
-                  <th className="border px-4 py-2 text-left dark:border-zinc-600">โมดูล</th>
-                  <th className="border px-4 py-2 text-center dark:border-zinc-600">ดู</th>
-                  <th className="border px-4 py-2 text-center dark:border-zinc-600">สร้าง</th>
-                  <th className="border px-4 py-2 text-center dark:border-zinc-600">แก้ไข</th>
-                  <th className="border px-4 py-2 text-center dark:border-zinc-600">ลบ</th>
+                <tr>
+                  <th className="border px-2 py-1">โมดูล</th>
+                  {permissionModules[0].actions.map(action => (
+                    <th key={action} className="border px-2 py-1 text-center">{action}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="border px-4 py-2 dark:border-zinc-600">รายการขาย</td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.sales.view}
-                      onChange={(e) => handlePermissionChange(e, 'sales', 'view')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.sales.create}
-                      onChange={(e) => handlePermissionChange(e, 'sales', 'create')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.sales.edit}
-                      onChange={(e) => handlePermissionChange(e, 'sales', 'edit')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.sales.delete}
-                      onChange={(e) => handlePermissionChange(e, 'sales', 'delete')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                </tr>
-                
-                <tr>
-                  <td className="border px-4 py-2 dark:border-zinc-600">สินค้า</td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.products.view}
-                      onChange={(e) => handlePermissionChange(e, 'products', 'view')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.products.create}
-                      onChange={(e) => handlePermissionChange(e, 'products', 'create')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.products.edit}
-                      onChange={(e) => handlePermissionChange(e, 'products', 'edit')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.products.delete}
-                      onChange={(e) => handlePermissionChange(e, 'products', 'delete')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                </tr>
-                
-                {/* Add more rows for other modules */}
-                <tr>
-                  <td className="border px-4 py-2 dark:border-zinc-600">ลูกค้า</td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.customers.view}
-                      onChange={(e) => handlePermissionChange(e, 'customers', 'view')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.customers.create}
-                      onChange={(e) => handlePermissionChange(e, 'customers', 'create')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.customers.edit}
-                      onChange={(e) => handlePermissionChange(e, 'customers', 'edit')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.customers.delete}
-                      onChange={(e) => handlePermissionChange(e, 'customers', 'delete')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                </tr>
-                
-                <tr>
-                  <td className="border px-4 py-2 dark:border-zinc-600">จัดการผู้ใช้</td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.users.view}
-                      onChange={(e) => handlePermissionChange(e, 'users', 'view')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.users.create}
-                      onChange={(e) => handlePermissionChange(e, 'users', 'create')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.users.edit}
-                      onChange={(e) => handlePermissionChange(e, 'users', 'edit')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center dark:border-zinc-600">
-                    <input
-                      type="checkbox"
-                      checked={userData.permissions.users.delete}
-                      onChange={(e) => handlePermissionChange(e, 'users', 'delete')}
-                      className="w-4 h-4"
-                    />
-                  </td>
-                </tr>
+                {permissionModules.map(mod => (
+                  <tr key={mod.key}>
+                    <td className="border px-2 py-1">{mod.label}</td>
+                    {mod.actions.map(action => (
+                      <td key={action} className="border px-2 py-1 text-center">
+                        <input
+                          type="checkbox"
+                          checked={userData.permissions[mod.key]?.[action] || false}
+                          onChange={e => handlePermissionChange(e, mod.key, action)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -370,5 +243,6 @@ export default function EditUserPage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
