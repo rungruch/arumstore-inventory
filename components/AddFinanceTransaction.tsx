@@ -332,14 +332,16 @@ export default function AddFinanceTransaction({
       // Create payment details if status is COMPLETED
       const paymentDetails = transactionState.payment_status === payment_status.COMPLETED ? {
         payment_method: "โอนเงิน",
-        patment_date: Timestamp.now(),
+        payment_date: Timestamp.now(),
         wallet_id: transactionState.wallet_id,
-        patment_amount: totalAmount
+        wallet_name: wallets.find(wallet => wallet.wallet_id === transactionState.wallet_id)?.wallet_name || "",
+        payment_amount: totalAmount
       } : {
         payment_method: "",
-        patment_date: Timestamp.now(),
+        payment_date: Timestamp.now(),
         wallet_id: "",
-        patment_amount: 0
+        wallet_name: "",
+        payment_amount: 0
       };
       
       if (transactionState.transaction_type === finance_transaction_type.INCOME) {
@@ -363,7 +365,6 @@ export default function AddFinanceTransaction({
           created_date: Timestamp.now(),
           updated_date: Timestamp.now()
         };
-        console.log("Income Data:", incomeData);
         
         await createIncomeTransaction(incomeData);
       } else {
@@ -685,26 +686,36 @@ export default function AddFinanceTransaction({
                       placeholder="ชื่อรายการ"
                       value={item.name}
                       onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                      className="w-full border p-2 rounded-md text-sm dark:border-gray-700"
+                      className="w-full border p-2 rounded-md text-sm dark:border-gray-700 dark:bg-zinc-600"
                       required
                     />
                   </div>
-                  <div className="col-span-3">
+                    <div className="col-span-3">
                     <input
                       type="text"
                       placeholder="ประเภท"
                       value={item.type}
                       onChange={(e) => handleItemChange(index, 'type', e.target.value)}
-                      className="w-full border p-2 rounded-md text-sm dark:border-gray-700"
+                      className="w-full border p-2 rounded-md text-sm dark:border-gray-700 dark:bg-zinc-600"
+                      list={`type-options-${index}`}
                     />
-                  </div>
+                    <datalist id={`type-options-${index}`}>
+                      <option value="ค่าบริการ" />
+                      <option value="ค่าเดินทาง" />
+                      <option value="ค่าอาหาร" />
+                      <option value="ค่าอุปกรณ์" />
+                      <option value="อื่นๆ" />
+                    </datalist>
+                    </div>
                   <div className="col-span-3">
                     <input
                       type="number"
                       placeholder="จำนวนเงิน"
                       value={item.amount}
                       onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
-                      className="w-full border p-2 rounded-md text-sm dark:border-gray-700"
+                      className="w-full border p-2 rounded-md text-sm dark:border-gray-700 dark:bg-zinc-600"
+                      min="0"
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       required
                     />
                   </div>
@@ -738,7 +749,7 @@ export default function AddFinanceTransaction({
             <div className="bg-gray-50 p-4 rounded-md w-full md:w-1/3 dark:bg-zinc-700">
               <div className="flex justify-between mb-2">
                 <span className="font-semibold">ยอดรวม:</span>
-                <span>฿{totalAmount.toLocaleString()}</span>
+                <span>{totalAmount.toLocaleString()} บาท</span>
               </div>
             </div>
           </div>

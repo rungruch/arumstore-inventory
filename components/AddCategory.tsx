@@ -87,7 +87,7 @@ export default function AddCategoryPopup({ isOpen, onClose }: AddCategoryPopupPr
             <button
               type="button" // Ensure this button doesn't trigger form submission
               onClick={handleClose}
-              className="bg-gray-300 py-2 px-4 rounded-md hover:bg-gray-400 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-all"
+              className="bg-gray-300 hover:bg-gray-400 py-2 px-4 rounded-md dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-all"
             >
               ยกเลิก
             </button>

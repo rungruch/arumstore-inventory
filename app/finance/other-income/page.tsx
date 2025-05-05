@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getIncomeTransactions, updateTransactionStatus } from "@/app/firebase/firestoreFinance";
 import { IncomeTransaction } from "@/app/finance/interface";
 import { finance_transaction_type, payment_status, payment_status_display } from "@/app/finance/enum";
@@ -9,6 +9,7 @@ import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { getWallets } from "@/app/firebase/firestoreFinance";
 import { WalletCollection } from "@/app/finance/interface";
+import { getFile, uploadFile } from "@/app/firebase/storage";
 
 export default function OtherIncomePage() {
   const [transactions, setTransactions] = useState<IncomeTransaction[]>([]);
@@ -17,6 +18,7 @@ export default function OtherIncomePage() {
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [formTrigger, setFormTrigger] = useState<boolean>(false);
   const [wallets, setWallets] = useState<WalletCollection[]>([]);
+  const [selectedTransactionNum, setSelectedTransactionNum] = useState<number>(10);
   
   const [isPayModalOpen, setIsPayModalOpen] = useState<boolean>(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string>("");
@@ -26,6 +28,10 @@ export default function OtherIncomePage() {
     title: "",
     message: "",
   });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   // Calculate total
   const totalAmount = transactions.reduce((sum, transaction) => {
@@ -37,12 +43,12 @@ export default function OtherIncomePage() {
   useEffect(() => {
     fetchTransactions();
     fetchWallets();
-  }, [formTrigger]);
+  }, [formTrigger, selectedTransactionNum]);
 
   const fetchTransactions = async () => {
     try {
       setIsLoading(true);
-      const data = await getIncomeTransactions();
+      const data = await getIncomeTransactions(selectedTransactionNum);
       setTransactions(data);
       setError(null);
     } catch (err) {
@@ -99,6 +105,41 @@ export default function OtherIncomePage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
+    setPreviewUrl(null);
+  };
+
+  const handleFileUpload = async () => {
+    if (!uploadedFile) return;
+
+    try {
+      const folder = "payment-proofs/";
+      const imagePath = await uploadFile(uploadedFile, folder);
+      const imageUrl = await getFile(imagePath);
+
+      console.log("File uploaded successfully:", imageUrl);
+
+      return imageUrl;
+      
+    } catch (error) {
+      console.error("Upload failed:", error);
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: `เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
+  };
+
   const handlePaymentConfirm = async () => {
     if (!selectedWalletId) {
       setModalState({
@@ -108,11 +149,23 @@ export default function OtherIncomePage() {
       });
       return;
     }
+    setImageUploading(true);
+
+    const uploadedFileUrl = await handleFileUpload();
 
     try {
-      await updateTransactionStatus(selectedTransactionId, payment_status.COMPLETED, selectedWalletId);
+      console.log("Uploaded file URL:", uploadedFileUrl);
+      await updateTransactionStatus(
+        selectedTransactionId, 
+        payment_status.COMPLETED, 
+        selectedWalletId, 
+        uploadedFileUrl
+      );
       setIsPayModalOpen(false);
+      setUploadedFile(null);
+      setPreviewUrl(null);
       fetchTransactions();
+      setImageUploading(false);
     } catch (err) {
       setModalState({
         isOpen: true,
@@ -142,14 +195,30 @@ export default function OtherIncomePage() {
         <h1 className="text-2xl font-bold">รายรับอื่นๆ</h1>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-[200px] sm:w-auto"
         >
           {showAddForm ? "ปิดฟอร์ม" : "สร้างรายรับ"}
         </button>
       </div>
+      <div className="flex items-center space-x-2 text-sm mb-4">
+        <span className="text-gray-500 dark:text-gray-400">แสดง:</span>
+        <select
+          className="border rounded-md px-2 py-1 bg-white dark:bg-zinc-700 dark:border-zinc-600"
+          value={selectedTransactionNum}
+          onChange={(e) => {
+            const limit = parseInt(e.target.value);
+            setSelectedTransactionNum(limit);
+          }}
+        >
+          <option value="5">5 รายการ</option>
+          <option value="10">10 รายการ</option>
+          <option value="50">50 รายการ</option>
+          <option value="100">100 รายการ</option>
+        </select>
+      </div>
 
       {showAddForm && (
-        <div className="mb-8">
+        <div className="mb-8 bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-zinc-700 p-6">
           <AddFinanceTransaction 
             transactionType={finance_transaction_type.INCOME} 
             trigger={formTrigger} 
@@ -159,54 +228,60 @@ export default function OtherIncomePage() {
       )}
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">
           {error}
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-zinc-700 p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">ยอดรวมรายรับที่ชำระแล้ว</h2>
-        <p className="text-3xl font-bold">฿{totalAmount.toLocaleString()}</p>
+        <p className="text-3xl font-bold text-green-600">฿{totalAmount.toLocaleString()}</p>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-4">กำลังโหลด...</div>
+        <div className="text-center py-4 animate-pulse flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-solid"></div>
+          <span className="ml-4 text-gray-500">กำลังโหลด...</span>
+        </div>
       ) : transactions.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-6 text-center">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-zinc-700 p-6 text-center">
           <p>ไม่พบข้อมูลรายรับ</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-zinc-700">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="max-h-[60vh] overflow-y-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+              <thead className="bg-gray-50 dark:bg-zinc-800">
+                <tr className="text-left h-[9vh]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     วันที่
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     รายการ
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     ชื่อผู้ติดต่อ
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     หมายเหตุ
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     จำนวนเงิน
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                     สถานะ
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    การดำเนินการ
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
+                    การชำระเงิน
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-zinc-800 dark:divide-zinc-700">
                 {transactions.map((transaction) => (
-                  <tr key={transaction.transaction_id} className="hover:bg-gray-50">
+                  <tr key={transaction.transaction_id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {formatDate(transaction.created_date)}
                     </td>
@@ -219,7 +294,7 @@ export default function OtherIncomePage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {transaction.notes || "-"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                       ฿{transaction.total_amount?.toLocaleString() || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -235,45 +310,66 @@ export default function OtherIncomePage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex space-x-2">
-                        {transaction.payment_status !== payment_status.COMPLETED && (
+                        {transaction.payment_status === payment_status.PENDING && (
                           <button
                             onClick={() => handleStatusChange(transaction.transaction_id || "", payment_status.COMPLETED)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                           >
                             ชำระเงิน
                           </button>
                         )}
-                        {transaction.payment_status !== payment_status.CANCELLED && (
+
+                        {transaction.payment_status === payment_status.COMPLETED  && transaction.payment_deatils?.payment_image ? (
+                        <div className="relative group">
+                          <img
+                            src={transaction.payment_deatils?.payment_image}
+                            alt="หลักฐาน"
+                            className="h-10 w-10 object-cover rounded border cursor-pointer transition-transform duration-200 group-hover:scale-600 group-hover:z-50 group-hover:shadow-lg"
+                            style={{ position: "relative" }}
+                          />
+                          <h6>{transaction.payment_deatils?.wallet_name}</h6>
+                        </div>
+                      ) : (
+                        <></>
+                      )}  
+
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex space-x-2">
+                        {transaction.payment_status === payment_status.PENDING && (
                           <button
                             onClick={() => handleStatusChange(transaction.transaction_id || "", payment_status.CANCELLED)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium"
                           >
                             ยกเลิก
                           </button>
-                        )}
+                        )} 
+
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}
 
       {/* Payment Modal */}
       {isPayModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">ยืนยันการชำระเงิน</h2>
+        <div className="fixed inset-0 bg-[#00000066] dark:bg-[#00000099]  flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-6 w-full max-w-md border border-gray-100 dark:border-zinc-700">
+            <h2 className="text-xl font-semibold mb-4 dark:text-white">ยืนยันการชำระเงิน</h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 เลือกกระเป๋าเงิน
               </label>
               <select
                 value={selectedWalletId}
                 onChange={(e) => setSelectedWalletId(e.target.value)}
-                className="w-full border rounded-md px-3 py-2"
+                className="w-full border border-gray-300 dark:border-zinc-700 rounded-md px-3 py-2 dark:bg-zinc-800 dark:text-white"
                 required
               >
                 <option value="">เลือกกระเป๋าเงิน</option>
@@ -284,19 +380,66 @@ export default function OtherIncomePage() {
                 ))}
               </select>
             </div>
+            {/* Upload Photo Section */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                อัปโหลดรูปภาพหลักฐานการชำระเงิน
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+              />
+              {previewUrl && (
+                <div className="mt-2 relative w-32 h-32">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="object-cover w-full h-full rounded-md border"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                    title="ลบรูป"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => setIsPayModalOpen(false)}
-                className="px-4 py-2 border rounded-md"
+                onClick={() => {
+                  setIsPayModalOpen(false);
+                  setUploadedFile(null);
+                  setPreviewUrl(null);
+                }}
+                className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors duration-200"
               >
                 ยกเลิก
               </button>
-              <button
-                onClick={handlePaymentConfirm}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                ยืนยัน
-              </button>
+              {imageUploading ? (
+                  <button
+                    disabled
+                    className="px-4 py-2 text-white rounded-md bg-gray-400 cursor-not-allowed flex items-center"
+                  >
+                    <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                    กำลังโหลด...
+                  </button>
+                ) : (
+                  <button
+                    onClick={handlePaymentConfirm}
+                    disabled={imageUploading}
+                    className="px-4 py-2 text-white rounded-md transition-colors duration-200 bg-black hover:bg-gray-800"
+                  >
+                    ยืนยัน
+                  </button>
+                )}
             </div>
           </div>
         </div>

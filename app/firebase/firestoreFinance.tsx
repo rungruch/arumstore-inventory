@@ -4,6 +4,7 @@ import { collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit,
 import { WalletCollection, IncomeTransaction, ExpenseTransaction, TransferTransaction } from "../finance/interface";
 import { wallet_type, payment_status, finance_transaction_type } from "../finance/enum";
 import { v4 as uuidv4 } from "uuid";
+import { create } from "domain";
 
 // Wallet Functions
 export const getWallets = async (): Promise<WalletCollection[]> => {
@@ -48,6 +49,8 @@ export const createWallet = async (walletData: WalletCollection): Promise<string
       ...walletData,
       wallet_id: walletId,
       total: walletData.total || 0,
+      created_date: Timestamp.now(),
+      updated_date: Timestamp.now()
     });
     
     return walletId;
@@ -59,6 +62,7 @@ export const createWallet = async (walletData: WalletCollection): Promise<string
 
 export const updateWallet = async (walletId: string, walletData: Partial<WalletCollection>): Promise<void> => {
   try {
+    walletData.updated_date = Timestamp.now();
     const walletRef = doc(db, "finance_wallet", walletId);
     await updateDoc(walletRef, walletData);
   } catch (error) {
@@ -88,7 +92,7 @@ export const updateWalletBalance = async (walletId: string, amount: number, isAd
         ? Number(currentWallet.total || 0) + Number(amount) 
         : Number(currentWallet.total || 0) - Number(amount);
       
-      await updateDoc(walletRef, { total: newTotal });
+      await updateDoc(walletRef, { total: newTotal, updated_date: Timestamp.now() });
     } else {
       throw new Error("Wallet not found");
     }
@@ -123,10 +127,10 @@ export const generateRandomFinanceTransactionId = async (): Promise<string> => {
   }
 };
 
-export const getFinanceTransactions = async (): Promise<(IncomeTransaction | ExpenseTransaction | TransferTransaction)[]> => {
+export const getFinanceTransactions = async (limitCount?: number): Promise<(IncomeTransaction | ExpenseTransaction | TransferTransaction)[]> => {
   try {
     const transactionsRef = collection(db, "finance_transactions");
-    const q = query(transactionsRef, orderBy("created_date", "desc"));
+    const q = query(transactionsRef, orderBy("created_date", "desc"), limit(limitCount || 10));
     const snapshot = await getDocs(q);
     
     const transactions: (IncomeTransaction | ExpenseTransaction | TransferTransaction)[] = [];
@@ -143,13 +147,14 @@ export const getFinanceTransactions = async (): Promise<(IncomeTransaction | Exp
   }
 };
 
-export const getIncomeTransactions = async (): Promise<IncomeTransaction[]> => {
+export const getIncomeTransactions = async (limitCount?: number): Promise<IncomeTransaction[]> => {
   try {
     const transactionsRef = collection(db, "finance_transactions");
     const q = query(
       transactionsRef, 
       where("transaction_type", "==", finance_transaction_type.INCOME),
-      orderBy("created_date", "desc")
+      orderBy("created_date", "desc"),
+      limit(limitCount || 10)
     );
     const snapshot = await getDocs(q);
     
@@ -167,13 +172,14 @@ export const getIncomeTransactions = async (): Promise<IncomeTransaction[]> => {
   }
 };
 
-export const getExpenseTransactions = async (): Promise<ExpenseTransaction[]> => {
+export const getExpenseTransactions = async (limitCount?: number): Promise<ExpenseTransaction[]> => {
   try {
     const transactionsRef = collection(db, "finance_transactions");
     const q = query(
       transactionsRef, 
       where("transaction_type", "==", finance_transaction_type.EXPENSE),
-      orderBy("created_date", "desc")
+      orderBy("created_date", "desc"),
+      limit(limitCount || 10)
     );
     const snapshot = await getDocs(q);
     
@@ -342,7 +348,8 @@ export const createTransferTransaction = async (transactionData: TransferTransac
 export const updateTransactionStatus = async (
   transactionId: string, 
   status: payment_status, 
-  walletId?: string
+  walletId?: string,
+  image?: string
 ): Promise<void> => {
   try {
     const transactionRef = doc(db, "finance_transactions", transactionId);
@@ -363,6 +370,7 @@ export const updateTransactionStatus = async (
         const paymentDetails = {
           ...transaction.payment_deatils,
           wallet_id: walletId,
+          payment_image: image || "",
         };
         
         await updateDoc(transactionRef, { 

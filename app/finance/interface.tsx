@@ -13,7 +13,8 @@ export interface WalletCollection {
     bank_account: string;
     bank_account_name: string;
     total: number;
-    payment_image?: string;
+    updated_date?: Timestamp;
+    created_date?: Timestamp;
 }
 
 export interface FinanceTransactionItem {
@@ -22,11 +23,13 @@ export interface FinanceTransactionItem {
     amount: string;
 }
 
-export interface FinancePatmentDetails {
+export interface FinancePaymentDetails {
     payment_method: string;
-    patment_date: Timestamp;
+    payment_date: Timestamp;
     wallet_id: string;
-    patment_amount: number;
+    wallet_name?: string;
+    payment_amount: number;
+    payment_image?: string;
 }
 
 export interface IncomeTransaction {
@@ -47,7 +50,7 @@ export interface IncomeTransaction {
     total_vat?: number;
     notes?: string;
     payment_status?: payment_status;
-    payment_deatils?:FinancePatmentDetails;
+    payment_deatils?:FinancePaymentDetails;
 }
 
 export interface ExpenseTransaction {
@@ -68,7 +71,7 @@ export interface ExpenseTransaction {
     total_vat?: number;
     notes?: string;
     payment_status?: payment_status;
-    payment_deatils?:FinancePatmentDetails;
+    payment_deatils?:FinancePaymentDetails;
 }     
 
 export interface TransferTransaction {
