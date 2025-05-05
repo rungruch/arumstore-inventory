@@ -17,6 +17,7 @@ export default function ProductCategoryPage() {
   const [totalCategories, setTotalCategories] = useState(0); // Total number of categories
   const [loading, setLoading] = useState(false); // Loading state
   const [pageSize, setPageSize] = useState(10); // Default page size is 10
+  const [skuCount, setSkuCount] = useState<any>([]); // SKU count state
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -25,9 +26,10 @@ export default function ProductCategoryPage() {
         setLoading(true);
         const totalCount = await getTotalCategoryCount();
         setTotalCategories(totalCount); // Update total categories
-        const { categories, lastDoc } = await getProductCategoryPaginated(null, pageSize);
+        const { categories, lastDoc, skuCount } = await getProductCategoryPaginated(null, pageSize);
         setCategories(categories);
         setLastDoc(lastDoc);
+        setSkuCount(skuCount);
       } catch (error) {
         console.error("Error fetching categories:", error);
       } finally {
@@ -166,7 +168,7 @@ export default function ProductCategoryPage() {
               <tr className="text-left h-[9vh]">
                 <th className="p-2 w-[5%] text-center">#</th>
                 <th className="p-2 w-[35%]">ชื่อหมวดหมู่</th>
-                <th className="p-2">จำนวน SKU</th>
+                <th className="p-2">จำนวนสินค้า</th>
                 <th className="p-2">มูลค่าสินค้าคงเหลือ</th>
                 <th className="p-2">มูลค่าสินค้าพร้อมขาย</th>
               </tr>
@@ -175,9 +177,9 @@ export default function ProductCategoryPage() {
               <tr key={category.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                 <td className="p-2 w-[35%]">{category.category_name}</td>
-                <td className="p-2">{category.stock ?? "0"}</td>
-                <td className="p-2">{category.value ?? "0"}</td>
-                <td className="p-2">{category.value ?? "0"}</td>
+                <td className="p-2">{skuCount?.skus?.[category.category_name]?.count || 0}</td>
+                <td className="p-2">{skuCount?.skus?.[category.category_name]?.totalIncome?.toLocaleString() || 0}</td>
+                <td className="p-2">{skuCount?.skus?.[category.category_name]?.totalPendingIncome?.toLocaleString() || 0}</td>
               </tr>
             )}
           />

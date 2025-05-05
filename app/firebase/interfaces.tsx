@@ -223,3 +223,14 @@ export interface User {
   created_date: Timestamp;
   updated_date: Timestamp;
 }
+
+export interface ProductCategoryCount {
+  date: Timestamp;
+  skus: {
+    [any: string]: {
+      count: number;
+      totalIncome: number;
+      totalPendingIncome: number;
+    }
+  }
+}[]

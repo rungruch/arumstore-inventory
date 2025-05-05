@@ -376,4 +376,68 @@ import {
     
     return results;
   }
+
+  /**
+   * Count products in each warehouse based on 'stocks' field in products collection
+   * @returns {Promise<Array<{warehouse_id: string, warehouse_name: string, count: number}>>}
+   */
+  export async function getProductCountByWarehouse(): Promise<Array<{ warehouse_id: string; warehouse_name: string; count: number }>> {
+    try {
+      // Get all products that have stocks
+      const productsRef = collection(db, "products");
+      const productsSnapshot = await getDocs(productsRef);
+      
+      // Get all warehouses to ensure we have their names
+      const warehousesRef = collection(db, "product_warehouse");
+      const warehousesSnapshot = await getDocs(warehousesRef);
+      
+      // Create a map of warehouse IDs to warehouse names
+      const warehouseMap = new Map<string, string>();
+      warehousesSnapshot.forEach(doc => {
+        const warehouse = doc.data();
+        if (warehouse.warehouse_id && warehouse.warehouse_name) {
+          warehouseMap.set(warehouse.warehouse_id, warehouse.warehouse_name);
+        }
+      });
+      
+      // Create a counter for each warehouse
+      const warehouseCounts = new Map<string, number>();
+      
+      // Count products in each warehouse
+      productsSnapshot.forEach(doc => {
+        const product = doc.data();
+        if (product.stocks && typeof product.stocks === 'object') {
+          // Iterate through the stocks object where keys are warehouse IDs
+          Object.entries(product.stocks).forEach(([warehouseId, stockCount]) => {
+            // Only count products with stock > 0
+            if (Number(stockCount) > 0) {
+              warehouseCounts.set(
+                warehouseId, 
+                (warehouseCounts.get(warehouseId) || 0) + 1
+              );
+            }
+          });
+        }
+      });
+      
+      // Convert the map to an array of objects
+      const result = Array.from(warehouseCounts.entries()).map(([warehouseId, count]) => ({
+        warehouse_id: warehouseId,
+        warehouse_name: warehouseMap.get(warehouseId) || warehouseId, // Fallback to ID if name not found
+        count: count
+      }));
+      
+      // Sort by count (highest first)
+      result.sort((a, b) => b.count - a.count);
+      
+      return result;
+    } catch (error) {
+      console.error("Error counting products by warehouse:", error);
+      return [];
+    }
+  }
+
   
+
+
+

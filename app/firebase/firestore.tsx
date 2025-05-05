@@ -17,12 +17,14 @@ import {
   startAfter,
   endAt,
   CollectionReference,
-  getCountFromServer
+  getCountFromServer,
+  setDoc
 } from "firebase/firestore";
 
 import { db } from "@/app/firebase/clientApp";
-import { Warehouse, Contact, TransferTransaction } from "@/app/firebase/interfaces";
+import { Warehouse, Contact, TransferTransaction, ProductCategoryCount } from "@/app/firebase/interfaces";
 import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus, TransferStatus } from "@/app/firebase/enum";
+import { get } from "http";
 
 
 export async function getProducts() {
@@ -42,6 +44,60 @@ export async function getProducts() {
   }
 }
 
+
+export async function getProductCategoryCount(): Promise<ProductCategoryCount> {
+      // Get all products to count by category
+    const productsSnapshot = await getDocs(query(collection(db, "products"), where("status", "==", ProductStatus.ACTIVE)));
+    
+    // Create a map of category IDs to product counts
+    const categoryCounts: { [key: string]: number } = {};
+    const categoryIncome: { [key: string]: number } = {};
+    const categoryPendingIncome: { [key: string]: number } = {};
+    
+    productsSnapshot.forEach(doc => {
+      const product = doc.data();
+      if (product.category) {
+      // Count products per category
+      categoryCounts[product.category] = (categoryCounts[product.category] || 0) + 1;
+      
+      // Calculate total income based on buy_price and current stock
+      const buyPrice = product.price?.buy_price || 0;
+      
+      // Calculate current stock value (without pending)
+      const totalStock = product.stocks ? 
+        Object.values(product.stocks).reduce((sum: number, qty: any) => sum + (Number(qty) || 0), 0) : 0;
+      categoryIncome[product.category] = (categoryIncome[product.category] || 0) + (totalStock * buyPrice);
+      
+      // Calculate pending stock value separately
+      const totalPendingStock = product.pending_stock ? 
+        Object.values(product.pending_stock).reduce((sum: number, qty: any) => sum + (Number(qty) || 0), 0) : 0;
+
+      categoryPendingIncome[product.category] = (categoryPendingIncome[product.category] || 0) + ((totalPendingStock+totalStock) * buyPrice);
+      }
+    });
+    
+    // Transform into the required format
+    const ProductCategoryCountcategoryCounts: { [key: string]: { count: number; totalIncome: number; totalPendingIncome: number; } } = {};
+    
+    Object.keys(categoryCounts).forEach(category => {
+      ProductCategoryCountcategoryCounts[category] = {
+      count: categoryCounts[category],
+      totalIncome: categoryIncome[category] || 0,
+      totalPendingIncome: categoryPendingIncome[category] || 0
+      };
+    });
+
+    return {
+      date: Timestamp.now(),
+      skus:
+        {
+          ...ProductCategoryCountcategoryCounts
+        }
+    } as ProductCategoryCount;
+}
+
+
+
 export async function getProductCategoryPaginated(lastDoc: any = null, pageSize: number = 10) {
   try {
     let q = query(collection(db, "product_category"), orderBy("created_at", "desc"), limit(pageSize));
@@ -54,8 +110,40 @@ export async function getProductCategoryPaginated(lastDoc: any = null, pageSize:
     const querySnapshot = await getDocs(q);
     const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
 
+
+    const docRef = doc(db, "hourly_stats", "product_category_count");
+    const docSnap = await getDoc(docRef);
+
+    let categoryCountData: ProductCategoryCount
+
+    if (!docSnap.exists()) {
+
+      // Get product category count data
+      categoryCountData = await getProductCategoryCount();
+      
+      // Set the data in the hourly_stats document
+      await setDoc(doc(db, "hourly_stats", "product_category_count"), categoryCountData);
+    }
+    else {
+      categoryCountData = docSnap.data() as ProductCategoryCount;
+
+      // If the data is older than 1 hour, refresh it
+      if (categoryCountData.date.seconds < Date.now() / 1000 - 3600) {
+      
+        // Get product category count data
+        categoryCountData = await getProductCategoryCount();
+        
+        // Set the data in the hourly_stats document
+        await setDoc(doc(db, "hourly_stats", "product_category_count"), categoryCountData);
+      }
+    }
+    
     return {
-      categories: querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      categories: querySnapshot.docs.map((doc) => ({ 
+        id: doc.id, 
+        ...doc.data(),
+      })),
+      skuCount: categoryCountData,
       lastDoc: lastVisible, // Store last document to fetch the next page
     };
   } catch (error) {

@@ -8,6 +8,7 @@ import { Timestamp, QueryDocumentSnapshot, DocumentData } from "firebase/firesto
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Warehouse } from "@/app/firebase/interfaces";
 import AddWarehousePopup from "@/components/AddWarehouse";
+import { getProductCountByWarehouse as getTotalProductsofWarehouse } from "@/app/firebase/firestoreStats";
 
 export default function ProductWarehousePage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -18,6 +19,7 @@ export default function ProductWarehousePage() {
   const [totalWarehouses, setTotalWarehouses] = useState(0); // Changed from totalCategories to totalWarehouses
   const [loading, setLoading] = useState(false); // Loading state
   const [pageSize, setPageSize] = useState(10); // Default page size is 10
+  const [totalProducts, setTotalProducts] = useState<Array<{ warehouse_id: string; warehouse_name: string; count: number }>>(); // Total products in the warehouse
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -29,6 +31,12 @@ export default function ProductWarehousePage() {
         const { warehouses, lastDoc } = await getProductWarehousePaginated(null, pageSize);
         setWarehouses(warehouses);
         setLastDoc(lastDoc);
+
+        // Fetch total products for all warehouse
+        const productCounts = await getTotalProductsofWarehouse()
+        setTotalProducts(productCounts);
+
+
       } catch (error) {
         console.error("Error fetching warehouses:", error);
       } finally {
@@ -169,7 +177,7 @@ export default function ProductWarehousePage() {
       <th className="p-2 w-[150px] whitespace-nowrap">รหัส</th>
       <th className="p-2 w-[150px] whitespace-nowrap">ชื่อคลัง</th>
       <th className="p-2 w-[150px] whitespace-nowrap">ประเภท</th>
-      <th className="p-2 w-[120px] whitespace-nowrap">มูลค่าสินค้าคงเหลือ</th>
+      <th className="p-2 w-[120px] whitespace-nowrap">จำนวนสินค้า</th>
       <th className="p-2 w-[180px] whitespace-nowrap">เคลื่อนไหวล่าสุด</th>
     </tr>
   }
@@ -179,7 +187,7 @@ export default function ProductWarehousePage() {
       <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.warehouse_id}</td>
       <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.warehouse_name}</td>
       <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.type || "-"}</td>
-      <td className="p-2 w-[120px] whitespace-nowrap overflow-hidden text-ellipsis">{0}</td>
+      <td className="p-2 w-[120px] whitespace-nowrap overflow-hidden text-ellipsis">{totalProducts?.find(warehouses => warehouse.warehouse_name === warehouses.warehouse_name)?.count || 0}</td>
       <td className="p-2 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
         {warehouse.updated_date ? 
           new Date(warehouse.updated_date.toDate()).toLocaleString('th-TH', {
