@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, Dot, LucideIcon } from "lucide-react";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { usePathname } from "next/navigation";
 
+// Maps submenu paths to permission module names
+const submenuModuleMap: Record<string, {module: string, action: string}> = {
+  "/users": { module: "users", action: "view" },
+  "/finance": { module: "finance", action: "view" },
+  "/finance/wallet": { module: "finance", action: "view" },
+  "/finance/other-income": { module: "finance", action: "view" },
+  "/finance/other-outcome": { module: "finance", action: "view" },
+  "/products": { module: "products", action: "view" },
+  "/products/categories": { module: "products", action: "view" },
+  "/products/warehouse": { module: "products", action: "view" },
+  "/customers": { module: "customers", action: "view" },
+  "/customers/groups": { module: "customers", action: "view" },
+  "/sales": { module: "sales", action: "view" },
+  "/sales/create": { module: "sales", action: "create" },
+  "/purchases": { module: "purchases", action: "view" },
+  "/purchases/create": { module: "purchases", action: "create" },
+  "/settings": { module: "settings", action: "view" },
+};
+
 type Submenu = {
   href: string;
   label: string;
@@ -50,7 +70,19 @@ export function CollapseMenuButton({
   isOpen
 }: CollapseMenuButtonProps) {
   const pathname = usePathname();
-  const isSubmenuActive = submenus.some((submenu) =>
+  const { hasPermission } = useAuth();
+  
+  // Filter submenus based on user permissions
+  const filteredSubmenus = submenus.filter(submenu => {
+    const mapping = submenuModuleMap[submenu.href];
+    if (!mapping) return true; // If no mapping exists, allow access by default
+    return hasPermission(mapping.module, mapping.action);
+  });
+  
+  // If no submenus are visible after filtering, don't render anything
+  if (filteredSubmenus.length === 0) return null;
+  
+  const isSubmenuActive = filteredSubmenus.some((submenu) =>
     submenu.active === undefined ? submenu.href === pathname : submenu.active
   );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(isSubmenuActive);
@@ -102,7 +134,7 @@ export function CollapseMenuButton({
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-        {submenus.map(({ href, label, active }, index) => (
+        {filteredSubmenus.map(({ href, label, active }, index) => (
           <Button
             key={index}
             variant={
@@ -170,7 +202,7 @@ export function CollapseMenuButton({
           {label}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {submenus.map(({ href, label, active }, index) => (
+        {filteredSubmenus.map(({ href, label, active }, index) => (
           <DropdownMenuItem key={index} asChild>
             <Link
               className={`cursor-pointer ${
