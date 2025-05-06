@@ -16,6 +16,85 @@ import {
   import { MonthlyIncome } from "@/app/firebase/interfaces";
   
   /**
+   * Get today's income summary from sell transactions
+   * @param {Date} date - The date to calculate income for (defaults to today)
+   * @param {boolean} excludeCancelled - Whether to exclude cancelled orders (default: true)
+   * @returns {Promise<{totalIncome: number, transactionCount: number, itemCount: number}>}
+   */
+  export async function getDailyIncomeSummary(date: Date = new Date(), excludeCancelled: boolean = true): Promise<{
+    totalIncome: number;
+    transactionCount: number;
+    itemCount: number;
+  }> {
+    // Calculate the start and end of the day (midnight to 11:59:59 PM)
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    try {
+      // Create base query conditions
+      let conditions = [
+        where("transaction_type", "==", TransactionType.SELL),
+        where("created_date", ">=", startOfDay),
+        where("created_date", "<=", endOfDay)
+      ];
+      
+      // Add condition to exclude cancelled orders if specified
+      if (excludeCancelled) {
+        conditions.push(where("status", "!=", OrderStatus.CANCELLED));
+      }
+      
+      const q = query(
+        collection(db, "transactions"),
+        ...conditions,
+        orderBy("created_date", "desc")
+      );
+  
+      const querySnapshot = await getDocs(q);
+      
+      let totalIncome = 0;
+      let transactionCount = 0;
+      let itemCount = 0;
+      
+      // Process each transaction
+      querySnapshot.forEach(doc => {
+        const transaction = doc.data();
+        transactionCount++;
+        
+        // Skip if items array is not defined
+        if (!transaction.items || !Array.isArray(transaction.items)) {
+          return;
+        }
+        
+        // Process each item in the transaction
+        transaction.items.forEach(item => {
+          const subtotal = item.subtotal || 0;
+          const quantity = item.quantity || 0;
+          
+          totalIncome += subtotal;
+          itemCount += quantity;
+        });
+      });
+      
+      return {
+        totalIncome,
+        transactionCount,
+        itemCount
+      };
+      
+    } catch (error) {
+      console.error("Error calculating daily income summary:", error);
+      return {
+        totalIncome: 0,
+        transactionCount: 0,
+        itemCount: 0
+      };
+    }
+  }
+
+  /**
    * Calculate monthly income by SKU from sell transactions
    * @param {Date} date - The month to calculate income for (any date within the month)
    * @param {boolean} excludeCancelled - Whether to exclude cancelled orders (default: true)
@@ -179,6 +258,68 @@ import {
   }
 
   /**
+   * Get total sales for the current year (from January 1st to current date)
+   * @param {number} year - The year to calculate sales for (defaults to current year)
+   * @param {boolean} excludeCancelled - Whether to exclude cancelled orders (default: true)
+   * @returns {Promise<number>} - Total sales amount for the year
+   */
+  export async function getYearlySales(year: number = new Date().getFullYear(), excludeCancelled: boolean = true): Promise<number> {
+    // Calculate the start date (January 1st of the specified year)
+    const startDate = new Date(year, 0, 1); // Month is 0-based (0 = January)
+    // End date is current date if it's the current year, or December 31st otherwise
+    const isCurrentYear = year === new Date().getFullYear();
+    const endDate = isCurrentYear 
+      ? new Date() 
+      : new Date(year, 11, 31, 23, 59, 59, 999); // December 31st
+    
+    try {
+      // Create base query conditions
+      let conditions = [
+        where("transaction_type", "==", TransactionType.SELL),
+        where("created_date", ">=", startDate),
+        where("created_date", "<=", endDate)
+      ];
+      
+      // Add condition to exclude cancelled orders if specified
+      if (excludeCancelled) {
+        conditions.push(where("status", "!=", OrderStatus.CANCELLED));
+      }
+      
+      const q = query(
+        collection(db, "transactions"),
+        ...conditions,
+        orderBy("created_date", "desc")
+      );
+  
+      const querySnapshot = await getDocs(q);
+      
+      let totalYearlySales = 0;
+      
+      // Process each transaction
+      querySnapshot.forEach(doc => {
+        const transaction = doc.data();
+        
+        // Skip if items array is not defined
+        if (!transaction.items || !Array.isArray(transaction.items)) {
+          return;
+        }
+        
+        // Process each item in the transaction
+        transaction.items.forEach(item => {
+          const subtotal = item.subtotal || 0;
+          totalYearlySales += subtotal;
+        });
+      });
+      
+      return totalYearlySales;
+      
+    } catch (error) {
+      console.error("Error calculating yearly sales:", error);
+      return 0;
+    }
+  }
+
+  /**
    * Get top selling products for a specific month
    * @param {Date} date - The month to analyze
    * @param {number} limit - Maximum number of products to return
@@ -189,7 +330,12 @@ import {
     limit: number = 5
   ): Promise<Array<{ sku: string; name: string; totalIncome: number; quantity: number; }>> {
     const monthlyIncome = await getMonthlyIncomeByDate(date);
-    return monthlyIncome.skus.slice(0, limit).map(sku => ({
+    
+    // Sort products by totalIncome in descending order to get true "top selling" products
+    const sortedProducts = [...monthlyIncome.skus].sort((a, b) => b.totalIncome - a.totalIncome);
+    
+    // Return the top products limited by the limit parameter
+    return sortedProducts.slice(0, limit).map(sku => ({
       sku: sku.sku,
       name: sku.name,
       totalIncome: sku.totalIncome,
@@ -437,7 +583,7 @@ import {
     }
   }
 
-  
+
 
 
 
