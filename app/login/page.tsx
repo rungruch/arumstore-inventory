@@ -58,9 +58,16 @@ export default function LoginPage() {
 
             <div className="flex flex-col justify-center w-full max-w-md mx-auto p-6">
                 <div className="mb-8 text-center">
-                    <Image src="/favicon.ico" alt="Arum Logo" width={80} height={80} className="mx-auto w-auto h-auto" priority />
-                    <h1 className="mt-4 text-2xl font-bold">เข้าสู่ระบบ Arum</h1>
-                    <p className="mt-2 text-gray-600 dark:text-gray-400">ระบบจัดการสินค้าคงคลัง</p>
+                    <Image
+                        src="/favicon.ico"
+                        alt="Arum Logo"
+                        width={80}
+                        height={80}
+                        className="mx-auto w-16 h-16 sm:w-20 sm:h-20"
+                        priority
+                    />
+                    <h1 className="mt-4 text-xl sm:text-2xl font-bold">เข้าสู่ระบบ Arum</h1>
+                    <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">ระบบจัดการสินค้าคงคลัง</p>
                 </div>
 
                 {error && (
