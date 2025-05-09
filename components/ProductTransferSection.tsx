@@ -324,7 +324,6 @@ interface PaginatedResponse {
                   <tr className="text-xs text-gray-600 uppercase dark:bg-zinc-800 dark:text-gray-200">
                     <th className="px-4 py-3 text-left font-medium border-b border-gray-200">สินค้า</th>
                     <th className="px-4 py-3 text-center font-medium border-b border-gray-200">คงเหลือ</th>
-                    <th className="px-4 py-3 text-center font-medium border-b border-gray-200">พร้อมขาย</th>
                     <th className="px-4 py-3 text-center font-medium border-b border-gray-200">ราคาขาย</th>
                     <th className="px-4 py-3 text-center font-medium border-b border-gray-200">จัดการ</th>
                   </tr>
@@ -358,15 +357,8 @@ interface PaginatedResponse {
                         <td className="p-3 text-center">
                           {product.stocks[warehouseName] > 0 ? (
                             <span className="text-green-600 font-medium">
-                              {product.stocks[warehouseName] + (product.pending_stock[warehouseName] || 0)}
+                              {product.stocks[warehouseName]}
                             </span>
-                          ) : (
-                            <span className="text-red-600 font-medium">0</span>
-                          )}
-                        </td>
-                        <td className="p-3 text-center">
-                          {product.stocks[warehouseName] > 0 ? (
-                            <span className="text-green-600 font-medium">{product.stocks[warehouseName]}</span>
                           ) : (
                             <span className="text-red-600 font-medium">0</span>
                           )}

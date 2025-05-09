@@ -118,13 +118,8 @@ interface PaginatedResponse {
         return;
       }
     } else if (field === 'quantity') {
-        if (updatedProducts[index].stock !== undefined && numericValue > updatedProducts[index].stock ) {
-            updatedProducts[index].quantity = updatedProducts[index].stock;
-            updatedProducts[index].total = updatedProducts[index].quantity * (updatedProducts[index].price - (updatedProducts[index].discount ?? 0));
-            updatedProducts[index].discount = 0;
-            setProducts(updatedProducts);
-            return;
-        } else if (numericValue < 0) { 
+        // Remove stock validation to allow ordering more than available
+if (numericValue < 0) { 
             updatedProducts[index].quantity = 0;
             updatedProducts[index].total = 0;
             updatedProducts[index].discount = 0;
@@ -280,7 +275,7 @@ interface PaginatedResponse {
                       type="number" 
                       onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       min="1" 
-                      max={product.stock}
+/* Removed max={product.stock} to allow ordering more than available stock */
                       step="1"
                       value={product.quantity} 
                       onChange={(e) => handleProductChange(index, 'quantity', e.target.value)}
@@ -400,7 +395,7 @@ interface PaginatedResponse {
                   <tr className="text-xs text-gray-600 uppercase dark:bg-zinc-800 dark:text-gray-200">
                     <th className="px-4 py-3 text-left font-medium border-b border-gray-200">สินค้า</th>
                     <th className="px-4 py-3 text-center font-medium border-b border-gray-200">คงเหลือ</th>
-                    <th className="px-4 py-3 text-center font-medium border-b border-gray-200">พร้อมขาย</th>
+                    <th className="px-4 py-3 text-center font-medium border-b border-gray-200">รอยืนยัน</th>
                     <th className="px-4 py-3 text-center font-medium border-b border-gray-200">ราคาขาย</th>
                     <th className="px-4 py-3 text-center font-medium border-b border-gray-200">จัดการ</th>
                   </tr>
@@ -434,32 +429,29 @@ interface PaginatedResponse {
                         <td className="p-3 text-center">
                           {product.stocks[warehouseName] > 0 ? (
                             <span className="text-green-600 font-medium">
-                              {product.stocks[warehouseName] + (product.pending_stock[warehouseName] || 0)}
+                              {product.stocks[warehouseName]}
                             </span>
                           ) : (
                             <span className="text-red-600 font-medium">0</span>
                           )}
                         </td>
                         <td className="p-3 text-center">
-                          {product.stocks[warehouseName] > 0 ? (
-                            <span className="text-green-600 font-medium">{product.stocks[warehouseName]}</span>
+                          {product.pending_stock[warehouseName] <= product.stocks[warehouseName] ? (
+                            <span className="text-green-600 font-medium">{product.pending_stock[warehouseName]}</span>
                           ) : (
-                            <span className="text-red-600 font-medium">0</span>
+                            <span className="text-red-600 font-medium">{product.pending_stock[warehouseName]}</span>
                           )}
                         </td>
                         <td className="p-3 text-center font-medium">{formatCurrency(product.price.sell_price)}</td>
                         <td className="p-3 text-center">
-                          {product.stocks[warehouseName] > 0 ? (
+                          {/* Remove the condition that prevents selecting out-of-stock products */}
                             <button
                               onClick={() => selectProduct(product)}
                               className="py-1.5 px-3 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-white rounded text-sm transition-colors"
                             >
                               เลือก
                             </button>
-                          ) : (
-                            <span className="py-1.5 px-3 bg-gray-100 text-gray-400 rounded text-sm inline-block dark:bg-zinc-700">สินค้าหมด</span>
-                          )}
-                        </td>
+                                                  </td>
                       </tr>
                     ))
                   ) : (

@@ -242,7 +242,7 @@ export default function ProductDetails() {
             <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 transition-all shadow-sm hover:shadow-md border border-gray-100 dark:border-zinc-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm font-medium">สินค้าคงเหลือ (ตัว)</div>
+                  <div className="text-gray-500 dark:text-gray-400 text-sm font-medium">สินค้าคงเหลือ </div>
                   <div className="text-blue-600 dark:text-blue-400 text-3xl font-bold mt-1">{stockAmount}</div>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-full">
@@ -259,8 +259,8 @@ export default function ProductDetails() {
             <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 transition-all shadow-sm hover:shadow-md border border-gray-100 dark:border-zinc-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm font-medium">สินค้าพร้อมขาย (ตัว)</div>
-                  <div className="text-green-600 dark:text-green-400 text-3xl font-bold mt-1">{stockAmount + stockPending}</div>
+                  <div className="text-gray-500 dark:text-gray-400 text-sm font-medium">สินค้ารอยืนยัน</div>
+                  <div className="text-green-600 dark:text-green-400 text-3xl font-bold mt-1">{stockPending}</div>
                 </div>
                 <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-full">
                   <div className="w-8 h-8 flex items-center justify-center text-green-600 dark:text-green-400">
@@ -412,7 +412,7 @@ export default function ProductDetails() {
                       <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">ชื่อคลังสินค้า</th>
                         <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">จำนวนคงเหลือ</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">จำนวนพร้อมขาย</th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">จำนวนรอยืนยัน</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200 dark:bg-zinc-800 dark:divide-zinc-700">
@@ -422,11 +422,10 @@ export default function ProductDetails() {
                             {warehouse || `คลังสินค้าหลัก ${index + 1}`}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right dark:text-gray-200">
-                            {amount + ((product.pending_stock as Record<string, number>)[warehouse] || 0)}
-
+                            {amount || 0}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right dark:text-gray-200">
-                            {amount || 0}
+                            {((product.pending_stock as Record<string, number>)[warehouse] || 0)}
                           </td>
                         </tr>
                       ))}

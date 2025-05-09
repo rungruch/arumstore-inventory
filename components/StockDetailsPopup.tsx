@@ -47,7 +47,7 @@ export default function StockDetailsPopup({ productName, productSKU, stocks, pen
           <div className="grid grid-cols-4 gap-2 p-2 font-semibold text-sm">
             <div>คลังสินค้า</div>
             <div>จำนวนคงเหลือ</div>
-            <div>จำนวนพร้อมขาย</div>
+            <div>จำนวนรอยืนยัน</div>
             <div></div>
           </div>
         </div>
@@ -56,18 +56,18 @@ export default function StockDetailsPopup({ productName, productSKU, stocks, pen
           {Object.entries(stocks).map(([warehouse, amount]) => (
             <div key={warehouse} className="grid grid-cols-4 gap-2 p-2 text-sm">
               <div>{warehouse}</div>
-              <div className={amount + (pendingStocks[warehouse] || 0) <= 0 
-                ? 'text-red-500' 
-                : amount + (pendingStocks[warehouse] || 0) < 5 
-                  ? 'text-yellow-500' 
-                  : 'text-green-500'
-              }>{amount + (pendingStocks[warehouse] || 0)}</div>
               <div className={amount <= 0 
                 ? 'text-red-500' 
                 : amount < 5 
                   ? 'text-yellow-500' 
                   : 'text-green-500'
               }>{amount}</div>
+              <div className={pendingStocks[warehouse] > amount
+                ? 'text-red-500' 
+                : pendingStocks[warehouse] < amount
+                  ? 'text-green-500'
+                  : 'text-yellow-500' 
+              }>{(pendingStocks[warehouse] || 0)}</div>
               <div>
                 <div className="flex justify-center">
                   <button 

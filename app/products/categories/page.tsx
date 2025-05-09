@@ -172,7 +172,7 @@ export default function ProductCategoryPage() {
                 <th className="p-2 w-[35%]">ชื่อหมวดหมู่</th>
                 <th className="p-2">จำนวนสินค้า</th>
                 <th className="p-2">มูลค่าสินค้าคงเหลือ</th>
-                <th className="p-2">มูลค่าสินค้าพร้อมขาย</th>
+                <th className="p-2">มูลค่าสินค้ารอยืนยัน</th>
               </tr>
             }
             customRow={(category, index) => (

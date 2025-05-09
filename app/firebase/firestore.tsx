@@ -785,6 +785,69 @@ export async function getProductWarehouse() {
     }
   }
 
+  export async function createSellTransactionWithStockDeductionv2(transactionData: any) {
+    try {
+      // Run a transaction to ensure atomic updates
+      return await runTransaction(db, async (transaction) => {
+        const transactionsCollection = collection(db, "transactions");
+        const productsCollection = collection(db, "products");
+  
+        // Validate and generate transaction ID if not provided
+        if (!transactionData.transaction_id) {
+          transactionData.transaction_id = await generateRandomSellTransactionId();
+        }
+  
+        // Check if transaction ID already exists
+        const existingTransactionQuery = query(
+          transactionsCollection,
+          where("transaction_id", "==", transactionData.transaction_id)
+        );
+        const existingTransactionSnapshot = await getDocs(existingTransactionQuery);
+        if (!existingTransactionSnapshot.empty) {
+          throw new Error(`Transaction ID "${transactionData.transaction_id}" หรือเลขรายการซ้ำ กรุณาลองอีกครั้ง`);
+        }
+  
+        // Process each item in the transaction
+        for (const item of transactionData.items) {
+          // Find the product by SKU
+          const productQuery = query(
+            productsCollection,
+            where("sku", "==", item.sku)
+          );
+          const productSnapshot = await getDocs(productQuery);
+  
+          if (productSnapshot.empty) {
+            throw new Error(`Product with SKU ${item.sku} not found`);
+          }
+  
+          const productDoc = productSnapshot.docs[0];
+          const productData = productDoc.data();
+  
+          const updatedPendingStocks = { ...productData.pending_stock };
+          updatedPendingStocks[item.warehouse_id] = 
+            (updatedPendingStocks[item.warehouse_id] || 0) + item.quantity;
+  
+          // Update the product document
+          transaction.update(productDoc.ref, {
+            pending_stock: updatedPendingStocks
+          });
+        }
+  
+        // Add the transaction
+        const docRef = await addDoc(transactionsCollection, {
+          ...transactionData,
+          transaction_type: TransactionType.SELL,
+          created_date: new Date()
+        });
+  
+        return { id: docRef.id, ...transactionData };
+      });
+    } catch (error) {
+      console.error("Error creating sell transaction:", error);
+      throw error;
+    }
+  }
+
   // New warehouse functions
 export async function getSellTransactionPaginated(lastDoc: any = null, pageSize: number = 10, statusFilter?: OrderStatusFilter) {
   try {
@@ -878,8 +941,15 @@ export async function updateOrderTransactionStatus(
         // Clear pending stock when order is in shipping
         await handleShippingOrderStockUpdate(transaction, transactionData.items);
       } else if (next_status === OrderStatus.CANCELLED) {
+        if(current_status === OrderStatus.SHIPPING) {
         // Restore stock when order is cancelled
-        await handleCancelledOrderStockUpdate(transaction, transactionData.items);
+        await handleCancelledOrderStockUpdateShipping(transaction, transactionData.items);
+        }
+
+        if(current_status === OrderStatus.PENDING) {
+          // Restore stock when order is cancelled
+          await handleCancelledOrderStockUpdatePending(transaction, transactionData.items);
+        }
       }
 
       // Update transaction status
@@ -903,7 +973,9 @@ async function handleShippingOrderStockUpdate(
   items: any[]
 ) {
   const productsCollection = collection(db, "products");
-
+  const productDocs: { doc: any, data: any, item: any }[] = [];
+  
+  // First pass: validate stock availability for all items
   for (const item of items) {
     const productQuery = query(
       productsCollection,
@@ -920,11 +992,26 @@ async function handleShippingOrderStockUpdate(
     const productDoc = productSnapshot.docs[0];
     const productData = productDoc.data();
 
-    // Reduce stocks and update pending stock
-    const updatedStocks = { ...productData.stocks };
-    const updatedPendingStocks = { ...productData.pending_stock };
+    // Validate stock availability
+    const currentStock = productData.stocks?.[item.warehouse_id] || 0;
+    if (currentStock < item.quantity) {
+      throw new Error(`สินค้าไม่เพียงพอสำหรับรายการ ${item.name || item.sku} (คลัง: ${item.warehouse_id}, ต้องการ: ${item.quantity})`);
+    }
+    
+    // Store document reference and data for the second pass
+    productDocs.push({ doc: productDoc, data: productData, item });
+  }
 
-    // Reduce pending stock only
+  // Second pass: update stocks for all items (only if all validations pass)
+  for (const { doc, data, item } of productDocs) {
+    // Reduce stocks and update pending stock
+    const updatedStocks = { ...data.stocks };
+    const updatedPendingStocks = { ...data.pending_stock };
+
+    // Actually reduce the stock since we validated it's available
+    updatedStocks[item.warehouse_id] = (updatedStocks[item.warehouse_id] || 0) - item.quantity;
+    
+    // Reduce pending stock
     if (updatedPendingStocks[item.warehouse_id]) {
       updatedPendingStocks[item.warehouse_id] = Math.max(
       0,
@@ -932,7 +1019,7 @@ async function handleShippingOrderStockUpdate(
       );
     }
 
-    transaction.update(productDoc.ref, {
+    transaction.update(doc.ref, {
       stocks: updatedStocks,
       pending_stock: updatedPendingStocks
     });
@@ -940,7 +1027,7 @@ async function handleShippingOrderStockUpdate(
 }
 
 // Helper function to handle stock restoration for cancelled orders
-async function handleCancelledOrderStockUpdate(
+async function handleCancelledOrderStockUpdateShipping(
   transaction: any, 
   items: any[]
 ) {
@@ -964,10 +1051,40 @@ async function handleCancelledOrderStockUpdate(
 
     // Restore stocks and remove from pending stock
     const updatedStocks = { ...productData.stocks };
-    const updatedPendingStocks = { ...productData.pending_stock };
 
     // Restore stock
     updatedStocks[item.warehouse_id] = (updatedStocks[item.warehouse_id] || 0) + item.quantity;
+
+    transaction.update(productDoc.ref, {
+      stocks: updatedStocks,
+    });
+  }
+}
+
+async function handleCancelledOrderStockUpdatePending(
+  transaction: any, 
+  items: any[]
+) {
+  const productsCollection = collection(db, "products");
+
+  for (const item of items) {
+    const productQuery = query(
+      productsCollection,
+      where("sku", "==", item.sku)
+    );
+
+    const productSnapshot = await getDocs(productQuery);
+
+    if (productSnapshot.empty) {
+      console.warn(`Product with SKU ${item.sku} not found`);
+      continue;
+    }
+
+    const productDoc = productSnapshot.docs[0];
+    const productData = productDoc.data();
+
+    // Restore stocks and remove from pending stock
+    const updatedPendingStocks = { ...productData.pending_stock };
 
     // Remove from pending stock
     if (updatedPendingStocks[item.warehouse_id]) {
@@ -978,11 +1095,13 @@ async function handleCancelledOrderStockUpdate(
     }
 
     transaction.update(productDoc.ref, {
-      stocks: updatedStocks,
       pending_stock: updatedPendingStocks
     });
   }
-}
+
+} 
+
+
 
 export async function createTransferTransactionCompleted(
   transaction_id: string,

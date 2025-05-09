@@ -243,7 +243,7 @@ export default function ProductPage() {
                 <th className="p-2 ">ราคาซื้อ</th>
                 <th className="p-2 ">ราคาขาย</th>
                 <th className="p-2 ">คงเหลือ</th>
-                <th className="p-2 ]">พร้อมขาย</th>
+                <th className="p-2 ]">รอยืนยัน</th>
                 <th className="p-2 ]">เคลื่อนไหวล่าสุด</th>
                 <th className="p-2 whitespace-nowrap"></th>
               </tr>
@@ -289,32 +289,36 @@ export default function ProductPage() {
                       stocks: product.stocks,
                       pendingStocks: product.pending_stock
                     })}
-                    className={`cursor-pointer hover:opacity-80 text-left ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) + (Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)) <= 0
+                    className={`cursor-pointer hover:opacity-80 text-left ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
                         ? 'text-red-500' // red if stock is 0 or less
-                        : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) + (Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)) < 5
+                        : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
                           ? 'text-yellow-500' // yellow if stock is less than 5
                           : 'text-green-500' // green if stock is greater than 5
                       }`}
                   >
-                    {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) + (Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0))}
+                    {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)}
                     {" " + product.unit_type}
                   </span>
                 </td>
                 <td className="p-2 w-[10%] text-left">
-                  <span 
-                      onClick={() => setSelectedStock({
+                  <span
+                    onClick={() => setSelectedStock({
                       productName: product.name,
                       productSKU: product.sku,
                       stocks: product.stocks,
                       pendingStocks: product.pending_stock
                     })}
-                    className={`cursor-pointer hover:opacity-80 ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
-                      ? 'text-red-500' // red if stock is 0 or less
-                      : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
-                        ? 'text-yellow-500' // yellow if stock is less than 5
-                        : 'text-green-500' // green if stock is greater than 5
-                    }`}>
-                    {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)}
+                    className={`cursor-pointer hover:opacity-80 ${
+                      Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) >
+                      Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)
+                        ? 'text-red-500'
+                        : Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) ===
+                          Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)
+                          ? 'text-yellow-500'
+                          : 'text-green-500'
+                    }`}
+                  >
+                    {Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)}
                     {" " + product.unit_type}
                   </span>
                 </td>

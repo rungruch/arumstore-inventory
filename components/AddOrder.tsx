@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { getProductBySKU, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeduction, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
+import { getProductBySKU, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeductionv2, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
@@ -404,7 +404,7 @@ export default function AddSellOrderForm({
         updated_date: Timestamp.now(),
       };
 
-      await createSellTransactionWithStockDeduction(formattedTransactionData);
+      await createSellTransactionWithStockDeductionv2(formattedTransactionData);
 
       // Reset form
       setOrderState({
