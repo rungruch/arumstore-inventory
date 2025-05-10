@@ -256,6 +256,11 @@ export async function createProduct(productData: any) {
   try {
       const productsCollection = collection(db, "products");
       const docRef = doc(productsCollection, productData.sku);
+      // Check for duplicate document ID
+      const existingDoc = await getDoc(docRef);
+      if (existingDoc.exists()) {
+        throw new Error(`Product with SKU "${productData.sku}" already exists.`);
+      }
       await setDoc(docRef, productData);
       return { id: docRef.id, ...productData };
   } catch (error) {
@@ -263,7 +268,6 @@ export async function createProduct(productData: any) {
       throw new Error("ไม่สามารถเพิ่มสินค้าได้");
   }
 }
-
 
  async function updateProductbySKU(sku: string, updateData: any) {
   try {
@@ -382,6 +386,14 @@ export async function createProductWarehouse(name: string, type:string, details:
     // Generate a warehouse_id
     const warehouseId = await getNextWarehouseId();
     
+    // Check for duplicate warehouse_id document
+    const docRef = doc(collection(db, "product_warehouse"), warehouseId);
+    const existingDoc = await getDoc(docRef);
+    
+    if (existingDoc.exists()) {
+      throw new Error(`Warehouse with ID "${warehouseId}" already exists.`);
+    }
+    
     // Define the new warehouse with the correct type
     const newWarehouse: Omit<Warehouse, 'id'> = {
       warehouse_id: warehouseId,
@@ -392,7 +404,6 @@ export async function createProductWarehouse(name: string, type:string, details:
       updated_date: Timestamp.now()
     };
 
-    const docRef = doc(collection(db, "product_warehouse"), warehouseId);
     await setDoc(docRef, newWarehouse);
     // Return the new warehouse with its Firestore ID
     return { id: docRef.id, ...newWarehouse } as Warehouse;
@@ -1181,6 +1192,13 @@ export async function createTransferTransactionCompleted(
       const productsRef = collection(db, "products");
       const transactionRef = collection(db, "transactions");
       
+// Check for duplicate transaction_id document
+      const transferDoc = doc(transactionRef, transaction_id);
+      const existingDoc = await getDoc(transferDoc);
+      if (existingDoc.exists()) {
+        throw new Error(`Transfer transaction with ID "${transaction_id}" already exists.`);
+      }
+
       // Generate transaction ID (you might want to implement your own logic)
       const transferItems = [];
 
@@ -1241,7 +1259,7 @@ export async function createTransferTransactionCompleted(
         updated_date: Timestamp.now()
       };
 
-      const transferDoc = doc(transactionRef, transaction_id);
+
       transaction.set(transferDoc, transferTransaction);
 
       return {

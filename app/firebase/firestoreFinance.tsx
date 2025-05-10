@@ -44,7 +44,11 @@ export const createWallet = async (walletData: WalletCollection): Promise<string
   try {
     const walletId = walletData.wallet_id || uuidv4();
     const walletRef = doc(db, "finance_wallet", walletId);
-    
+    // Check for duplicate wallet_id document
+    const existingDoc = await getDoc(walletRef);
+    if (existingDoc.exists()) {
+      throw new Error(`Wallet with ID "${walletId}" already exists.`);
+    }
     await setDoc(walletRef, {
       ...walletData,
       wallet_id: walletId,
@@ -52,7 +56,6 @@ export const createWallet = async (walletData: WalletCollection): Promise<string
       created_date: Timestamp.now(),
       updated_date: Timestamp.now()
     });
-    
     return walletId;
   } catch (error) {
     console.error("Error creating wallet:", error);
@@ -243,7 +246,11 @@ export const createIncomeTransaction = async (transactionData: IncomeTransaction
   try {
     const transactionId = transactionData.transaction_id || await generateRandomFinanceTransactionId();
     const transactionRef = doc(db, "finance_transactions", transactionId);
-    
+    // Check for duplicate transaction_id document
+    const existingDoc = await getDoc(transactionRef);
+    if (existingDoc.exists()) {
+      throw new Error(`Finance transaction with ID "${transactionId}" already exists.`);
+    }
     const transactionToSave = {
       ...transactionData,
       transaction_id: transactionId,
@@ -251,9 +258,7 @@ export const createIncomeTransaction = async (transactionData: IncomeTransaction
       created_date: transactionData.created_date || Timestamp.now(),
       updated_date: Timestamp.now()
     };
-    
     await setDoc(transactionRef, transactionToSave);
-    
     // Update wallet balance if payment is completed
     if (transactionData.payment_status === payment_status.COMPLETED && 
         transactionData.payment_deatils && 
@@ -265,7 +270,6 @@ export const createIncomeTransaction = async (transactionData: IncomeTransaction
         true // Add to wallet
       );
     }
-    
     return transactionId;
   } catch (error) {
     console.error("Error creating income transaction:", error);
@@ -277,7 +281,11 @@ export const createExpenseTransaction = async (transactionData: ExpenseTransacti
   try {
     const transactionId = transactionData.transaction_id || await generateRandomFinanceTransactionId();
     const transactionRef = doc(db, "finance_transactions", transactionId);
-    
+    // Check for duplicate transaction_id document
+    const existingDoc = await getDoc(transactionRef);
+    if (existingDoc.exists()) {
+      throw new Error(`Finance transaction with ID "${transactionId}" already exists.`);
+    }
     const transactionToSave = {
       ...transactionData,
       transaction_id: transactionId,
@@ -285,9 +293,7 @@ export const createExpenseTransaction = async (transactionData: ExpenseTransacti
       created_date: transactionData.created_date || Timestamp.now(),
       updated_date: Timestamp.now()
     };
-    
     await setDoc(transactionRef, transactionToSave);
-    
     // Update wallet balance if payment is completed
     if (transactionData.payment_status === payment_status.COMPLETED && 
         transactionData.payment_deatils && 
@@ -299,7 +305,6 @@ export const createExpenseTransaction = async (transactionData: ExpenseTransacti
         false // Subtract from wallet
       );
     }
-    
     return transactionId;
   } catch (error) {
     console.error("Error creating expense transaction:", error);
@@ -311,7 +316,11 @@ export const createTransferTransaction = async (transactionData: TransferTransac
   try {
     const transactionId = transactionData.transaction_id || await generateRandomFinanceTransactionId();
     const transactionRef = doc(db, "finance_transactions", transactionId);
-    
+    // Check for duplicate transaction_id document
+    const existingDoc = await getDoc(transactionRef);
+    if (existingDoc.exists()) {
+      throw new Error(`Finance transaction with ID "${transactionId}" already exists.`);
+    }
     const transactionToSave = {
       ...transactionData,
       transaction_id: transactionId,
@@ -319,9 +328,7 @@ export const createTransferTransaction = async (transactionData: TransferTransac
       created_date: transactionData.created_date || Timestamp.now(),
       updated_date: Timestamp.now()
     };
-    
     await setDoc(transactionRef, transactionToSave);
-    
     // Update wallet balances for transfer
     if (transactionData.from_wallet_id && transactionData.to_wallet_id && transactionData.total_amount) {
       await updateWalletBalance(
@@ -329,14 +336,12 @@ export const createTransferTransaction = async (transactionData: TransferTransac
         transactionData.total_amount,
         false // Subtract from source wallet
       );
-      
       await updateWalletBalance(
         transactionData.to_wallet_id,
         transactionData.total_amount,
         true // Add to destination wallet
       );
     }
-    
     return transactionId;
   } catch (error) {
     console.error("Error creating transfer transaction:", error);
