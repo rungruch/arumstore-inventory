@@ -188,6 +188,14 @@ export default function AddPurchaseForm({
   }, []);
 
     const handleSaveContact = async () => {
+      if (!orderState.supplier_name.trim()) {
+        setModalState({
+          isOpen: true,
+          title: ModalTitle.WARNING,
+          message: "กรุณากรอกชื่อผู้จำหน่าย",
+        });
+        return;
+      }
       try {
         const contact = {
           name: orderState.supplier_name,
@@ -488,94 +496,78 @@ export default function AddPurchaseForm({
         <h1 className="text-xl font-semibold mb-4">เพิ่มรายการซื้อ</h1>
         <form onSubmit={handleFormSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div>
-              <h3 className="text-sm font-semibold mb-2">ข้อมูล</h3>
-              <label className="block mb-1 text-sm">ประเภท</label>
-              <input 
-                type="text" 
-                name="transaction_type" 
-                placeholder="ประเภท" 
-                value={'สินค้าซื้อเข้า'} 
-                disabled={true} 
-                onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
-              />
-              <label className="block mb-1 text-sm">รายการ<span className="text-red-500">*</span></label> 
-              <input 
-                type="text" 
-                name="transaction_id" 
-                placeholder="รหัสรายการ" 
-                value={orderState.transaction_id} 
-                onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
-              />
-              <label className="block mb-1 text-sm">ช่องทางการซื้อ</label> 
-              <select
-                name="sell_method"
-                value={orderState.buy_method}
-                onChange={handleChange}
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
-              >
-                <option value="">เลือกช่องทางการขาย</option>
-                <option value="STORE">ร้านค้า</option>
-                <option value="FACEBOOK">Facebook</option>
-                <option value="LINE">Line</option>
-                <option value="WEBSITE">เว็บไซต์</option>
-                <option value="INSTAGRAM">Instagram</option>
-                <option value="Others">อื่นๆ</option>
-              </select>
-              <label className="block mb-1 text-sm">ประเภทภาษี</label> 
-              <select
-                name="vat_type"
-                value={orderState.vat_type}
-                onChange={handleChange}
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
-              >
-                <option value={VatType.VAT0}>รวมภาษีมูลค่าเพิ่ม 7%</option>
-                <option value={VatType.VAT7}>แยกภาษีมูลค่าเพิ่ม 7%</option>
-                <option value={VatType.NO_VAT}>ไม่มีภาษีมูลค่าเพิ่ม</option>
-              </select>
+            <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700 bg-white dark:bg-zinc-800 shadow-md">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">ข้อมูล</h3>
+              <div className="relative mb-3">
+                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ประเภท</label>
+                <input 
+                  type="text" 
+                  name="transaction_type" 
+                  placeholder="ประเภท" 
+                  value={'สินค้าซื้อเข้า'} 
+                  disabled={true} 
+                  onChange={handleChange} 
+                  className="w-full border p-2 pt-1 rounded-md text-sm bg-gray-100 dark:bg-zinc-700 dark:border-gray-700" 
+                />
+              </div>
+              
+              <div className="relative mb-3">
+                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">รายการ<span className="text-red-500">*</span></label> 
+                <input 
+                  type="text" 
+                  name="transaction_id" 
+                  placeholder="รหัสรายการ" 
+                  value={orderState.transaction_id} 
+                  onChange={handleChange} 
+                  disabled={true}
+                  className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 bg-gray-100 dark:bg-zinc-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                />
+              </div>
+              
+              <div className="relative mb-3">
+                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ช่องทางการซื้อ</label> 
+                <select
+                  name="buy_method"
+                  value={orderState.buy_method}
+                  onChange={handleChange}
+                  className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                >
+                  <option value="">เลือกช่องทางการซื้อ</option>
+                  <option value="STORE">ร้านค้า</option>
+                  <option value="FACEBOOK">Facebook</option>
+                  <option value="LINE">Line</option>
+                  <option value="WEBSITE">เว็บไซต์</option>
+                  <option value="INSTAGRAM">Instagram</option>
+                  <option value="Others">อื่นๆ</option>
+                </select>
+              </div>
+              
+              <div className="relative">
+                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ประเภทภาษี</label> 
+                <select
+                  name="vat_type"
+                  value={orderState.vat_type}
+                  onChange={handleChange}
+                  className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                >
+                  <option value={VatType.VAT0}>รวมภาษีมูลค่าเพิ่ม 7%</option>
+                  <option value={VatType.VAT7}>แยกภาษีมูลค่าเพิ่ม 7%</option>
+                  <option value={VatType.NO_VAT}>ไม่มีภาษีมูลค่าเพิ่ม</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold mb-2">ข้อมูลผู้จำหน่าย</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700 bg-white dark:bg-zinc-800 shadow-md">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">ข้อมูลผู้จำหน่าย</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border border-gray-200 rounded-md dark:border-gray-700 mb-3 shadow-sm">
                 <div className="relative">
                   <input 
                     type="text" 
                     name="supplier_name" 
                     placeholder="ชื่อ*" 
                     value={orderState.supplier_name} 
-                    onChange={(e) => {
-                      const { value } = e.target;
-                      setOrderState(prev => ({
-                        ...prev,
-                        supplier_name: value,
-                        supplier_id: "",
-                        supplier_tel: "",
-                        supplier_email: "",
-                        supplier_address: "",
-                        tax_id: "",
-                        branch_name: "",
-                        branch_id: ""
-                      }));
-                      setisCreateContactDisabled(false);
-
-                      if (value.length >= 2) {
-                        try {
-                          getContactsByName(value).then(contacts => {
-                            setContactSuggestions(contacts);
-                            setShowSuggestions(true);
-                          });
-                        } catch (error) {
-                          console.error("Error fetching contacts:", error);
-                        }
-                      } else {
-                        setContactSuggestions([]);
-                        setShowSuggestions(false);
-                      }
-                    }}
+                    onChange={handleSupplierNameChange}
                     onClick={handleSupplierNameClick}
-                    className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
+                    className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
                     autoComplete="off"
                     required
                   /> 
@@ -597,15 +589,15 @@ export default function AddPurchaseForm({
                     };
                     }}>
                     {showSuggestions && contactSuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto dark:bg-zinc-800">
+                      <div className="absolute z-10 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto dark:bg-zinc-800 animate-fadeIn">
                       {contactSuggestions.map((contact) => (
                         <div
                         key={contact.id}
-                        className="p-2 hover:bg-gray-100 cursor-pointer dark:hover:bg-zinc-700"
+                        className="p-2 hover:bg-gray-100 cursor-pointer dark:hover:bg-zinc-700 transition-colors"
                         onClick={() => handleContactSelect(contact)}
                         >
                         <div className="font-semibold">{contact.name}</div>
-                        <div className="text-sm text-gray-600">{contact.tel}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{contact.tel}</div>
                         </div>
                       ))}
                       </div>
@@ -618,75 +610,92 @@ export default function AddPurchaseForm({
                   placeholder="รหัสผู้จำหน่าย" 
                   value={orderState.supplier_id} 
                   onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
+                  className="w-full border p-2 rounded-md mb-2 text-sm bg-gray-100 dark:bg-zinc-700 dark:border-gray-700" 
                   disabled={true}
                 />
-                <button
-                  type="button"
-                  className={`w-fit h-fit p-2 text-sm rounded-md text-white ${
-                    isCreateContactDisabled
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-black hover:bg-gray-800"
-                  } transition`}
-                  disabled={isCreateContactDisabled}
-                  onClick={handleSaveContact}
-                >
-                  เพิ่มผู้จำหน่าย
-                </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="relative">
+                  <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">เบอร์โทร</label>
+                  <input 
+                    type="text" 
+                    name="supplier_tel" 
+                    value={orderState.supplier_tel} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 pt-1 rounded-md mb-3 text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                  />
+                </div>
+                <div className="relative">
+                  <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">อีเมล</label>
+                  <input 
+                    type="text" 
+                    name="supplier_email" 
+                    value={orderState.supplier_email} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 pt-1 rounded-md mb-3 text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                  />
+                </div>
+              </div>
+              <div className="relative mb-3">
+                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ที่อยู่</label>
                 <input 
                   type="text" 
-                  name="supplier_tel" 
-                  placeholder="เบอร์โทร" 
-                  value={orderState.supplier_tel} 
+                  name="supplier_address" 
+                  value={orderState.supplier_address} 
                   onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
-                />
-                <input 
-                  type="text" 
-                  name="supplier_email" 
-                  placeholder="อีเมล" 
-                  value={orderState.supplier_email} 
-                  onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
+                  className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
                 />
               </div>
-              <input 
-                type="text" 
-                name="supplier_address" 
-                placeholder="ที่อยู่" 
-                value={orderState.supplier_address} 
-                onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
-              />
-              <label className="block mb-1 text-sm">เลขประจำตัวผู้เสียภาษี</label>
-              <input 
-                type="text" 
-                name="tax_id" 
-                placeholder="เลขประจำตัวผู้เสียภาษี" 
-                value={orderState.tax_id} 
-                onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
-              />
-              <label className="block mb-1 text-sm">ชื่อสาขา</label>
-              <input 
-                type="text" 
-                name="branch_name" 
-                placeholder="ชื่อสาขา" 
-                value={orderState.branch_name} 
-                onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
-              />
-              <label className="block mb-1 text-sm">รหัสสาขา</label>
-              <input 
-                type="text" 
-                name="branch_id" 
-                placeholder="รหัสสาขา" 
-                value={orderState.branch_id} 
-                onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
-              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div className="relative">
+                  <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">เลขประจำตัวผู้เสียภาษี</label>
+                  <input 
+                    type="text" 
+                    name="tax_id" 
+                    value={orderState.tax_id} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                  />
+                </div>
+                <div className="relative">
+                  <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ชื่อสาขา</label>
+                  <input 
+                    type="text" 
+                    name="branch_name" 
+                    value={orderState.branch_name} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                  />
+                </div>
+                <div className="relative">
+                  <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">รหัสสาขา</label>
+                  <input 
+                    type="text" 
+                    name="branch_id" 
+                    value={orderState.branch_id} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                  />
+                </div>
+              </div>
+              
+              <button
+                type="button"
+                className={`w-fit h-fit p-2 px-4 text-sm rounded-md text-white ${
+                  isCreateContactDisabled
+                    ? "bg-gray-500 cursor-not-allowed"
+                    : "bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-white rounded text-sm transition-colors"
+                } transition-colors flex items-center gap-1 shadow-sm`}
+                disabled={isCreateContactDisabled}
+                onClick={handleSaveContact}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-person-plus" viewBox="0 0 16 16">
+                  <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                  <path fillRule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                </svg>
+                เพิ่มผู้จำหน่าย
+              </button>
             </div>
           </div>
 
@@ -702,32 +711,37 @@ export default function AddPurchaseForm({
 
           <div className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <div className="mb-4"> 
-              <h3 className="text-sm font-semibold mb-2">หมายเหตุ</h3>
-              <input 
-                type="text" 
-                name="notes" 
-                placeholder="หมายเหตุ" 
-                value={orderState.notes} 
-                onChange={handleChange} 
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700" 
-              />
+              <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700 bg-white dark:bg-zinc-800 shadow-md"> 
+                <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">หมายเหตุ</h3>
+                <div className="relative">
+                  <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">รายละเอียดเพิ่มเติม</label>
+                  <input 
+                    type="text" 
+                    name="notes" 
+                    value={orderState.notes} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                  />
+                </div>
               </div>
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold mb-2">เพิ่มเข้าคลังสินค้า</h3>
-                <select 
-                  name="warehouse" 
-                  value={orderState.warehouse} 
-                  onChange={handleChange} 
-                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
-                >
-                  <option value="" disabled>เลือกคลังสินค้า</option>
-                  {warehouses.map((warehouse) => (
-                    <option key={warehouse.warehouse_name} value={warehouse.warehouse_name}>
-                      {warehouse.warehouse_name}
-                    </option>
-                  ))}
-                </select>
+              <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700 bg-white dark:bg-zinc-800 shadow-md">
+                <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">เพิ่มเข้าคลังสินค้า</h3>
+                <div className="relative">
+                  <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">คลังสินค้า</label>
+                  <select 
+                    name="warehouse" 
+                    value={orderState.warehouse} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  >
+                    <option value="" disabled>เลือกคลังสินค้า</option>
+                    {warehouses.map((warehouse) => (
+                      <option key={warehouse.warehouse_name} value={warehouse.warehouse_name}>
+                        {warehouse.warehouse_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
