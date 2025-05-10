@@ -537,9 +537,10 @@ export default function ProductPage() {
               customHeader={
                 <tr className="text-left h-[9vh]">
                   <th className="p-2 w-[5%] text-center">#</th>
-                  <th className="p-2 w-[15%]">วันที่</th>
-                  <th className="p-2 w-[20%]">รายการ</th>
+                  <th className="p-2 w-[10%]">วันที่</th>
+                  <th className="p-2 w-[10%]">รายการ</th>
                   <th className="p-2 w-[25%]">ลูกค้า</th>
+                  <th className="p-2 w-[10%]">ช่องทางการขาย</th>
                   <th className="p-2 flex-1">มูลค่า</th>
                   <th className="p-2 flex-1">สถานะ</th>
                   <th className="p-2 flex-1">วันส่งสินค้า</th>
@@ -550,7 +551,7 @@ export default function ProductPage() {
               customRow={(data, index) => (
                 <tr key={data.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                   <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
-                  <td className="p-2 w-[15%] whitespace-nowrap overflow-hidden text-ellipsis">
+                  <td className="p-2 w-[10%] whitespace-nowrap overflow-hidden text-ellipsis">
                     {data.created_date ?
                       new Date(data.created_date.toDate()).toLocaleString('th-TH', {
                         year: 'numeric',
@@ -560,7 +561,7 @@ export default function ProductPage() {
                       : "-"}
                   </td>
                   <td
-                    className="p-2 w-[20%] whitespace-nowrap"
+                    className="p-2 w-[10%] whitespace-nowrap"
                     onMouseEnter={(e) => {
                       setHoveredRow(data.transaction_id);
                       setTooltipPosition({
@@ -641,6 +642,7 @@ export default function ProductPage() {
                     </div>
                   </td>
                   <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.client_name}</td>
+                  <td className="p-2 w-[10%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.sell_method}</td>
                   <td className="p-2 flex-1">{data.total_amount}</td>
                   <td className="p-2">
                     <div className="relative" style={{ width: "120px" }}>

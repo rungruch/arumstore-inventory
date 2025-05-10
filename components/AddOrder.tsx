@@ -527,10 +527,10 @@ export default function AddSellOrderForm({
                 className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
               >
                 <option value="">เลือกช่องทางการขาย</option>
-                <option value="STORE">ร้านค้า</option>
+                <option value="ร้านค้า">ร้านค้า</option>
                 <option value="FACEBOOK">Facebook</option>
                 <option value="LINE">Line</option>
-                <option value="WEBSITE">เว็บไซต์</option>
+                <option value="เว็บไซต์">เว็บไซต์</option>
                 <option value="INSTAGRAM">Instagram</option>
                 <option value="Others">อื่นๆ</option>
               </select>

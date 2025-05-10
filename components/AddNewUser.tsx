@@ -46,6 +46,59 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
       [name]: value
     }));
     setValidationError('');
+
+    // Auto-check all permissions if role is admin
+    if (name === "role" && value === "admin") {
+      const perms: any = {};
+      permissionModules.forEach(mod => {
+        perms[mod.key] = {};
+        mod.actions.forEach(action => {
+          perms[mod.key][action] = true;
+        });
+      });
+      setPermissions(perms);
+    }
+    // If role is manager, check all view/create/edit, uncheck delete
+    else if (name === "role" && value === "manager") {
+      const perms: any = {};
+      permissionModules.forEach(mod => {
+        perms[mod.key] = {};
+        mod.actions.forEach(action => {
+          if (["view", "create", "edit"].includes(action)) {
+            perms[mod.key][action] = true;
+          } else {
+            perms[mod.key][action] = false;
+          }
+        });
+      });
+      setPermissions(perms);
+    }
+    // If role is staff, check only view/create, uncheck edit/delete
+    else if (name === "role" && value === "staff") {
+      const perms: any = {};
+      permissionModules.forEach(mod => {
+        perms[mod.key] = {};
+        mod.actions.forEach(action => {
+          if (["view", "create"].includes(action)) {
+            perms[mod.key][action] = true;
+          } else {
+            perms[mod.key][action] = false;
+          }
+        });
+      });
+      setPermissions(perms);
+    }
+    // Optionally, reset permissions for other roles
+    else if (name === "role" && value !== "admin" && value !== "staff") {
+      const perms: any = {};
+      permissionModules.forEach(mod => {
+        perms[mod.key] = {};
+        mod.actions.forEach(action => {
+          perms[mod.key][action] = false;
+        });
+      });
+      setPermissions(perms);
+    }
   };
 
   const handlePermissionChange = (module: string, action: string, checked: boolean) => {
@@ -281,7 +334,7 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
                   <table className="min-w-full border-collapse text-xs">
                     <thead>
                       <tr>
-                        <th className="border px-2 py-1">โมดูล</th>
+                        <th className="border px-2 py-1">รายการ</th>
                         {permissionModules[0].actions.map(action => (
                           <th key={action} className="border px-2 py-1 text-center">{action}</th>
                         ))}

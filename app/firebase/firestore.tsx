@@ -18,7 +18,8 @@ import {
   endAt,
   CollectionReference,
   getCountFromServer,
-  setDoc
+  setDoc,
+  deleteDoc
 } from "firebase/firestore";
 
 import { db } from "@/app/firebase/clientApp";
@@ -100,7 +101,7 @@ export async function getProductCategoryCount(): Promise<ProductCategoryCount> {
 
 export async function getProductCategoryPaginated(lastDoc: any = null, pageSize: number = 10) {
   try {
-    let q = query(collection(db, "product_category"), orderBy("created_at", "desc"), limit(pageSize));
+    let q = query(collection(db, "product_category"), orderBy("created_at", "desc"),limit(pageSize));
 
     // If there's a last document (for next page), start after it
     if (lastDoc) {
@@ -154,7 +155,9 @@ export async function getProductCategoryPaginated(lastDoc: any = null, pageSize:
 
 export async function getTotalCategoryCount() {
   try {
-    const categoryCollection = collection(db, "product_category");
+    const categoryCollection = query(
+      collection(db, "product_category"),
+    );
     const snapshot = await getCountFromServer(categoryCollection);
     return snapshot.data().count;
   } catch (error) {
@@ -207,14 +210,13 @@ function startsWith(
 export async function getProductCategoryByName(partialName: string) {
   try {
     // Execute the query
-    const querySnapshot = await getDocs(
-      startsWith(
-        collection(db, 'product_category'),
-        'category_name',
-        partialName
-      )
+    const q = query(
+      collection(db, 'product_category'),
+      orderBy('category_name'),
+      startAt(partialName),
+      endAt(partialName + '~'),
     );
-
+    const querySnapshot = await getDocs(q);
     // Map the results into an array of category objects
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -589,7 +591,6 @@ export async function getProductCategory() {
     const q = query(
       collection(db, "product_category"),
     );
-    
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -598,7 +599,8 @@ export async function getProductCategory() {
   } catch (error) {
     console.error("Error fetching Category: ", error);
     throw error;
-  }}
+  }
+}
 
 
 export async function getProductWarehouse() {
@@ -1553,5 +1555,16 @@ export async function getSellTransactionsByDate(startDate: Date, endDate: Date) 
   } catch (error) {
     console.error("Error fetching sell transactions by date:", error);
     return [];
+  }
+}
+
+export async function deleteProductCategory(categoryId: string) {
+  try {
+    const categoryRef = doc(db, "product_category", categoryId);
+    await deleteDoc(categoryRef);
+    return { id: categoryId, deleted: true };
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    throw error;
   }
 }
