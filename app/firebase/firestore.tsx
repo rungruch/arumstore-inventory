@@ -1660,3 +1660,32 @@ export async function getProductByID(productId: string) {
     throw error;
   }
 }
+
+export async function deleteProductWarehouse(warehouseId: string) {
+  try {
+    const categoryRef = doc(db, "product_warehouse", warehouseId);
+    await deleteDoc(categoryRef);
+    return { id: warehouseId, deleted: true };
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    throw error;
+  }
+}
+
+export async function updateProductWarehouse(warehouseId: string, updateData: any) {
+  try {
+    const warehouseRef = doc(db, "product_warehouse", warehouseId);
+    await updateDoc(warehouseRef, {
+      ...updateData,
+      updated_date: Timestamp.now()
+    });
+    const updatedDoc = await getDoc(warehouseRef);
+    return {
+      id: warehouseId,
+      ...updatedDoc.data()
+    };
+  } catch (error) {
+    console.error("Error updating warehouse:", error);
+    throw error;
+  }
+}

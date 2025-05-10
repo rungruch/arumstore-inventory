@@ -1,15 +1,16 @@
 "use client";
 
-import { getProductWarehousePaginated, getTotalWarehouseCount, getProductWarehouseByName } from "@/app/firebase/firestore";
+import { getProductWarehousePaginated, getTotalWarehouseCount, getProductWarehouseByName, deleteProductWarehouse } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
-import AddCategoryPopup from "@/components/AddCategory";
-import { Timestamp, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Warehouse } from "@/app/firebase/interfaces";
 import AddWarehousePopup from "@/components/AddWarehouse";
 import { getProductCountByWarehouse as getTotalProductsofWarehouse } from "@/app/firebase/firestoreStats";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Modal from "@/components/modal";
+import { ModalTitle } from '@/components/enum';
+import { EditWarehousePopup } from "@/components/AddWarehouse";
 
 export default function ProductWarehousePage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -21,6 +22,16 @@ export default function ProductWarehousePage() {
   const [loading, setLoading] = useState(false); // Loading state
   const [pageSize, setPageSize] = useState(10); // Default page size is 10
   const [totalProducts, setTotalProducts] = useState<Array<{ warehouse_id: string; warehouse_name: string; count: number }>>(); // Total products in the warehouse
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null); // Track open dropdown
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    warehouseId: '',
+    warehouseName: '',
+  });
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editWarehouse, setEditWarehouse] = useState<any>(null);
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -133,8 +144,57 @@ export default function ProductWarehousePage() {
   // Calculate total pages
   const totalPages = Math.ceil(totalWarehouses / pageSize);
 
+  // Add this function to refresh warehouses after edit
+  const refreshWarehouses = async () => {
+    setLoading(true);
+    const totalCount = await getTotalWarehouseCount();
+    setTotalWarehouses(totalCount);
+    const { warehouses, lastDoc } = await getProductWarehousePaginated(null, pageSize);
+    setWarehouses(warehouses);
+    setLastDoc(lastDoc);
+    // Fetch total products for all warehouse
+    const productCounts = await getTotalProductsofWarehouse();
+    setTotalProducts(productCounts);
+    setLoading(false);
+  };
+
+  // Delete warehouse handler
+  const handleDeleteWarehouse = async (warehouseId: string) => {
+    try {
+      // You need to implement deleteProductWarehouse in your firestore utils
+      await deleteProductWarehouse(warehouseId);
+      setWarehouses((prev: any[]) => prev.filter((w: any) => w.id !== warehouseId));
+      closeModal();
+    } catch (error) {
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: 'เกิดข้อผิดพลาดในการลบคลังสินค้า',
+        warehouseId: '',
+        warehouseName: '',
+      });
+    }
+  };
+
+  const closeModal = () => {
+    setModalState(prev => ({ ...prev, isOpen: false }));
+  };
+
   return (
     <ProtectedRoute module='products' action="view">
+    <EditWarehousePopup
+      isOpen={editModalOpen}
+      onClose={() => setEditModalOpen(false)}
+      warehouse={editWarehouse}
+      onSuccess={refreshWarehouses}
+    />
+    <Modal
+      isOpen={modalState.isOpen}
+      onClose={closeModal}
+      title={modalState.title}
+      message={modalState.message || `คุณต้องการลบคลังสินค้า ${modalState.warehouseName} ใช่หรือไม่?`}
+      onConfirm={() => handleDeleteWarehouse(modalState.warehouseId)}
+    />
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">คลังสินค้า</h1>
@@ -181,6 +241,7 @@ export default function ProductWarehousePage() {
       <th className="p-2 w-[150px] whitespace-nowrap">ประเภท</th>
       <th className="p-2 w-[120px] whitespace-nowrap">จำนวนสินค้า</th>
       <th className="p-2 w-[180px] whitespace-nowrap">เคลื่อนไหวล่าสุด</th>
+      <th className="p-2 w-[5%]"> </th>
     </tr>
   }
   customRow={(warehouse, index) => (
@@ -201,6 +262,62 @@ export default function ProductWarehousePage() {
             hour12: false
           }) 
           : "-"}
+      </td>
+      <td className="p-2 w-[5%]">
+        <div className="relative inline-block text-left">
+          <button
+            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenDropdownId(openDropdownId === warehouse.id ? null : warehouse.id);
+            }}
+          >
+            <svg width="20" height="20" fill="currentColor" className="text-gray-600 dark:text-gray-300" viewBox="0 0 20 20">
+              <circle cx="4" cy="10" r="2" />
+              <circle cx="10" cy="10" r="2" />
+              <circle cx="16" cy="10" r="2" />
+            </svg>
+          </button>
+          {openDropdownId === warehouse.id && (
+            <div
+              id={`dropdown-${warehouse.id}`}
+              className="fixed z-50 mt-2 w-32 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg"
+              style={{
+                top: 'auto',
+                left: 'auto',
+                right: '16px',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                onClick={() => {
+                  setEditWarehouse(warehouse);
+                  setEditModalOpen(true);
+                  setOpenDropdownId(null);
+                }}
+              >
+                แก้ไข
+              </button>
+              <button
+                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                onClick={() => {
+                  setModalState({
+                    isOpen: true,
+                    title: ModalTitle.DELETE,
+                    message: '',
+                    warehouseId: warehouse.id,
+                    warehouseName: warehouse.warehouse_name,
+                  });
+                  setOpenDropdownId(null);
+                }}
+              >
+                ลบ
+              </button>
+            </div>
+          )}
+        </div>
       </td>
     </tr>
   )}
