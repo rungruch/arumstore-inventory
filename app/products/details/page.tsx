@@ -89,7 +89,6 @@ export default function ProductDetails() {
         setTransactionsLoading(true);
         // Use the new getMonthlyProductTransactions function with current month
         const transactions = await getMonthlyProductTransactions(psku, new Date());
-        console.log("Fetched monthly transactions:", transactions);
         setProductTransactions(transactions);
       } catch (error) {
         console.error("Error fetching monthly product transactions:", error);

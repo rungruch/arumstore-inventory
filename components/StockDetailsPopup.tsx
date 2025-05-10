@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
-import { generateRandomTransferTransactionId, createAdjustStockTransaction } from '@/app/firebase/firestore';
+import { generateRandomAdjustTransactionId, createAdjustStockTransaction } from '@/app/firebase/firestore';
 
 interface StockDetailsPopupProps {
   productName: string;
@@ -162,7 +162,7 @@ export default function StockDetailsPopup({ productName, productSKU, stocks, pen
                       }
                       try {
                       await createAdjustStockTransaction(
-                        await generateRandomTransferTransactionId(),
+                        await generateRandomAdjustTransactionId(),
                         { 
                         sku: productSKU, 
                         quantity: adjustQuantity,

@@ -79,15 +79,15 @@ export default function AddSellOrderForm({
       if (ref_product_id) {
         let leatest_product:any = await getProductByID(ref_product_id);
         setProducts([{
-          id: leatest_product[0].id,
-          product_code: leatest_product[0].sku,
-          product_name: leatest_product[0].name,
-          quantity: leatest_product[0].quantity ?? 0,
-          price: leatest_product[0].price,
-          discount: leatest_product[0].discount ?? 0,
-          total: leatest_product[0].subtotal ?? 0,
-          stock: leatest_product[0].stocks[orderState.warehouse] ?? 0,
-          unit_type: leatest_product[0].unit_type,
+          id: leatest_product.id,
+          product_code: leatest_product.sku,
+          product_name: leatest_product.name,
+          quantity: leatest_product.quantity ?? 0,
+          price: leatest_product.price,
+          discount: leatest_product.discount ?? 0,
+          total: leatest_product.subtotal ?? 0,
+          stock: leatest_product.stocks[orderState.warehouse] ?? 0,
+          unit_type: leatest_product.unit_type,
         }])
       }
 

@@ -740,6 +740,53 @@ export async function getProductWarehouse() {
     });
   }
 
+  export async function generateRandomAdjustTransactionId(): Promise<string> {
+    const transactionsCollection = collection(db, "transactions");
+  
+    return runTransaction(db, async (transaction) => {
+      // Query to find the latest 'SELL' transaction
+      const sellQuery = query(
+        transactionsCollection,
+        where("transaction_type", "==", TransactionType.ADJUST),
+        orderBy("created_date", "desc"), // Assuming 'createdAt' is a timestamp field
+        limit(1)
+      );
+  
+      const sellSnapshot = await getDocs(sellQuery);
+      let newTransactionId: string;
+  
+      if (!sellSnapshot.empty) {
+        // Extract the latest transaction_id
+        const latestTransaction = sellSnapshot.docs[0].data();
+        const latestTransactionId = latestTransaction.transaction_id;
+  
+        // Extract the numeric part from the latestTransactionId (e.g., 'SELL-YYMMDD-1' -> 1)
+        const match = latestTransactionId.match(/A-\d{6}-(\d+)/);
+        const lastNumber = match ? parseInt(match[1], 10) : 0;
+  
+        // Generate the new transaction_id
+        const today = new Date();
+        const yy = today.getFullYear().toString().slice(-2);
+        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
+        const dd = today.getDate().toString().padStart(2, "0");
+        const datePart = `${yy}${mm}${dd}`;
+  
+        newTransactionId = `A-${datePart}-${lastNumber + 1}`;
+      } else {
+        // If no transactions exist, start with 'SELL-YYMMDD-1'
+        const today = new Date();
+        const yy = today.getFullYear().toString().slice(-2);
+        const mm = (today.getMonth() + 1).toString().padStart(2, "0");
+        const dd = today.getDate().toString().padStart(2, "0");
+        const datePart = `${yy}${mm}${dd}`;
+  
+        newTransactionId = `A-${datePart}-1`;
+      }
+  
+      return newTransactionId;
+    });
+  }
+
   async function createSellTransactionWithStockDeduction(transactionData: any) {
     try {
       // Run a transaction to ensure atomic updates
