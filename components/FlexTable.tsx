@@ -20,10 +20,10 @@ export default function FlexTable({
             {datas.length === 0 ? (
               <tr className="dark:bg-zinc-700">
                 <td 
-                  colSpan={6} 
+                  colSpan={10} 
                   className="text-center p-4 dark:text-gray-200"
                 >
-                  No data available
+                  ไม่พบข้อมูล
                 </td>
               </tr>
             ) : (

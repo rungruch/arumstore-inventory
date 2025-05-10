@@ -6,7 +6,7 @@ import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Warehouse } from "@/app/firebase/interfaces";
 import AddWarehousePopup from "@/components/AddWarehouse";
-import { getProductCountByWarehouse as getTotalProductsofWarehouse } from "@/app/firebase/firestoreStats";
+import { getCachedProductCountByWarehouse as getTotalProductsofWarehouse } from "@/app/firebase/firestoreStats";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
@@ -46,6 +46,7 @@ export default function ProductWarehousePage() {
 
         // Fetch total products for all warehouse
         const productCounts = await getTotalProductsofWarehouse()
+        console.log("Total products in warehouse:", productCounts);
         setTotalProducts(productCounts);
 
 
@@ -248,7 +249,14 @@ export default function ProductWarehousePage() {
     <tr key={warehouse.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
       <td className="p-2 w-[50px] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
       <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.warehouse_id}</td>
-      <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.warehouse_name}</td>
+      <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">
+        <a
+          href={`/products/list?warehouse=${encodeURIComponent(warehouse.warehouse_id)}`}
+          className="text-blue-500 hover:underline"
+        >
+          {warehouse.warehouse_name}
+        </a>
+      </td>
       <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{warehouse.type || "-"}</td>
       <td className="p-2 w-[120px] whitespace-nowrap overflow-hidden text-ellipsis">{totalProducts?.find(warehouses => warehouse.warehouse_name === warehouses.warehouse_name)?.count || 0}</td>
       <td className="p-2 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">

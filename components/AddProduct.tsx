@@ -139,6 +139,7 @@ import { ProductStatus } from "@/app/firebase/enum";
                 description: productState.description,
                 category: productState.productCategory || "others",
                 unit_type: productState.unit,
+                warehouse: [productState.warehouse], // Added warehouse field as an array
                 price: {
                     buy_price: productState.purchasePrice,
                     sell_price: productState.sellingPrice,
@@ -150,6 +151,7 @@ import { ProductStatus } from "@/app/firebase/enum";
                 pending_stock: {
                     [productState.warehouse]: 0,
                 },
+                
                 delivery_details: {
                     height_cm: productState.height,
                     length_cm: productState.length,

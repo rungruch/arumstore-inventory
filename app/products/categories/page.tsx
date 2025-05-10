@@ -4,7 +4,6 @@ import { getProductCategoryPaginated, getTotalCategoryCount, getProductCategoryB
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import AddCategoryPopup, { EditCategoryPopup } from "@/components/AddCategory";
-import { Timestamp, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Link from "next/link";
@@ -236,7 +235,14 @@ export default function ProductCategoryPage() {
             customRow={(category, index) => (
               <tr key={category.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
-                <td className="p-2 w-[35%]">{category.category_name}</td>
+                <td className="p-2 w-[35%]">
+                  <Link
+                    href={`/products/list?category=${encodeURIComponent(category.category_name)}`}
+                    className="text-blue-500 hover:underline cursor-pointer"
+                  >
+                    {category.category_name}
+                  </Link>
+                </td>
                 <td className="p-2">{skuCount?.skus?.[category.category_name]?.count || 0}</td>
                 <td className="p-2">{skuCount?.skus?.[category.category_name]?.totalIncome?.toLocaleString() || 0}</td>
                   <td className="p-2">{skuCount?.skus?.[category.category_name]?.totalPendingIncome?.toLocaleString() || 0}</td>

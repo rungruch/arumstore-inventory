@@ -15,6 +15,7 @@ import PaymentDetailsForm from "@/components/AddPaymentDetail";
 import * as XLSX from 'xlsx-js-style';
 import { newTransaction, ExcelExportRow } from '@/components/interface';
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 
 interface ModalState {
@@ -34,6 +35,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(false); // Loading state
   const [pageSize, setPageSize] = useState(10); // Default page size is 10
   const [trigger, setTrigger] = useState(false);
+  const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     title: "",
@@ -443,12 +445,14 @@ export default function ProductPage() {
               จำนวน {totaAllData} รายการ
             </h2>
           </div>
-          <button
-            onClick={togglePopup}
-            className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full sm:w-auto"
-          >
-            เพิ่มรายการขาย
-          </button>
+          {hasPermission('sales', 'create') && (
+            <button
+              onClick={togglePopup}
+              className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full sm:w-auto"
+            >
+              เพิ่มรายการขาย
+            </button>
+          )}
         </div>
 
         {/* Status Filter Buttons */}

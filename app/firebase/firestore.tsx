@@ -369,34 +369,19 @@ export async function getTotalWarehouseCount() {
   }
 }
 
-export async function createProductWarehouse(name: string, type:string, details: string = ""): Promise<Warehouse> {
+export async function createProductWarehouse(name: string, type: string, details: string = ""): Promise<Warehouse> {
   try {
-    // First check if a warehouse with this name already exists
-    const warehouseQuery = query(
-      collection(db, "product_warehouse"),
-      where("warehouse_name", "==", name)
-    );
-    
-    const existingWarehouses = await getDocs(warehouseQuery);
-    
-    if (!existingWarehouses.empty) {
+    // First check if a warehouse with this name already exists (by document ID)
+    const docRef = doc(collection(db, "product_warehouse"), name);
+    const existingDoc = await getDoc(docRef);
+
+    if (existingDoc.exists()) {
       throw new Error(`คลังสินค้า "${name}" มีข้อมูลอยู่แล้ว`);
     }
-    
-    // Generate a warehouse_id
-    const warehouseId = await getNextWarehouseId();
-    
-    // Check for duplicate warehouse_id document
-    const docRef = doc(collection(db, "product_warehouse"), warehouseId);
-    const existingDoc = await getDoc(docRef);
-    
-    if (existingDoc.exists()) {
-      throw new Error(`Warehouse with ID "${warehouseId}" already exists.`);
-    }
-    
+
     // Define the new warehouse with the correct type
     const newWarehouse: Omit<Warehouse, 'id'> = {
-      warehouse_id: warehouseId,
+      warehouse_id: name,
       warehouse_name: name,
       type: type,
       details: details,
@@ -432,41 +417,6 @@ export async function getProductWarehouseByName(partialName: string): Promise<Wa
     console.error("Error fetching warehouse by partial name:", error);
     throw error;
   }
-}
-async function getNextWarehouseId(): Promise<string> {
-  const warehouseCollection = collection(db, "product_warehouse");
-
-  return runTransaction(db, async (transaction) => {
-    // Query to find the latest warehouse
-    const warehouseQuery = query(
-      warehouseCollection,
-      orderBy("warehouse_id", "desc"),
-      limit(1)
-    );
-
-    const warehouseSnapshot = await getDocs(warehouseQuery);
-    let nextId: number;
-
-    if (!warehouseSnapshot.empty) {
-      // Extract the numeric part from the latest warehouse_id
-      const latestWarehouse = warehouseSnapshot.docs[0].data();
-      const match = latestWarehouse.warehouse_id.match(/WH(\d+)/);
-      nextId = match ? parseInt(match[1], 10) + 1 : 1;
-    } else {
-      // If no warehouses exist, start with 1
-      nextId = 1;
-    }
-
-    // Format the new warehouse_id with padding
-    const formattedId = `WH${nextId.toString().padStart(5, '0')}`;
-
-    return formattedId;
-  }).catch(error => {
-    console.error("Error generating warehouse ID:", error);
-    // Fallback to timestamp-based ID in case of failure
-    const timestamp = Date.now();
-    return `WH${timestamp.toString().slice(-5).padStart(5, '0')}`;
-  });
 }
 
   export async function generateRandomSKU(): Promise<string> {
@@ -1234,6 +1184,16 @@ export async function createTransferTransactionCompleted(
         transaction.update(productDoc, {
           stocks: updatedStocks,
           updated_date: Timestamp.now()
+          ,
+          warehouse: Array.isArray(productData.warehouse)
+            ? (productData.warehouse.includes(to_warehouse)
+                ? productData.warehouse
+                : [...productData.warehouse, to_warehouse])
+            : productData.warehouse === to_warehouse
+              ? [to_warehouse]
+              : productData.warehouse
+                ? [productData.warehouse, to_warehouse]
+                : [to_warehouse]
         });
 
         // Add to transfer items
@@ -1687,5 +1647,187 @@ export async function updateProductWarehouse(warehouseId: string, updateData: an
   } catch (error) {
     console.error("Error updating warehouse:", error);
     throw error;
+  }
+}
+
+export async function getProductFilterCategory(categoryId: string, lastDoc: any = null, pageSize: number = 10) {
+  try {
+    // Create query with category filter
+    let q = query(
+      collection(db, "products"), 
+      where("status", "==", ProductStatus.ACTIVE),
+      where("category", "==", categoryId),
+      orderBy("created_date", "desc"), 
+      limit(pageSize)
+    );
+
+    // If there's a last document (for next page), start after it
+    if (lastDoc) {
+      q = query(
+        collection(db, "products"),
+        where("status", "==", ProductStatus.ACTIVE),
+        where("category", "==", categoryId),
+        orderBy("created_date", "desc"),
+        startAfter(lastDoc),
+        limit(pageSize)
+      );
+    }
+
+    const querySnapshot = await getDocs(q);
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
+
+    // Get total count for this category
+    const countQuery = query(
+      collection(db, "products"),
+      where("status", "==", ProductStatus.ACTIVE),
+      where("category", "==", categoryId)
+    );
+    const countSnapshot = await getCountFromServer(countQuery);
+    const totalCount = countSnapshot.data().count;
+
+    return {
+      data: querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      lastDoc: lastVisible,
+      totalCount
+    }
+  } catch (error) {
+    console.error("Error fetching filtered products by category:", error);
+    return { data: [], lastDoc: null, totalCount: 0 };
+  }
+}
+
+export async function getProductFilterWarehouse(warehouseName: string, lastDoc: any = null, pageSize: number = 10) {
+  try {
+    // warehouseName is the document ID, so fetch the warehouse document directly
+    const warehouseDocRef = doc(db, "product_warehouse", warehouseName);
+    const warehouseDoc = await getDoc(warehouseDocRef);
+
+    if (!warehouseDoc.exists()) {
+      // No warehouse with this ID found
+      return { data: [], lastDoc: null, totalCount: 0, hasMore: false };
+    }
+
+    const warehouseId = warehouseDoc.id;
+    
+    // Use array-contains query on the warehouse field instead of client-side filtering
+    let q = query(
+      collection(db, "products"),
+      where("status", "==", ProductStatus.ACTIVE),
+      where("warehouse", "array-contains", warehouseId),
+      orderBy("created_date", "desc"),
+      limit(pageSize)
+    );
+
+    // If there's a last document (for next page), start after it
+    if (lastDoc) {
+      q = query(
+        collection(db, "products"),
+        where("status", "==", ProductStatus.ACTIVE),
+        where("warehouse", "array-contains", warehouseId),
+        orderBy("created_date", "desc"),
+        startAfter(lastDoc),
+        limit(pageSize)
+      );
+    }
+
+    const querySnapshot = await getDocs(q);
+    
+    // Last visible document for pagination
+    const lastVisible = querySnapshot.docs.length > 0 ? 
+                        querySnapshot.docs[querySnapshot.docs.length - 1] : null;
+
+    // Get the count for this warehouse filter
+    const countQuery = query(
+      collection(db, "products"),
+      where("status", "==", ProductStatus.ACTIVE),
+      where("warehouse", "array-contains", warehouseId)
+    );
+    const countSnapshot = await getCountFromServer(countQuery);
+    const totalCount = countSnapshot.data().count;
+
+    // Add the warehouse name to the result for reference
+    return {
+      data: querySnapshot.docs.map((doc) => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        filtered_by_warehouse: {
+          id: warehouseId,
+          name: warehouseName
+        }
+      })),
+      lastDoc: lastVisible,
+      totalCount,
+      hasMore: totalCount > (lastDoc ? querySnapshot.docs.length + pageSize : querySnapshot.docs.length),
+      warehouseInfo: {
+        id: warehouseId,
+        name: warehouseName,
+        ...warehouseDoc.data()
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching filtered products by warehouse name:", error);
+    return { data: [], lastDoc: null, totalCount: 0, hasMore: false };
+  }
+}
+
+// Combined filter function for both category and warehouse
+export async function getProductFiltered(filters: {
+  category?: string,
+  warehouse?: string
+}, lastDoc: any = null, pageSize: number = 10) {
+  try {
+    // If filtering by both warehouse and category, we need client-side filtering
+    if (filters.category && filters.warehouse) {
+      // Start with category filter since it can be done on the database
+      const categoryResult = await getProductFilterCategory(filters.category, lastDoc, pageSize * 5);
+      
+      // Then filter by warehouse client-side
+      const filteredProducts = categoryResult.data.filter(product => {
+        const prod = product as { id: string; stocks?: Record<string, number> };
+        return (
+          prod.stocks &&
+          prod.stocks[filters.warehouse!] !== undefined &&
+          prod.stocks[filters.warehouse!] > 0
+        );
+      });
+      
+      // Paginate results
+      const paginatedProducts = filteredProducts.slice(0, pageSize);
+      const lastVisible = paginatedProducts.length > 0 ? 
+        categoryResult.lastDoc : null;
+      
+      return {
+        data: paginatedProducts,
+        lastDoc: lastVisible,
+        totalCount: filteredProducts.length,
+        hasMore: filteredProducts.length > pageSize
+      }
+    } 
+    
+    // If filtering just by category
+    else if (filters.category) {
+      return await getProductFilterCategory(filters.category, lastDoc, pageSize);
+    } 
+    
+    // If filtering just by warehouse
+    else if (filters.warehouse) {
+      console.log("Fetching products filtered by warehouse:", filters.warehouse);
+      return await getProductFilterWarehouse(filters.warehouse, lastDoc, pageSize);
+    } 
+    
+    // If no filters, return regular paginated products
+    else {
+      const result = await getProductPaginated(lastDoc, pageSize, ProductStatus.ACTIVE);
+      const totalCount = await getTotalProductCount();
+      
+      return {
+        data: result.data,
+        lastDoc: result.lastDoc,
+        totalCount
+      }
+    }
+  } catch (error) {
+    console.error("Error in getProductFiltered:", error);
+    return { data: [], lastDoc: null, totalCount: 0 };
   }
 }

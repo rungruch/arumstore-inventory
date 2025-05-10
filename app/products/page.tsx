@@ -13,6 +13,7 @@ import { ProductStatus } from "../firebase/enum";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface ModalState {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export default function ProductPage() {
     pendingStocks: Record<string, number>;
     buyPrice: number;
   } | null>(null);
+    const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
     const [modalState, setModalState] = useState<ModalState>({
       isOpen: false,
       title: "",
@@ -217,12 +219,14 @@ export default function ProductPage() {
             }
           }}
         />
-        <button
-          onClick={togglePopup}
-          className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
-        >
-          เพิ่มสินค้า
-        </button>
+        {hasPermission('products', 'create') && (
+          <button
+            onClick={togglePopup}
+            className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
+          >
+            เพิ่มสินค้า
+          </button>
+        )}
       </div>
 
       {/* Data Table with Loading State */}

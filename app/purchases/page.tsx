@@ -11,6 +11,7 @@ import { getPurchaseTransactionPaginated, getTotalPurchaseTransactionCount, getP
 import { PurchaseStatusDisplay, PURCHASE_STATUS_TRANSITIONS, PurchaseStatus } from "../firebase/enum";
 import AddPurchase from "@/components/AddPurchase";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface ModalState {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export default function PurchasePage() {
   const [trigger, setTrigger] = useState(false);
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     title: "",
@@ -327,12 +329,14 @@ export default function PurchasePage() {
               จำนวน {totalAllData} รายการ
             </h2>
           </div>
-          <button
-            onClick={togglePopup}
-            className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full sm:w-auto"
-          >
-            เพิ่มรายการซื้อ
-          </button>
+          {hasPermission('purchases', 'create') && (
+            <button
+              onClick={togglePopup}
+              className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full sm:w-auto"
+            >
+              เพิ่มรายการซื้อ
+            </button>
+          )}
         </div>
 
         {/* Search, Date Range, Export */}

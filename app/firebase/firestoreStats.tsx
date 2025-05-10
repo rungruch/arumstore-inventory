@@ -9,6 +9,7 @@ import {
     addDoc,
     setDoc,
     doc,
+    getDoc
   } from "firebase/firestore";
   
   import { db } from "@/app/firebase/clientApp";
@@ -526,10 +527,32 @@ import {
 
   /**
    * Count products in each warehouse based on 'stocks' field in products collection
-   * @returns {Promise<Array<{warehouse_id: string, warehouse_name: string, count: number}>>}
+   * @returns {Promise<Array<{warehouse_id: string; warehouse_name: string; count: number; totalIncome: number; totalPendingIncome: number}>>}
    */
-  export async function getProductCountByWarehouse(): Promise<Array<{ warehouse_id: string; warehouse_name: string; count: number }>> {
+  export async function getProductCountByWarehouse(): Promise<Array<{ 
+    warehouse_id: string; 
+    warehouse_name: string; 
+    count: number;
+    totalIncome: number;
+    totalPendingIncome: number;
+  }>> {
     try {
+      // Check if we have cached data in hourly_stats collection
+      const statsDocRef = doc(db, "hourly_stats", "product_warehouse_count");
+      const statsDocSnap = await getDoc(statsDocRef);
+      
+      // If we have cached data and it's less than 1 hour old, use it
+      if (statsDocSnap.exists()) {
+        const cachedData = statsDocSnap.data();
+        const cachedTime = cachedData.updated_at.seconds;
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        // If cache is less than 1 hour old (3600 seconds)
+        if (currentTime - cachedTime < 3600) {
+          return cachedData.warehouses;
+        }
+      }
+      
       // Get all products that have stocks
       const productsRef = collection(db, "products");
       const productsSnapshot = await getDocs(productsRef);
@@ -547,39 +570,118 @@ import {
         }
       });
       
-      // Create a counter for each warehouse
+      // Create maps for counts, income, and pending income
       const warehouseCounts = new Map<string, number>();
+      const warehouseIncome = new Map<string, number>();
+      const warehousePendingIncome = new Map<string, number>();
       
-      // Count products in each warehouse
+      // Count products in each warehouse and calculate total values
       productsSnapshot.forEach(doc => {
         const product = doc.data();
+        const buyPrice = product.price?.buy_price || 0;
+        
         if (product.stocks && typeof product.stocks === 'object') {
           // Iterate through the stocks object where keys are warehouse IDs
           Object.entries(product.stocks).forEach(([warehouseId, stockCount]) => {
+            const numericCount = Number(stockCount);
             // Only count products with stock > 0
-            if (Number(stockCount) > 0) {
+            if (numericCount > 0) {
               warehouseCounts.set(
                 warehouseId, 
                 (warehouseCounts.get(warehouseId) || 0) + 1
+              );
+              
+              // Calculate stock value
+              warehouseIncome.set(
+                warehouseId,
+                (warehouseIncome.get(warehouseId) || 0) + (numericCount * buyPrice)
+              );
+            }
+          });
+        }
+        
+        // Calculate pending stock values
+        if (product.pending_stock && typeof product.pending_stock === 'object') {
+          Object.entries(product.pending_stock).forEach(([warehouseId, pendingCount]) => {
+            const numericCount = Number(pendingCount);
+            if (numericCount > 0) {
+              warehousePendingIncome.set(
+                warehouseId,
+                (warehousePendingIncome.get(warehouseId) || 0) + (numericCount * buyPrice)
               );
             }
           });
         }
       });
       
-      // Convert the map to an array of objects
-      const result = Array.from(warehouseCounts.entries()).map(([warehouseId, count]) => ({
+      // Convert the maps to an array of objects
+      const result = Array.from(warehouseMap.keys()).map(warehouseId => ({
         warehouse_id: warehouseId,
-        warehouse_name: warehouseMap.get(warehouseId) || warehouseId, // Fallback to ID if name not found
-        count: count
+        warehouse_name: warehouseMap.get(warehouseId) || warehouseId,
+        count: warehouseCounts.get(warehouseId) || 0,
+        totalIncome: warehouseIncome.get(warehouseId) || 0,
+        totalPendingIncome: warehousePendingIncome.get(warehouseId) || 0
       }));
       
       // Sort by count (highest first)
       result.sort((a, b) => b.count - a.count);
       
+      // Store the result in cache for future use
+      await setDoc(statsDocRef, {
+        warehouses: result,
+        updated_at: Timestamp.now()
+      });
+      
       return result;
     } catch (error) {
       console.error("Error counting products by warehouse:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get cached product count by warehouse with hourly refresh
+   * Similar to getProductCategoryPaginated's caching approach
+   */
+  export async function getCachedProductCountByWarehouse() {
+    try {
+      const docRef = doc(db, "hourly_stats", "product_warehouse_count");
+      const docSnap = await getDoc(docRef);
+
+      let warehouseCountData;
+
+      if (!docSnap.exists()) {
+        // Get product warehouse count data
+        warehouseCountData = await getProductCountByWarehouse();
+        
+        // Set the data in the hourly_stats document
+        await setDoc(docRef, {
+          warehouses: warehouseCountData,
+          updated_at: Timestamp.now()
+        });
+      }
+      else {
+        const cachedData = docSnap.data();
+        
+        // If the data is older than 1 hour, refresh it
+        if (cachedData.updated_at.seconds < Date.now() / 1000 - 3600) {
+          // Get fresh product warehouse count data
+          warehouseCountData = await getProductCountByWarehouse();
+          
+          // Update the cached data
+          await setDoc(docRef, {
+            warehouses: warehouseCountData,
+            updated_at: Timestamp.now()
+          });
+        } else {
+          // Use cached data
+          warehouseCountData = cachedData.warehouses;
+        }
+      }
+
+      return warehouseCountData;
+    } catch (error) {
+      console.error("Error fetching cached warehouse counts:", error);
       return [];
     }
   }
