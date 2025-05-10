@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getProductBySKU, deleteProductBySKU } from "@/app/firebase/firestore";
+import { getProductByID, deleteProductById } from "@/app/firebase/firestore";
 import { getMonthlyIncomeByDateSku, getProductPeriodMonthlyIncomeSummarybySku, getMonthlyProductTransactions } from '@/app/firebase/firestoreStats';
 import Image from "next/image";
 import { Products } from "@/app/firebase/interfaces";
@@ -102,18 +102,19 @@ export default function ProductDetails() {
     const fetchProductDetails = async () => {
       try {
         setLoading(true);
-        const productData = await getProductBySKU(psku) as Products[];
-        if (productData && productData.length > 0) {
-          setProduct(productData[0]);
+        const productData = await getProductByID(psku);
+        if (productData && (productData as Products).stocks) {
+          setProduct(productData as Products);
+          let stock = Object.values(((productData as Products).stocks || {})).reduce((a, b) => a + b, 0);
+          setstockAmount(stock);
+          let pending = Object.values(((productData as Products).pending_stock || {})).reduce((a, b) => a + b, 0);
+          setstockPending(pending);
+        } else {
+          setProduct(null);
         }
-        let stock = Object.values(productData[0].stocks as Record<string, number>).reduce((a, b) => a + b, 0);
-        setstockAmount(stock);
-        let pending = Object.values(productData[0].pending_stock as Record<string, number>).reduce((a, b) => a + b, 0);
-        setstockPending(pending);
-
-
       } catch (error) {
         console.error("Error fetching product details:", error);
+        setProduct(null);
       } finally {
         setLoading(false);
       }
@@ -185,7 +186,7 @@ export default function ProductDetails() {
   };
   const handleDeleteProduct = async (sku: string) => {
     try {
-      await deleteProductBySKU(sku);
+      await deleteProductById(sku);
       setTrigger(!trigger); // Refresh the product list
       closeModal();
       router.push('/products');

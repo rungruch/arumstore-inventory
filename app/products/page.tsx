@@ -1,6 +1,6 @@
 "use client";
 
-import { getProductPaginated, getTotalProductCount, getProductByName, deleteProductBySKU } from "@/app/firebase/firestore";
+import { getProductPaginated, getTotalProductCount, getProductByName, deleteProductById } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -170,7 +170,7 @@ export default function ProductPage() {
 
   const handleDeleteProduct = async (sku: string) => {
     try {
-      await deleteProductBySKU(sku);
+      await deleteProductById(sku);
       setTrigger(!trigger); // Refresh the product list
       closeModal();
     } catch (error) {

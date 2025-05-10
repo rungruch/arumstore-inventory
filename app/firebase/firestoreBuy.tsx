@@ -11,8 +11,9 @@ import {
     startAt, 
     startAfter,
     endAt,
-    getCountFromServer
-  } from "firebase/firestore";
+    doc,
+    getCountFromServer,
+  } from "firebase/firestore"
   
   import { db } from "@/app/firebase/clientApp";
   import { TransactionType, PurchaseStatus, PurchaseStatusFilter, PURCHASE_STATUS_TRANSITIONS } from "@/app/firebase/enum";
@@ -269,14 +270,18 @@ export const getTotalPurchaseTransactionCount = async () => {
           });
         }
   
-        // Add the transaction
-        const docRef = await addDoc(transactionsCollection, {
-          ...transactionData,
-          transaction_type: TransactionType.BUY,
-          created_date: Timestamp.now()
-        });
+        // Add the transaction with a custom document ID (transaction_id)
+        const transactionDocRef = doc(transactionsCollection, transactionData.transaction_id);
+        transaction.set(
+          transactionDocRef,
+          {
+            ...transactionData,
+            transaction_type: TransactionType.BUY,
+            created_date: Timestamp.now()
+          }
+        );
   
-        return { id: docRef.id, ...transactionData };
+        return { id: transactionDocRef.id, ...transactionData };
       });
     } catch (error) {
       console.error("Error creating purchase transaction:", error);

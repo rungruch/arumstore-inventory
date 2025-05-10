@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { getProductBySKU, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeductionv2, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
+import { getProductByID, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeductionv2, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
@@ -319,7 +319,7 @@ export default function AddSellOrderForm({
 
   async function transformItemData(originalData: any[]): Promise<Product[]> {
     return Promise.all(originalData.map(async item => {
-      let leatest_product:any = await getProductBySKU(item.sku);
+      let leatest_product:any = await getProductByID(item.sku);
       return {
         id: item.sku,
         product_code: item.sku,

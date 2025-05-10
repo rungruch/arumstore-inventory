@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { getProductBySKU, generateRandomTransferTransactionId, getProductWarehouse, createTransferTransactionCompleted} from "@/app/firebase/firestore";
+import { getProductByID, generateRandomTransferTransactionId, getProductWarehouse, createTransferTransactionCompleted} from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ProductSection from "./ProductTransferSection";
@@ -77,7 +77,7 @@ export default function AddSellOrderForm({
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
       if (ref_product_id) {
-        let leatest_product:any = await getProductBySKU(ref_product_id);
+        let leatest_product:any = await getProductByID(ref_product_id);
         setProducts([{
           id: leatest_product[0].id,
           product_code: leatest_product[0].sku,

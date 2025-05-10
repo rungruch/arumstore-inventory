@@ -1,7 +1,7 @@
 "use client";
 import { useRef,useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {getProductBySKU, updateProductbySKU, getProductCategory } from "@/app/firebase/firestore";
+import {getProductByID, updateProductbyId, getProductCategory } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum'
 import { getFile, uploadFile } from "@/app/firebase/storage";
@@ -67,8 +67,8 @@ import { Products } from "@/app/firebase/interfaces";
         };
         async function fetchSKU() {
             try {
-                const skudata = await getProductBySKU(sku)
-                const currentsku = skudata[0] as Products;
+                const skudata = await getProductByID(sku)
+                const currentsku = skudata as Products;
                 setOriginalProductData(currentsku);
 
                 setProductState(prev => ({
@@ -154,7 +154,7 @@ import { Products } from "@/app/firebase/interfaces";
                 newProductData.barcode = productState.qrBarcode;
             }
     
-            await updateProductbySKU(sku, newProductData);
+            await updateProductbyId(sku, newProductData);
     
             // Reset form
             setProductState({

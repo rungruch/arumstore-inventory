@@ -168,15 +168,11 @@ export async function getTotalCategoryCount() {
 
 export async function createProductCategory(categoryName: string) {
   try {
-    // First check if a category with this name already exists
-    const categoryQuery = query(
-      collection(db, "product_category"),
-      where("category_name", "==", categoryName)
-    );
-    
-    const existingCategories = await getDocs(categoryQuery);
-    
-    if (!existingCategories.empty) {
+    // First check if a category with this name already exists by document ID
+    const docRef = doc(collection(db, "product_category"), categoryName);
+    const existingCategory = await getDoc(docRef);
+
+    if (existingCategory.exists()) {
       throw new Error(`หมวดหมู่ "${categoryName}" มีข้อมูลอยู่แล้ว`);
     }
     
@@ -187,7 +183,7 @@ export async function createProductCategory(categoryName: string) {
       updated_at: Timestamp.now()
     };
 
-    const docRef = await addDoc(collection(db, "product_category"), newCategory);
+    await setDoc(docRef, newCategory);
     return { id: docRef.id, ...newCategory };
   } catch (error) {
     throw error; // Re-throw the error to handle it in the calling function
@@ -259,7 +255,8 @@ export async function getProductWarehousePaginated(lastDoc: any = null, pageSize
 export async function createProduct(productData: any) {
   try {
       const productsCollection = collection(db, "products");
-      const docRef = await addDoc(productsCollection, productData);
+      const docRef = doc(productsCollection, productData.sku);
+      await setDoc(docRef, productData);
       return { id: docRef.id, ...productData };
   } catch (error) {
       console.error("Error adding product:", error);
@@ -268,7 +265,7 @@ export async function createProduct(productData: any) {
 }
 
 
-export async function updateProductbySKU(sku: string, updateData: any) {
+ async function updateProductbySKU(sku: string, updateData: any) {
   try {
     const productsRef = collection(db, "products");
     const q = query(productsRef, where("sku", "==", sku));
@@ -295,7 +292,7 @@ export async function updateProductbySKU(sku: string, updateData: any) {
   }
 }
 
-export async function deleteProductBySKU(sku: string) {
+ async function deleteProductBySKU(sku: string) {
   try {
     const productsRef = collection(db, "products");
     const q = query(productsRef, where("sku", "==", sku));
@@ -314,6 +311,41 @@ export async function deleteProductBySKU(sku: string) {
     return {
       id: productDoc.id,
       sku: sku,
+      deleted: true
+    };
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    throw error;
+  }
+}
+
+export async function updateProductbyId(productId: string, updateData: any) {
+  try {
+    const productRef = doc(db, "products", productId);
+    await updateDoc(productRef, {
+      ...updateData,
+      updated_date: Timestamp.now()
+    });
+    const updatedDoc = await getDoc(productRef);
+    return {
+      id: productId,
+      ...updatedDoc.data()
+    };
+  } catch (error) {
+    console.error("Error updating product:", error);
+    throw error;
+  }
+}
+
+export async function deleteProductById(productId: string) {
+  try {
+    const productRef = doc(db, "products", productId);
+    await updateDoc(productRef, {
+      status: ProductStatus.DELETED,
+      updated_date: Timestamp.now()
+    });
+    return {
+      id: productId,
       deleted: true
     };
   } catch (error) {
@@ -360,7 +392,8 @@ export async function createProductWarehouse(name: string, type:string, details:
       updated_date: Timestamp.now()
     };
 
-    const docRef = await addDoc(collection(db, "product_warehouse"), newWarehouse);
+    const docRef = doc(collection(db, "product_warehouse"), warehouseId);
+    await setDoc(docRef, newWarehouse);
     // Return the new warehouse with its Firestore ID
     return { id: docRef.id, ...newWarehouse } as Warehouse;
   } catch (error) {
@@ -489,7 +522,7 @@ export const getTotalSellTransactionCount = async () => {
   return snapshot.data().count;
 }
 
-export async function getProductBySKU(sku: string) {
+ async function getProductBySKU(sku: string) {
   try {
     // Execute the query
     const querySnapshot = await getDocs(
@@ -561,24 +594,18 @@ export async function getSellTransactionbyName(partialName: string) {
 
 export async function getSellTransactionByTransactionId(transactionId: string) {
   try {
-    const transactionsCollection = collection(db, "transactions");
-    const q = query(
-      transactionsCollection,
-      where("transaction_id", "==", transactionId),
-      where("transaction_type", "==", TransactionType.SELL),
-      limit(1)
-    );
+    const transactionRef = doc(db, "transactions", transactionId);
+    const transactionSnap = await getDoc(transactionRef);
 
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
+    if (!transactionSnap.exists()) {
       return null;
     }
 
     return {
-      id: querySnapshot.docs[0].id,
-      ...querySnapshot.docs[0].data()
+      id: transactionSnap.id,
+      ...transactionSnap.data()
     };
+
   } catch (error) {
     console.error("Error fetching transaction by ID:", error);
     throw error;
@@ -713,7 +740,7 @@ export async function getProductWarehouse() {
     });
   }
 
-  export async function createSellTransactionWithStockDeduction(transactionData: any) {
+  async function createSellTransactionWithStockDeduction(transactionData: any) {
     try {
       // Run a transaction to ensure atomic updates
       return await runTransaction(db, async (transaction) => {
@@ -736,6 +763,9 @@ export async function getProductWarehouse() {
         }
   
         // Process each item in the transaction
+        if (!Array.isArray(transactionData.items)) {
+          throw new Error("Invalid transaction data: 'items' must be an array");
+        }
         for (const item of transactionData.items) {
           // Find the product by SKU
           const productQuery = query(
@@ -773,7 +803,8 @@ export async function getProductWarehouse() {
         }
   
         // Add the transaction
-        const docRef = await addDoc(transactionsCollection, {
+        const docRef = doc(transactionsCollection, transactionData.transaction_id);
+        transaction.set(docRef, {
           ...transactionData,
           transaction_type: TransactionType.SELL,
           created_date: new Date()
@@ -799,44 +830,40 @@ export async function getProductWarehouse() {
           transactionData.transaction_id = await generateRandomSellTransactionId();
         }
   
-        // Check if transaction ID already exists
-        const existingTransactionQuery = query(
-          transactionsCollection,
-          where("transaction_id", "==", transactionData.transaction_id)
-        );
-        const existingTransactionSnapshot = await getDocs(existingTransactionQuery);
-        if (!existingTransactionSnapshot.empty) {
+        // Check if transaction ID already exists by directly checking the document ID
+        const transactionDocRef = doc(transactionsCollection, transactionData.transaction_id);
+        const existingTransactionDoc = await getDoc(transactionDocRef);
+
+        if (existingTransactionDoc.exists()) {
           throw new Error(`Transaction ID "${transactionData.transaction_id}" หรือเลขรายการซ้ำ กรุณาลองอีกครั้ง`);
         }
   
         // Process each item in the transaction
         for (const item of transactionData.items) {
           // Find the product by SKU
-          const productQuery = query(
-            productsCollection,
-            where("sku", "==", item.sku)
-          );
-          const productSnapshot = await getDocs(productQuery);
+            const productDocRef = doc(productsCollection, item.sku);
+            const productSnapshot = await getDoc(productDocRef);
   
-          if (productSnapshot.empty) {
+          if (!productSnapshot.exists()) {
             throw new Error(`Product with SKU ${item.sku} not found`);
           }
-  
-          const productDoc = productSnapshot.docs[0];
-          const productData = productDoc.data();
-  
+          const productData = productSnapshot.data();
+
+          // Product data is guaranteed to exist at this point
+
           const updatedPendingStocks = { ...productData.pending_stock };
           updatedPendingStocks[item.warehouse_id] = 
             (updatedPendingStocks[item.warehouse_id] || 0) + item.quantity;
-  
+
           // Update the product document
-          transaction.update(productDoc.ref, {
+          transaction.update(productSnapshot.ref, {
             pending_stock: updatedPendingStocks
           });
         }
   
         // Add the transaction
-        const docRef = await addDoc(transactionsCollection, {
+        const docRef = doc(transactionsCollection, transactionData.transaction_id);
+        transaction.set(docRef, {
           ...transactionData,
           transaction_type: TransactionType.SELL,
           created_date: new Date()
@@ -906,19 +933,14 @@ export async function updateOrderTransactionStatus(
     return await runTransaction(db, async (transaction) => {
       // Find the transaction by transaction_id
       const transactionsCollection = collection(db, "transactions");
-      const transactionQuery = query(
-        transactionsCollection,
-        where("transaction_id", "==", transaction_id)
-      );
-
-      const transactionSnapshot = await getDocs(transactionQuery);
+      const transactionDocRef = doc(transactionsCollection, transaction_id);
+      const transactionDoc = await getDoc(transactionDocRef);
 
       // Check if transaction exists
-      if (transactionSnapshot.empty) {
+      if (!transactionDoc.exists()) {
         throw new Error(`Transaction with ID "${transaction_id}" not found`);
       }
 
-      const transactionDoc = transactionSnapshot.docs[0];
       const transactionData = transactionDoc.data();
 
       // Validate current status
@@ -979,20 +1001,16 @@ async function handleShippingOrderStockUpdate(
   
   // First pass: validate stock availability for all items
   for (const item of items) {
-    const productQuery = query(
-      productsCollection,
-      where("sku", "==", item.sku)
-    );
+    const productDocRef = doc(productsCollection, item.sku);
+    const productSnapshot = await getDoc(productDocRef);
 
-    const productSnapshot = await getDocs(productQuery);
-
-    if (productSnapshot.empty) {
+    if (!productSnapshot.exists()) {
       console.warn(`Product with SKU ${item.sku} not found`);
       continue;
     }
 
-    const productDoc = productSnapshot.docs[0];
-    const productData = productDoc.data();
+    const productDoc = productSnapshot;
+    const productData = productSnapshot.data();
 
     // Validate stock availability
     const currentStock = productData.stocks?.[item.warehouse_id] || 0;
@@ -1036,20 +1054,16 @@ async function handleCancelledOrderStockUpdateShipping(
   const productsCollection = collection(db, "products");
 
   for (const item of items) {
-    const productQuery = query(
-      productsCollection,
-      where("sku", "==", item.sku)
-    );
+    const productDocRef = doc(productsCollection, item.sku);
+    const productSnapshot = await getDoc(productDocRef);
 
-    const productSnapshot = await getDocs(productQuery);
-
-    if (productSnapshot.empty) {
+    if (!productSnapshot.exists()) {
       console.warn(`Product with SKU ${item.sku} not found`);
       continue;
     }
 
-    const productDoc = productSnapshot.docs[0];
-    const productData = productDoc.data();
+    const productDoc = productSnapshot;
+    const productData = productSnapshot.data();
 
     // Restore stocks and remove from pending stock
     const updatedStocks = { ...productData.stocks };
@@ -1070,20 +1084,16 @@ async function handleCancelledOrderStockUpdatePending(
   const productsCollection = collection(db, "products");
 
   for (const item of items) {
-    const productQuery = query(
-      productsCollection,
-      where("sku", "==", item.sku)
-    );
+    const productDocRef = doc(productsCollection, item.sku);
+    const productSnapshot = await getDoc(productDocRef);
 
-    const productSnapshot = await getDocs(productQuery);
-
-    if (productSnapshot.empty) {
+    if (!productSnapshot.exists()) {
       console.warn(`Product with SKU ${item.sku} not found`);
       continue;
     }
 
-    const productDoc = productSnapshot.docs[0];
-    const productData = productDoc.data();
+    const productDoc = productSnapshot;
+    const productData = productSnapshot.data();
 
     // Restore stocks and remove from pending stock
     const updatedPendingStocks = { ...productData.pending_stock };
@@ -1130,15 +1140,14 @@ export async function createTransferTransactionCompleted(
       // Process each item
       for (const item of items) {
         // Find the product by SKU
-        const productQuery = query(productsRef, where("sku", "==", item.sku));
-        const productSnapshot = await getDocs(productQuery);
+        const productDoc = doc(productsRef, item.sku);
+        const productSnapshot = await getDoc(productDoc);
 
-        if (productSnapshot.empty) {
+        if (!productSnapshot.exists()) {
           throw new Error(`Product with SKU ${item.sku} not found`);
         }
 
-        const productDoc = productSnapshot.docs[0];
-        const productData = productDoc.data();
+        const productData = productSnapshot.data();
 
         // Initialize or get current stocks
         const currentStocks = productData.stocks || {};
@@ -1157,7 +1166,7 @@ export async function createTransferTransactionCompleted(
         };
 
         // Update the product document
-        transaction.update(productDoc.ref, {
+        transaction.update(productDoc, {
           stocks: updatedStocks,
           updated_date: Timestamp.now()
         });
@@ -1185,7 +1194,8 @@ export async function createTransferTransactionCompleted(
         updated_date: Timestamp.now()
       };
 
-      const transferDoc = await addDoc(transactionRef, transferTransaction);
+      const transferDoc = doc(transactionRef, transaction_id);
+      transaction.set(transferDoc, transferTransaction);
 
       return {
         id: transferDoc.id,
@@ -1212,16 +1222,15 @@ export async function createAdjustStockTransaction(
       const productsRef = collection(db, "products");
       const transactionRef = collection(db, "transactions");
 
-      // Find the product by SKU
-      const productQuery = query(productsRef, where("sku", "==", item.sku));
-      const productSnapshot = await getDocs(productQuery);
+      // Get the product document directly by SKU
+      const productDoc = doc(productsRef, item.sku);
+      const productSnapshot = await getDoc(productDoc);
 
-      if (productSnapshot.empty) {
+      if (!productSnapshot.exists()) {
         throw new Error(`Product with SKU ${item.sku} not found`);
       }
 
-      const productDoc = productSnapshot.docs[0];
-      const productData = productDoc.data();
+      const productData = productSnapshot.data();
 
       // Initialize or get current stocks
       const currentStocks = productData.stocks || {};
@@ -1247,7 +1256,7 @@ export async function createAdjustStockTransaction(
       const newAverageBuyPrice = (currentTotalValue + newStockValue) / (newTotalStock + currentTotalStock);
 
       // Update the product document
-      transaction.update(productDoc.ref, {
+      transaction.update(productDoc, {
         stocks: updatedStocks,
         updated_date: Timestamp.now(),
         price: {
@@ -1274,7 +1283,8 @@ export async function createAdjustStockTransaction(
         updated_date: Timestamp.now()
       };
 
-      const adjustDoc = await addDoc(transactionRef, adjustTransaction);
+      const adjustDoc = doc(transactionRef, transaction_id);
+      transaction.set(adjustDoc, adjustTransaction);
 
       return {
         id: adjustDoc.id,
@@ -1297,15 +1307,13 @@ export const updateShippingDetails = async (
     image: string
   }
 ) => {
-  const transactionsCollection = collection(db, "transactions");
-  const transactionQuery = query(transactionsCollection, where("transaction_id", "==", transactionId));
-  const transactionSnapshot = await getDocs(transactionQuery);
-  
-  if (transactionSnapshot.empty) {
+  const transactionRef = doc(db, "transactions", transactionId);
+  const transactionSnap = await getDoc(transactionRef);
+
+  if (!transactionSnap.exists()) {
     throw new Error(`Transaction with ID "${transactionId}" not found`);
   }
-  
-  const transactionRef = transactionSnapshot.docs[0].ref;
+
   await updateDoc(transactionRef, {
     shipping_details: shippingDetails
   });
@@ -1321,15 +1329,13 @@ export const updatePaymentDetails = async (
     image: string
   }
 ) => {
-  const transactionsCollection = collection(db, "transactions");
-  const transactionQuery = query(transactionsCollection, where("transaction_id", "==", transactionId));
-  const transactionSnapshot = await getDocs(transactionQuery);
-  
-  if (transactionSnapshot.empty) {
+  const transactionRef = doc(db, "transactions", transactionId);
+  const transactionSnap = await getDoc(transactionRef);
+
+  if (!transactionSnap.exists()) {
     throw new Error(`Transaction with ID "${transactionId}" not found`);
   }
-  
-  const transactionRef = transactionSnapshot.docs[0].ref;
+
   await updateDoc(transactionRef, {
     payment_status: payment_status,
     payment_method: payment_method,
@@ -1425,7 +1431,8 @@ export async function createContact(contactData: Omit<Contact, 'id' | 'created_d
       updated_date: Timestamp.now()
     };
 
-    const docRef = await addDoc(collection(db, "contacts"), newContact);
+    const docRef = doc(collection(db, "contacts"), newContact.client_id);
+    await setDoc(docRef, newContact);
     
     // Return the new contact with its Firestore ID
     return { id: docRef.id, ...newContact } as Contact;
@@ -1462,22 +1469,15 @@ export async function updateContact(contactId: string, contactData: Partial<Cont
   try {
     const contactRef = doc(db, "contacts", contactId);
     const contactDoc = await getDoc(contactRef);
-    
     if (!contactDoc.exists()) {
       throw new Error(`ไม่พบข้อมูลผู้ติดต่อ ID: ${contactId}`);
     }
-    
-    // Add updated timestamp
     const updatedData = {
       ...contactData,
       updated_date: Timestamp.now()
     };
-    
     await updateDoc(contactRef, updatedData);
-    
-    // Return the updated contact
     return {
-      id: contactId,
       ...contactDoc.data(),
       ...updatedData
     } as Contact;
@@ -1508,6 +1508,19 @@ export async function deleteContact(contactId: string): Promise<void> {
     // Alternatively, you could completely delete the document:
     // await deleteDoc(contactRef);
     
+  } catch (error) {
+    console.error("Error deleting contact:", error);
+    throw error;
+  }
+}
+
+export async function deleteContactById(contactId: string): Promise<void> {
+  try {
+    const contactRef = doc(db, "contacts", contactId);
+    await updateDoc(contactRef, { 
+      deleted: true,
+      updated_date: Timestamp.now()
+    });
   } catch (error) {
     console.error("Error deleting contact:", error);
     throw error;
@@ -1565,6 +1578,20 @@ export async function deleteProductCategory(categoryId: string) {
     return { id: categoryId, deleted: true };
   } catch (error) {
     console.error("Error deleting category:", error);
+    throw error;
+  }
+}
+
+export async function getProductByID(productId: string) {
+  try {
+    const productRef = doc(db, "products", productId);
+    const productSnap = await getDoc(productRef);
+    if (!productSnap.exists()) {
+      throw new Error(`Product with ID ${productId} not found`);
+    }
+    return { id: productSnap.id, ...productSnap.data() };
+  } catch (error) {
+    console.error("Error fetching product by ID:", error);
     throw error;
   }
 }
