@@ -56,7 +56,8 @@ export enum OrderStatus {
     SHIPPED = "จัดส่งแล้ว",
     PICKED_UP = "รับสินค้าแล้ว",
     CANCELLED = "ยกเลิก",
-    FAILED = "ล้มเหลว"
+    FAILED = "ล้มเหลว",
+    COMPLETED = "เสร็จสมบูรณ์"
   }
 
   export enum TransactionType {
@@ -64,6 +65,7 @@ export enum OrderStatus {
     SELL = "SELL",
     REFUND = "REFUND",
     TRANFER = "TRANSFER",
+    ADJUST = "ADJUST",
   }
 
   export enum VatType {

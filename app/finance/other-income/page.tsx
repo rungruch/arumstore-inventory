@@ -127,8 +127,6 @@ export default function OtherIncomePage() {
       const imagePath = await uploadFile(uploadedFile, folder);
       const imageUrl = await getFile(imagePath);
 
-      console.log("File uploaded successfully:", imageUrl);
-
       return imageUrl;
       
     } catch (error) {
@@ -155,7 +153,6 @@ export default function OtherIncomePage() {
     const uploadedFileUrl = await handleFileUpload();
 
     try {
-      console.log("Uploaded file URL:", uploadedFileUrl);
       await updateTransactionStatus(
         selectedTransactionId, 
         payment_status.COMPLETED, 

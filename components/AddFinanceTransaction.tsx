@@ -388,8 +388,6 @@ export default function AddFinanceTransaction({
           created_date: Timestamp.now(),
           updated_date: Timestamp.now()
         };
-
-        console.log("Expense Data:", expenseData);
         
         await createExpenseTransaction(expenseData);
       }

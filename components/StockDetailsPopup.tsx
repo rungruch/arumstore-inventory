@@ -7,11 +7,12 @@ interface StockDetailsPopupProps {
   productSKU: string;
   stocks: Record<string, number>;
   pendingStocks: Record<string, number>;
+  buyPrice: number;
   onClose: () => void;
   onUpdate: () => void; // Add this new prop
 }
 
-export default function StockDetailsPopup({ productName, productSKU, stocks, pendingStocks, onClose, onUpdate }: StockDetailsPopupProps) {
+export default function StockDetailsPopup({ productName, productSKU, stocks, pendingStocks, buyPrice, onClose, onUpdate }: StockDetailsPopupProps) {
   const [adjustingWarehouse, setAdjustingWarehouse] = useState<string | null>(null);
   const [selectedWarehouseCurrentStock, setSelectedWarehouseCurrentStock] = useState(0);
   const [adjustPrice, setAdjustPrice] = useState<number>(0);
@@ -21,6 +22,7 @@ export default function StockDetailsPopup({ productName, productSKU, stocks, pen
   const handleAdjustClick = (warehouse: string, currentStock: number) => {
     setSelectedWarehouseCurrentStock(currentStock);
     setAdjustingWarehouse(warehouse);
+    setAdjustPrice(buyPrice);
   };
 
   return (

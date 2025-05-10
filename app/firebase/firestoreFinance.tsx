@@ -241,7 +241,6 @@ export const getTransactionById = async (transactionId: string): Promise<IncomeT
 
 export const createIncomeTransaction = async (transactionData: IncomeTransaction): Promise<string> => {
   try {
-    console.log("Transaction Data:", transactionData);
     const transactionId = transactionData.transaction_id || await generateRandomFinanceTransactionId();
     const transactionRef = doc(db, "finance_transactions", transactionId);
     

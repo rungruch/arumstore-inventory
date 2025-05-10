@@ -72,7 +72,7 @@ export async function getProductCategoryCount(): Promise<ProductCategoryCount> {
       const totalPendingStock = product.pending_stock ? 
         Object.values(product.pending_stock).reduce((sum: number, qty: any) => sum + (Number(qty) || 0), 0) : 0;
 
-      categoryPendingIncome[product.category] = (categoryPendingIncome[product.category] || 0) + ((totalPendingStock+totalStock) * buyPrice);
+      categoryPendingIncome[product.category] = (categoryPendingIncome[product.category] || 0) + ((totalPendingStock) * buyPrice);
       }
     });
     
@@ -1162,7 +1162,7 @@ export async function createTransferTransactionCompleted(
 
         // Add to transfer items
         transferItems.push({
-          sku: productDoc.id,
+          sku: item.sku,
           quantity: item.quantity,
           subtotal: item.quantity * (productData.price || 0)
         });
@@ -1256,10 +1256,10 @@ export async function createAdjustStockTransaction(
       // Create adjust transaction document
       const adjustTransaction: TransferTransaction = {
         transaction_id: transaction_id,
-        transaction_type: TransactionType.TRANFER,
+        transaction_type: TransactionType.ADJUST,
         status: status,
         items: [{
-          sku: productDoc.id,
+          sku: item.sku,
           quantity: item.quantity,
           subtotal: item.quantity * (productData.price || 0)
         }],

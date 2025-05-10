@@ -36,6 +36,7 @@ export default function ProductPage() {
     productSKU: string;
     stocks: Record<string, number>;
     pendingStocks: Record<string, number>;
+    buyPrice: number;
   } | null>(null);
     const [modalState, setModalState] = useState<ModalState>({
       isOpen: false,
@@ -287,7 +288,8 @@ export default function ProductPage() {
                       productName: product.name,
                       productSKU: product.sku,
                       stocks: product.stocks,
-                      pendingStocks: product.pending_stock
+                      pendingStocks: product.pending_stock,
+                      buyPrice: product.price.buy_price
                     })}
                     className={`cursor-pointer hover:opacity-80 text-left ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
                         ? 'text-red-500' // red if stock is 0 or less
@@ -306,7 +308,8 @@ export default function ProductPage() {
                       productName: product.name,
                       productSKU: product.sku,
                       stocks: product.stocks,
-                      pendingStocks: product.pending_stock
+                      pendingStocks: product.pending_stock,
+                      buyPrice: product.price.buy_price
                     })}
                     className={`cursor-pointer hover:opacity-80 ${
                       Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) >
@@ -411,7 +414,8 @@ export default function ProductPage() {
                           productName: product.name,
                           productSKU: product.sku,
                           stocks: product.stocks,
-                          pendingStocks: product.pending_stock
+                          pendingStocks: product.pending_stock,
+                          buyPrice: product.price.buy_price
                           })}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                           ปรับจำนวน
@@ -491,6 +495,7 @@ export default function ProductPage() {
         <StockDetailsPopup
           productName={selectedStock.productName}
           productSKU={selectedStock.productSKU}
+          buyPrice={selectedStock.buyPrice}
           stocks={selectedStock.stocks}
           pendingStocks={selectedStock.pendingStocks}
           onClose={() => setSelectedStock(null)}

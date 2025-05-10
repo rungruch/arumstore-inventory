@@ -1,13 +1,14 @@
 import {
     collection,
     query,
+    limit,
     getDocs,
     where,
     orderBy,
     Timestamp,
     addDoc,
     setDoc,
-    doc
+    doc,
   } from "firebase/firestore";
   
   import { db } from "@/app/firebase/clientApp";
@@ -579,6 +580,117 @@ import {
       return result;
     } catch (error) {
       console.error("Error counting products by warehouse:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all transactions that include a specific product SKU in their items
+   * @param {string} sku - The SKU of the product to search for
+   * @param {number} limit - Maximum number of transactions to return (optional)
+   * @returns {Promise<Array<any>>} - Array of transactions containing the specified SKU
+   */
+  export async function getProductTransactions(sku: string, size: number = 10): Promise<Array<any>> {
+    try {
+      // Get all transactions from the transactions collection
+      const transactionsRef = collection(db, "transactions");
+      
+      // Create a query to fetch all transactions (we'll filter for SKU client-side)
+      let q = query(transactionsRef, orderBy("created_date", "desc"), limit(size));
+      
+      const querySnapshot = await getDocs(q);
+      
+      // Filter transactions that contain the specified SKU
+      const filteredTransactions = [];
+      
+      for (const doc of querySnapshot.docs) {
+        const transaction = doc.data();
+        
+        // Check if items array exists and contains the specified SKU
+        if (transaction.items && Array.isArray(transaction.items)) {
+          const hasMatchingSku = transaction.items.some(
+            (item: any) => item.sku === sku
+          );
+          
+          // If this transaction contains the SKU, add it to the results
+          if (hasMatchingSku) {
+            filteredTransactions.push({
+              id: doc.id,
+              ...transaction
+            });
+          }
+        }
+      }
+      
+      return filteredTransactions;
+      
+    } catch (error) {
+      console.error(`Error fetching transactions for SKU ${sku}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all transactions from a specific month that include a specific product SKU in their items
+   * @param {string} sku - The SKU of the product to search for
+   * @param {Date} date - A date in the month to search (defaults to current month)
+   * @param {number} size - Maximum number of transactions to return (use 0 for no limit, but use with caution)
+   * @returns {Promise<Array<any>>} - Array of transactions containing the specified SKU within the specified month
+   */
+  export async function getMonthlyProductTransactions(
+    sku: string, 
+    date: Date = new Date(), 
+    size: number = 100
+  ): Promise<Array<any>> {
+    try {
+      // Calculate the start and end of the month
+      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+      
+      // Get transactions from the transactions collection within the date range
+      const transactionsRef = collection(db, "transactions");
+      
+      // Create a query with date range and order by date
+      let q = query(
+        transactionsRef, 
+        where("created_date", ">=", startOfMonth),
+        where("created_date", "<=", endOfMonth),
+        orderBy("created_date", "desc")
+      );
+      
+      // Only apply limit if size is greater than 0
+      if (size > 0) {
+        q = query(q, limit(size));
+      }
+      
+      const querySnapshot = await getDocs(q);
+      
+      // Filter transactions that contain the specified SKU
+      const filteredTransactions = [];
+      
+      for (const doc of querySnapshot.docs) {
+        const transaction = doc.data();
+        
+        // Check if items array exists and contains the specified SKU
+        if (transaction.items && Array.isArray(transaction.items)) {
+          const hasMatchingSku = transaction.items.some(
+            (item: any) => item.sku === sku
+          );
+          
+          // If this transaction contains the SKU, add it to the results
+          if (hasMatchingSku) {
+            filteredTransactions.push({
+              id: doc.id,
+              ...transaction
+            });
+          }
+        }
+      }
+      
+      return filteredTransactions;
+      
+    } catch (error) {
+      console.error(`Error fetching monthly transactions for SKU ${sku}:`, error);
       return [];
     }
   }

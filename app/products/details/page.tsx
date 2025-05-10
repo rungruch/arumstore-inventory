@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getProductBySKU, deleteProductBySKU } from "@/app/firebase/firestore";
-import { getMonthlyIncomeByDateSku, getProductPeriodMonthlyIncomeSummarybySku } from '@/app/firebase/firestoreStats';
+import { getMonthlyIncomeByDateSku, getProductPeriodMonthlyIncomeSummarybySku, getMonthlyProductTransactions } from '@/app/firebase/firestoreStats';
 import Image from "next/image";
 import { Products } from "@/app/firebase/interfaces";
 import { ArrowLeft, BarChart2, PieChart, Settings, Circle, Trash, Edit3, MoveRight } from "lucide-react";
@@ -22,6 +22,7 @@ import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import StockDetailsPopup from "@/components/StockDetailsPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { TransactionType, OrderStatusDisplay, OrderStatus } from "@/app/firebase/enum";
 
 interface ModalState {
   isOpen: boolean;
@@ -50,6 +51,9 @@ export default function ProductDetails() {
   const [showPieChart, setShowPieChart] = useState(false);
   const [productMonthlySummary, setProductMonthlySummary] = useState<{ str_date: string; date: Timestamp; sku: string; name: string; totalIncome: number; quantity: number }>();
   const [product6MonthlySummary, setProduct6MonthlySummary] = useState<{ month: string; year: number; str_date: string; date: Timestamp; totalIncome: number; quantity: number }[]>();
+  const [productTransactions, setProductTransactions] = useState<any[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [monthLength, setMonthLength] = useState<number>(6); // Add state for month length selection
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     title: "",
@@ -70,19 +74,30 @@ export default function ProductDetails() {
     const getIncome = async () => {
       const date = new Date();
       let productMonthlyData = await getMonthlyIncomeByDateSku(psku, date);
-      // console.log(psku)
-      // console.log(productMonthlyData)
       setProductMonthlySummary(productMonthlyData);
     };
     getIncome();
 
     const getIncome6Month = async () => {
-      let product6MonthlySummary = await getProductPeriodMonthlyIncomeSummarybySku(psku, 6);
-      //console.log (await getProductPeriodMonthlyIncomeSummarybySku(psku, 6))
+      let product6MonthlySummary = await getProductPeriodMonthlyIncomeSummarybySku(psku, monthLength); // Use monthLength
       setProduct6MonthlySummary(product6MonthlySummary);
     };
     getIncome6Month();
 
+    const fetchTransactionHistory = async () => {
+      try {
+        setTransactionsLoading(true);
+        // Use the new getMonthlyProductTransactions function with current month
+        const transactions = await getMonthlyProductTransactions(psku, new Date());
+        console.log("Fetched monthly transactions:", transactions);
+        setProductTransactions(transactions);
+      } catch (error) {
+        console.error("Error fetching monthly product transactions:", error);
+      } finally {
+        setTransactionsLoading(false);
+      }
+    };
+    fetchTransactionHistory();
 
     const fetchProductDetails = async () => {
       try {
@@ -105,7 +120,48 @@ export default function ProductDetails() {
     };
 
     fetchProductDetails();
-  }, [psku, trigger]);
+  }, [psku, trigger, monthLength]); // Add monthLength to dependencies
+
+  // Helper function to get transaction type in Thai
+  const getTransactionTypeText = (type: string) => {
+    switch (type) {
+      case TransactionType.BUY:
+        return "ซื้อ";
+      case TransactionType.SELL:
+        return "ขาย";
+      case TransactionType.TRANFER:
+        return "โอน";
+      case TransactionType.REFUND:
+        return "คืน";
+      case TransactionType.ADJUST:
+        return "ปรับ";
+      default:
+        return type;
+    }
+  };
+
+  // Helper function to format date
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return "-";
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return "-";
+    }
+  };
+
+  const getSkuDetails = (items: any[], sku: string) => {
+    if (!items || !Array.isArray(items)) return { sku: "", quantity: 0 };
+    const item = items.find(item => item.sku === sku);
+    return item 
+  };
 
   if (loading) {
     return (
@@ -162,6 +218,7 @@ export default function ProductDetails() {
         <StockDetailsPopup
           productName={selectedStock.productName}
           productSKU={selectedStock.productSKU}
+          buyPrice={product.price.buy_price}
           stocks={selectedStock.stocks}
           pendingStocks={selectedStock.pendingStocks}
           onClose={() => {
@@ -432,53 +489,149 @@ export default function ProductDetails() {
                     </tbody>
                   </table>
                 </div>
-
-                <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden mt-3 border border-gray-100 dark:border-zinc-700">
-                  <div className="p-6 border-b border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">ยอดขายรายเดือน</h2>
-                    <p className="text-sm text-gray-500 mt-1 dark:text-gray-400">แสดงยอดขายย้อนหลัง 4 เดือน</p>
-                  </div>
-                  <div className="p-6 h-72">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={product6MonthlySummary?.map(item => ({
-                          month: `${item.month.padStart(2, '0')}${item.year.toString().slice(-2)}`,
-                          amount: item.totalIncome
-                        })) || []}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                        barSize={70}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgb(63 63 70)" />
-                        <XAxis
-                          dataKey="month"
-                          tick={{ fill: 'rgb(161 161 170)' }}
-                          axisLine={{ stroke: 'rgb(63 63 70)' }}
-                        />
-                        <YAxis
-                          tick={{ fill: 'rgb(161 161 170)' }}
-                          axisLine={{ stroke: 'rgb(63 63 70)' }}
-                          tickFormatter={(value) => `${value.toLocaleString()}฿`}
-                        />
-                        <Tooltip
-                          formatter={(value) => [`${value.toLocaleString()}฿`, 'ยอดขาย']}
-                          contentStyle={{
-                            backgroundColor: 'rgb(39 39 42)',
-                            color: 'rgb(244 244 245)',
-                            borderRadius: '8px',
-                            border: '1px solid rgb(63 63 70)',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                          }}
-                        />
-                        <Bar
-                          dataKey="amount"
-                          fill="#60a5fa"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Transaction History Table */}
+          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden mt-6 border border-gray-100 dark:border-zinc-700">
+            <div className="p-6 border-b border-gray-100 dark:border-zinc-700 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">รายงานธุรกรรมประจำเดือน</h2>
+            </div>
+            <div className="overflow-y-auto" style={{ maxHeight: "500px", minHeight: "400px" }}>
+              {transactionsLoading ? (
+                <div className="flex justify-center items-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600 dark:text-gray-400">กำลังโหลด...</span>
+                </div>
+              ) : productTransactions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">ไม่พบรายการธุรกรรม</div>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+                  <thead className="bg-gray-50 dark:bg-zinc-800 sticky top-0 z-10">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">วันที่</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">ประเภท</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">สถานะ</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">รายการ</th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">จำนวน</th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">จาก</th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">ไป</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-zinc-800 dark:divide-zinc-700">
+                    {productTransactions.map((transaction, index) => {
+                      // Find the quantity for this specific SKU in the transaction
+                      const skuDetails = getSkuDetails(transaction.items, psku || '');
+                      
+                      return (
+                        <tr key={transaction.id || index} className="hover:bg-gray-50 dark:hover:bg-zinc-700">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                            {formatDate(transaction.created_date)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                              ${transaction.transaction_type === TransactionType.SELL ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                                transaction.transaction_type === TransactionType.BUY ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 
+                                transaction.transaction_type === TransactionType.TRANFER ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
+                                transaction.transaction_type === TransactionType.ADJUST ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                              {getTransactionTypeText(transaction.transaction_type)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                              ${transaction.status === 'COMPLETED' || transaction.status === OrderStatus.SHIPPED || transaction.status === OrderStatus.PICKED_UP ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                                transaction.status === OrderStatus.PENDING ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                                transaction.status === OrderStatus.CANCELLED ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                              {OrderStatusDisplay[transaction.status as keyof typeof OrderStatusDisplay] || '-'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                            {transaction.transaction_id || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right dark:text-gray-200">
+                              {transaction.transaction_type === TransactionType.BUY
+                              ? `+${skuDetails.quantity || 0}`
+                              : transaction.transaction_type === TransactionType.SELL
+                                ? `-${skuDetails.quantity || 0}`
+                                : skuDetails.quantity || 0}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right dark:text-gray-200">
+                            {transaction.warehouse}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right dark:text-gray-200">
+                            {transaction.to_warehouse || '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden mt-6 border border-gray-100 dark:border-zinc-700">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">ยอดขายรายเดือน</h2>
+                <p className="text-sm text-gray-500 mt-1 dark:text-gray-400">แสดงยอดขายย้อนหลัง</p>
+              </div>
+              <div className="flex items-center">
+                <label htmlFor="monthLength" className="text-sm text-gray-600 dark:text-gray-400 mr-2">ช่วงเวลา:</label>
+                <select 
+                  id="monthLength" 
+                  value={monthLength}
+                  onChange={(e) => setMonthLength(Number(e.target.value))}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1.5 dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
+                >
+                  <option value={3}>3 เดือน</option>
+                  <option value={6}>6 เดือน</option>
+                  <option value={9}>9 เดือน</option>
+                  <option value={12}>12 เดือน</option>
+                </select>
+              </div>
+            </div>
+            <div className="p-6 h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={product6MonthlySummary?.map(item => ({
+                    month: `${item.month} ${item.year.toString().slice(-2)}`,
+                    amount: item.totalIncome
+                  })) || []}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                  barSize={70}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgb(63 63 70)" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: 'rgb(161 161 170)' }}
+                    axisLine={{ stroke: 'rgb(63 63 70)' }}
+                  />
+                  <YAxis
+                    tick={{ fill: 'rgb(161 161 170)' }}
+                    axisLine={{ stroke: 'rgb(63 63 70)' }}
+                    tickFormatter={(value) => `${value.toLocaleString()}฿`}
+                  />
+                  <Tooltip
+                    formatter={(value) => [`${value.toLocaleString()} บาท`, 'ยอดขาย']}
+                    contentStyle={{
+                      backgroundColor: 'rgb(39 39 42)',
+                      color: 'rgb(244 244 245)',
+                      borderRadius: '8px',
+                      border: '1px solid rgb(63 63 70)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                  />
+                  <Bar
+                    dataKey="amount"
+                    fill="#60a5fa"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
