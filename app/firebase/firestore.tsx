@@ -1801,7 +1801,6 @@ export async function getProductFiltered(filters: {
     
     // If filtering just by warehouse
     else if (filters.warehouse) {
-      console.log("Fetching products filtered by warehouse:", filters.warehouse);
       return await getProductFilterWarehouse(filters.warehouse, lastDoc, pageSize);
     } 
     
@@ -1840,5 +1839,127 @@ export async function getSellTransactionsByClientId(clientId: string) {
   } catch (error) {
     console.error("Error fetching transactions by client ID:", error);
     return [];
+  }
+}
+
+// Get contact groups from settings collection
+export async function getContactGroups() {
+  try {
+    const settingsRef = doc(db, "settings", "contacts_groups");
+    const settingsDoc = await getDoc(settingsRef);
+    
+    if (settingsDoc.exists() && settingsDoc.data().contacts_groups) {
+      const groups = settingsDoc.data().contacts_groups;
+      const formattedGroups = groups.map((group: string) => ({
+        value: group,
+        label: group
+      }));
+      
+      // Add "ALL" option at the beginning
+      return [
+        { value: "ALL", label: "ทั้งหมด" },
+        ...formattedGroups
+      ];
+    } else {
+      // Default if no groups found
+      return [{ value: "ALL", label: "ทั้งหมด" }];
+    }
+  } catch (error) {
+    console.error("Error fetching contact groups:", error);
+    // Set default if error
+    return [{ value: "ALL", label: "ทั้งหมด" }];
+  }
+}
+
+// Get filtered contacts by group
+export async function getContactsByGroup(group: string, lastDoc: any = null, pageSize: number = 10) {
+  try {
+    // If group is ALL, get all contacts
+    if (group === "ALL") {
+      return await getContactsPaginated(lastDoc, pageSize);
+    }
+
+    // Create query with group filter
+    let q = query(
+      collection(db, "contacts"), 
+      where("group", "==", group),
+      orderBy("created_date", "desc"), 
+      limit(pageSize)
+    );
+
+    // If there's a last document (for next page), start after it
+    if (lastDoc) {
+      q = query(
+        collection(db, "contacts"),
+        where("group", "==", group),
+        orderBy("created_date", "desc"),
+        startAfter(lastDoc),
+        limit(pageSize)
+      );
+    }
+
+    const querySnapshot = await getDocs(q);
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // Track last doc for pagination
+
+    // Get count for this group
+    const countQuery = query(
+      collection(db, "contacts"),
+      where("group", "==", group)
+    );
+    const countSnapshot = await getCountFromServer(countQuery);
+
+    return {
+      contacts: querySnapshot.docs.map((doc) => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      })),
+      lastDoc: lastVisible,
+      count: countSnapshot.data().count
+    };
+  } catch (error) {
+    console.error("Error fetching contacts by group:", error);
+    return { contacts: [], lastDoc: null, count: 0 };
+  }
+}
+
+// Add a new contact group to settings/contacts_groups
+export async function addContactGroup(groupName: string) {
+  try {
+    const settingsRef = doc(db, "settings", "contacts_groups");
+    const settingsDoc = await getDoc(settingsRef);
+    let groups: string[] = [];
+    if (settingsDoc.exists() && settingsDoc.data().contacts_groups) {
+      groups = settingsDoc.data().contacts_groups;
+      if (groups.includes(groupName)) {
+        throw new Error("กลุ่มนี้มีอยู่แล้ว");
+      }
+      groups.push(groupName);
+    } else {
+      groups = [groupName];
+    }
+    await setDoc(settingsRef, { contacts_groups: groups });
+    return true;
+  } catch (error) {
+    console.error("Error adding contact group:", error);
+    throw error;
+  }
+}
+
+// Delete a contact group from settings/contacts_groups
+export async function deleteContactGroup(groupName: string) {
+  try {
+    const settingsRef = doc(db, "settings", "contacts_groups");
+    const settingsDoc = await getDoc(settingsRef);
+    if (settingsDoc.exists() && settingsDoc.data().contacts_groups) {
+      let groups: string[] = settingsDoc.data().contacts_groups;
+      groups = groups.filter((g) => g !== groupName);
+      await setDoc(settingsRef, { contacts_groups: groups });
+      return true;
+    } else {
+      throw new Error("ไม่พบกลุ่มผู้ติดต่อ");
+    }
+  } catch (error) {
+    console.error("Error deleting contact group:", error);
+    throw error;
   }
 }

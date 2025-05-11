@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { createContact, updateContact } from "@/app/firebase/firestore";
+import { createContact, updateContact, getContactGroups } from "@/app/firebase/firestore";
 import { Timestamp } from "firebase/firestore";
-import { Contact } from "@/app/firebase/interfaces";
 
 interface AddContactPopupProps {
   isOpen: boolean;
@@ -35,8 +34,17 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
   });
   const [validationError, setValidationError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contactGroups, setContactGroups] = useState<{ value: string; label: string }[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  useEffect(() => {
+    async function fetchGroups() {
+      const groups = await getContactGroups();
+      setContactGroups(groups.filter((g: any) => g.value !== "ALL"));
+    }
+    fetchGroups();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
@@ -348,14 +356,18 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">กลุ่ม</label>
-                  <input
-                    type="text"
+                  <select
                     name="group"
                     className="w-full border border-gray-300 p-2 rounded-md"
                     value={contactData.group}
                     onChange={handleChange}
                     disabled={isSubmitting}
-                  />
+                  >
+                    <option value="">เลือกกลุ่ม</option>
+                    {contactGroups.map((group) => (
+                      <option key={group.value} value={group.value}>{group.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">หมายเหตุ</label>
@@ -440,6 +452,15 @@ export function EditContactPopup({ isOpen, onClose, contact, onSuccess }: EditCo
   });
   const [validationError, setValidationError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contactGroups, setContactGroups] = useState<{ value: string; label: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchGroups() {
+      const groups = await getContactGroups();
+      setContactGroups(groups.filter((g: any) => g.value !== "ALL"));
+    }
+    fetchGroups();
+  }, []);
 
   // Load contact data when the contact prop changes
   useEffect(() => {
@@ -471,7 +492,7 @@ export function EditContactPopup({ isOpen, onClose, contact, onSuccess }: EditCo
     }
   }, [contact]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
@@ -743,14 +764,18 @@ export function EditContactPopup({ isOpen, onClose, contact, onSuccess }: EditCo
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">กลุ่ม</label>
-                  <input
-                    type="text"
+                  <select
                     name="group"
                     className="w-full border border-gray-300 p-2 rounded-md"
                     value={contactData.group}
                     onChange={handleChange}
                     disabled={isSubmitting}
-                  />
+                  >
+                    <option value="">เลือกกลุ่ม</option>
+                    {contactGroups.map((group) => (
+                      <option key={group.value} value={group.value}>{group.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">หมายเหตุ</label>

@@ -1,11 +1,9 @@
 "use client";
 
-import { getContactsPaginated, getTotalContactsCount, getContactsByName, deleteContact } from "@/app/firebase/firestore";
+import { getContactsPaginated, getTotalContactsCount, getContactsByName, deleteContact, getContactGroups, getContactsByGroup } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
-import { Timestamp } from "firebase/firestore";
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Contact } from "@/app/firebase/interfaces";
 import AddContactPopup from "@/components/AddContact";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Modal from "@/components/modal";
@@ -37,6 +35,54 @@ export default function ContactsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  // Contact group filter states
+  const [contactGroups, setContactGroups] = useState<{value: string, label: string}[]>([]);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [totalData, setTotalData] = useState(0);
+
+  // Fetch contact groups from Firebase using the imported function
+  useEffect(() => {
+    const loadContactGroups = async () => {
+      try {
+        const groups = await getContactGroups();
+        setContactGroups(groups);
+      } catch (error) {
+        console.error("Error loading contact groups:", error);
+      }
+    };
+    
+    loadContactGroups();
+  }, []);
+
+  // Handle group filter change
+  const handleGroupFilterChange = async (group: string) => {
+    try {
+      setLoading(true);
+      setStatusFilter(group);
+      setCurrentPage(1);
+      setLastDoc(null);
+      
+      if (group === "ALL") {
+        const totalCount = await getTotalContactsCount();
+        setTotalContacts(totalCount);
+        setTotalData(totalCount);
+        const { contacts, lastDoc } = await getContactsPaginated(null, pageSize);
+        setContacts(contacts);
+        setLastDoc(lastDoc);
+      } else {
+        const result:any = await getContactsByGroup(group, null, pageSize);
+        setContacts(result.contacts);
+        setLastDoc(result.lastDoc);
+        setTotalData(result.count);
+        setTotalContacts(result.count);
+      }
+    } catch (error) {
+      console.error(`Error filtering contacts by group ${group}:`, error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -108,9 +154,15 @@ export default function ContactsPage() {
     if (!lastDoc || currentPage === Math.ceil(totalContacts / pageSize)) return;
     try {
       setLoading(true);
-      const { contacts: nextContacts, lastDoc: newLastDoc } = await getContactsPaginated(lastDoc, pageSize);
-      setContacts(nextContacts);
-      setLastDoc(newLastDoc);
+      if (statusFilter !== "ALL") {
+        const result = await getContactsByGroup(statusFilter, lastDoc, pageSize);
+        setContacts(result.contacts);
+        setLastDoc(result.lastDoc);
+      } else {
+        const { contacts: nextContacts, lastDoc: newLastDoc } = await getContactsPaginated(lastDoc, pageSize);
+        setContacts(nextContacts);
+        setLastDoc(newLastDoc);
+      }
       setCurrentPage(currentPage + 1);
     } catch (error) {
       console.error("Error fetching next page:", error);
@@ -125,9 +177,15 @@ export default function ContactsPage() {
     try {
       setLoading(true);
       setCurrentPage(currentPage - 1);
-      const { contacts, lastDoc } = await getContactsPaginated(null, pageSize);
-      setContacts(contacts);
-      setLastDoc(lastDoc);
+      if (statusFilter !== "ALL") {
+        const result = await getContactsByGroup(statusFilter, null, pageSize);
+        setContacts(result.contacts);
+        setLastDoc(result.lastDoc);
+      } else {
+        const { contacts, lastDoc } = await getContactsPaginated(null, pageSize);
+        setContacts(contacts);
+        setLastDoc(lastDoc);
+      }
     } catch (error) {
       console.error("Error fetching previous page:", error);
     } finally {
@@ -185,6 +243,24 @@ export default function ContactsPage() {
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">ผู้ติดต่อ</h1>
         <h2 className="text-1xl font-semibold text-gray-700 dark:text-gray-200">จำนวน {totalContacts} รายการ</h2>
+      </div>
+
+      {/* Contact Group Filter Buttons */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {contactGroups.map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => handleGroupFilterChange(value)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              statusFilter === value
+                ? "bg-gray-900 text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            }`}
+          >
+            {label}
+            {statusFilter === value && totalData > 0 ? ` (${totalData})` : ""}
+          </button>
+        ))}
       </div>
 
       <div className="flex justify-between items-center mb-4">

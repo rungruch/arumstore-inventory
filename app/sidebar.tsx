@@ -57,7 +57,6 @@ const menuItems: MenuItem[] = [
     icon: <FaUsers />,
     subMenu: [
       { title: "ผู้ติดต่อ", path: "/contacts" },
-      { title: "กลุ่มลูกค้า", path: "/contacts/groups" }
     ]
   },
   {
@@ -74,7 +73,8 @@ const menuItems: MenuItem[] = [
     title: "ตั้งค่า",
     icon: <FaCog />,
     subMenu: [
-      { title: "การตั้งค่า", path: "/settings" }
+      { title: "บริษัท", path: "/settings" },
+      { title: "กลุมลูกค้า", path: "/settings/contact-group" }
     ]
   }
 ];

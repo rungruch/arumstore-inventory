@@ -79,12 +79,8 @@ export default function ProductListPage() {
         // Use the new combined filter function
         const filters: { category?: string; warehouse?: string } = {};
         if (categoryFilter) filters.category = categoryFilter;
-        if (warehouseFilter) filters.warehouse = warehouseFilter;
-
-        console.log("Fetching products with filters:", filters);
-        
+        if (warehouseFilter) filters.warehouse = warehouseFilter; 
         const result = await getProductFiltered(filters, null, pageSize);
-        console.log("Fetched products:", result);
         
         setDatas(result.data);
         setLastDoc(result.lastDoc);

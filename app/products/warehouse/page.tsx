@@ -46,7 +46,6 @@ export default function ProductWarehousePage() {
 
         // Fetch total products for all warehouse
         const productCounts = await getTotalProductsofWarehouse()
-        console.log("Total products in warehouse:", productCounts);
         setTotalProducts(productCounts);
 
 

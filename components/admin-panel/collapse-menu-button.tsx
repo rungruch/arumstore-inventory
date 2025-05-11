@@ -40,7 +40,6 @@ const submenuModuleMap: Record<string, {module: string, action: string}> = {
   "/products/categories": { module: "products", action: "view" },
   "/products/warehouse": { module: "products", action: "view" },
   "/contacts": { module: "customers", action: "view" },
-  "/contacts/groups": { module: "customers", action: "view" },
   "/sales": { module: "sales", action: "view" },
   "/sales/create": { module: "sales", action: "create" },
   "/purchases": { module: "purchases", action: "view" },

@@ -65,7 +65,6 @@ export default function ContactDetailsPage() {
             // This function needs to be implemented or replaced with your actual function
             // that gets transactions for a specific contact
             const contactTransactions:any = await getSellTransactionsByClientId(clientId);
-            console.log("Fetched transactions:", contactTransactions);
             setTransactions(contactTransactions || []);
             
             // Calculate sales metrics from transactions
