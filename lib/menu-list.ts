@@ -55,7 +55,7 @@ export function getMenuList(pathname: string): Group[] {
             label: "สินค้า"
           },
           {
-            href: "/dashboard/customers",
+            href: "/dashboard/contacts",
             label: "ลูกค้า"
           }
         ]
@@ -132,11 +132,11 @@ export function getMenuList(pathname: string): Group[] {
           icon: User2,
           submenus: [
             {
-              href: "/customers",
+              href: "/contacts",
               label: "ผู้ติดต่อ"
             },
             {
-              href: "/customers/groups",
+              href: "/contacts/groups",
               label: "กลุ่มลูกค้า"
             }
           ]

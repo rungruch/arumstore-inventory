@@ -1,6 +1,6 @@
 "use client";
 
-import { getContactsPaginated, getTotalContactsCount, getContactsByName } from "@/app/firebase/firestore";
+import { getContactsPaginated, getTotalContactsCount, getContactsByName, deleteContact } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { Timestamp } from "firebase/firestore";
@@ -8,6 +8,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Contact } from "@/app/firebase/interfaces";
 import AddContactPopup from "@/components/AddContact";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Modal from "@/components/modal";
+import { ModalTitle } from '@/components/enum';
+import { EditContactPopup } from "@/components/AddContact";
+import Link from "next/link";
 
 export default function ContactsPage() {
   const [search, setSearch] = useState("");
@@ -18,6 +22,21 @@ export default function ContactsPage() {
   const [totalContacts, setTotalContacts] = useState(0);
   const [loading, setLoading] = useState(false);
   const [pageSize, setPageSize] = useState(10);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    contactId: '',
+    contactName: '',
+  });
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editContact, setEditContact] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<{id: string, name: string} | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -35,7 +54,7 @@ export default function ContactsPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [refreshTrigger]);
 
   // Handle page size change
   const handlePageSizeChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -119,9 +138,49 @@ export default function ContactsPage() {
   const togglePopup = () => setShowPopup(!showPopup);
   const totalPages = Math.ceil(totalContacts / pageSize);
 
+  // Call this function to trigger a refresh
+  const refreshContactsList = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Handle contact deletion
+  const handleDeleteContact = async (contactId: string) => {
+    try {
+      await deleteContact(contactId);
+      // Remove deleted contact from local state
+      setContacts((prev) => prev.filter((c) => c.id !== contactId));
+      // Refresh the contact list
+      await refreshContactsList();
+      // Close the modal
+      setModalState(prev => ({ ...prev, isOpen: false }));
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: 'เกิดข้อผิดพลาดในการลบผู้ติดต่อ',
+        contactId: '',
+        contactName: '',
+      });
+    }
+  };
+
   return (
     <>
     <ProtectedRoute module='customers' action="view">
+    <EditContactPopup
+      isOpen={editModalOpen}
+      onClose={() => setEditModalOpen(false)}
+      contact={editContact}
+      onSuccess={refreshContactsList}
+    />
+    <Modal
+      isOpen={modalState.isOpen}
+      onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+      title={modalState.title}
+      message={modalState.message || `คุณต้องการลบผู้ติดต่อ ${modalState.contactName} ใช่หรือไม่?`}
+      onConfirm={() => handleDeleteContact(modalState.contactId)}
+    />
     <div className="container mx-auto p-5">
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-2xl font-bold">ผู้ติดต่อ</h1>
@@ -167,13 +226,21 @@ export default function ContactsPage() {
                 <th className="p-2 w-[150px] whitespace-nowrap">เบอร์โทรศัพท์</th>
                 <th className="p-2 w-[120px] whitespace-nowrap">อีเมล</th>
                 <th className="p-2 w-[180px] whitespace-nowrap">อัพเดทล่าสุด</th>
+                <th className="p-2 w-[100px] text-center">ลบ</th>
               </tr>
             }
             customRow={(contact, index) => (
               <tr key={contact.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                 <td className="p-2 w-[50px] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                 <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{contact.client_id}</td>
-                <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{contact.name}</td>
+                <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">
+                  <Link
+                  href={`/contacts/${contact.client_id}`}
+                  className="text-blue-600 hover:underline"
+                  >
+                  {contact.name}
+                  </Link>
+                </td>
                 <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{contact.contact_info?.phone || "-"}</td>
                 <td className="p-2 w-[120px] whitespace-nowrap overflow-hidden text-ellipsis">{contact.contact_info?.email || "-"}</td>
                 <td className="p-2 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
@@ -187,6 +254,62 @@ export default function ContactsPage() {
                       hour12: false
                     }) 
                     : "-"}
+                </td>
+                <td className="p-2 w-[5%]">
+                  <div className="relative inline-block text-left">
+                    <button
+                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenDropdownId(openDropdownId === contact.id ? null : contact.id);
+                      }}
+                    >
+                      <svg width="20" height="20" fill="currentColor" className="text-gray-600 dark:text-gray-300" viewBox="0 0 20 20">
+                        <circle cx="4" cy="10" r="2" />
+                        <circle cx="10" cy="10" r="2" />
+                        <circle cx="16" cy="10" r="2" />
+                      </svg>
+                    </button>
+                    {openDropdownId === contact.id && (
+                      <div
+                        id={`dropdown-${contact.id}`}
+                        className="fixed z-50 mt-2 w-32 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg"
+                        style={{
+                          top: 'auto',
+                          left: 'auto',
+                          right: '16px',
+                        }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <button
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          onClick={() => {
+                            setEditContact(contact);
+                            setEditModalOpen(true);
+                            setOpenDropdownId(null);
+                          }}
+                        >
+                          แก้ไข
+                        </button>
+                        <button
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          onClick={() => {
+                            setModalState({
+                              isOpen: true,
+                              title: ModalTitle.DELETE,
+                              message: '',
+                              contactId: contact.id,
+                              contactName: contact.name,
+                            });
+                            setOpenDropdownId(null);
+                          }}
+                        >
+                          ลบ
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </td>
               </tr>
             )}
@@ -235,6 +358,86 @@ export default function ContactsPage() {
       </div>
 
       <AddContactPopup isOpen={showPopup} onClose={togglePopup} />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && contactToDelete && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={(e) => {
+            if ((e.target as HTMLElement).className.includes('fixed')) {
+              setShowDeleteConfirm(false);
+              setContactToDelete(null);
+              setDeleteError("");
+            }
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">ยืนยันการลบรายการ</h3>
+            <p className="mb-6">คุณต้องการลบผู้ติดต่อ <span className="font-semibold">{contactToDelete.name}</span> ใช่หรือไม่?</p>
+            
+            {deleteError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+                <p>{deleteError}</p>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setContactToDelete(null);
+                  setDeleteError("");
+                }}
+                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setIsDeleting(true);
+                    await deleteContact(contactToDelete.id);
+                    
+                    // Refresh contacts list after deletion
+                    const totalCount = await getTotalContactsCount();
+                    setTotalContacts(totalCount);
+                    
+                    // Calculate the correct page to display after deletion
+                    const newTotalPages = Math.ceil((totalCount) / pageSize);
+                    const newCurrentPage = currentPage > newTotalPages ? newTotalPages || 1 : currentPage;
+                    setCurrentPage(newCurrentPage);
+                    
+                    // Fetch updated contacts
+                    const { contacts: updatedContacts, lastDoc: newLastDoc } = await getContactsPaginated(
+                      null, 
+                      pageSize
+                    );
+                    setContacts(updatedContacts);
+                    setLastDoc(newLastDoc);
+                    
+                    // Close modal
+                    setShowDeleteConfirm(false);
+                    setContactToDelete(null);
+                  } catch (error) {
+                    console.error("Error deleting contact:", error);
+                    setDeleteError(`เกิดข้อผิดพลาดในการลบ: ${error instanceof Error ? error.message : String(error)}`);
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                className={`px-4 py-2 text-white rounded-md ${
+                  isDeleting ? 
+                  "bg-gray-500 cursor-not-allowed" : 
+                  "bg-red-600 hover:bg-red-700"
+                } transition`}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "กำลังลบ..." : "ลบ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </ProtectedRoute>
     </>

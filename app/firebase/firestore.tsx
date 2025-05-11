@@ -1512,27 +1512,17 @@ export async function updateContact(contactId: string, contactData: Partial<Cont
   }
 }
 
-// Delete a contact
+// Delete a contact (completely remove the document)
 export async function deleteContact(contactId: string): Promise<void> {
   try {
     const contactRef = doc(db, "contacts", contactId);
     const contactDoc = await getDoc(contactRef);
-    
+
     if (!contactDoc.exists()) {
       throw new Error(`ไม่พบข้อมูลผู้ติดต่อ ID: ${contactId}`);
     }
-    
-    // Here you could implement additional checks before deletion
-    // e.g., check if the contact is referenced elsewhere
-    
-    await updateDoc(contactRef, { 
-      deleted: true,
-      updated_date: Timestamp.now()
-    });
-    
-    // Alternatively, you could completely delete the document:
-    // await deleteDoc(contactRef);
-    
+
+    await deleteDoc(contactRef);
   } catch (error) {
     console.error("Error deleting contact:", error);
     throw error;
@@ -1829,5 +1819,26 @@ export async function getProductFiltered(filters: {
   } catch (error) {
     console.error("Error in getProductFiltered:", error);
     return { data: [], lastDoc: null, totalCount: 0 };
+  }
+}
+
+// Get transactions by clientId
+export async function getSellTransactionsByClientId(clientId: string) {
+  try {
+    const q = query(
+      collection(db, "transactions"),
+      where("transaction_type", "==", TransactionType.SELL),
+      where("client_id", "==", clientId),
+      orderBy("created_date", "desc")
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching transactions by client ID:", error);
+    return [];
   }
 }

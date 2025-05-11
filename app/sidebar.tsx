@@ -21,7 +21,7 @@ const menuItems: MenuItem[] = [
       { title: "ยอดขาย", path: "/dashboard/sales" },
       { title: "ยอดซื้อ", path: "/dashboard/purchases" },
       { title: "สินค้า", path: "/dashboard/products" },
-      { title: "ลูกค้า", path: "/dashboard/customers" }
+      { title: "ลูกค้า", path: "/dashboard/contacts" }
     ]
   },
   {
@@ -56,8 +56,8 @@ const menuItems: MenuItem[] = [
     title: "ลูกค้า",
     icon: <FaUsers />,
     subMenu: [
-      { title: "ผู้ติดต่อ", path: "/customers" },
-      { title: "กลุ่มลูกค้า", path: "/customers/groups" }
+      { title: "ผู้ติดต่อ", path: "/contacts" },
+      { title: "กลุ่มลูกค้า", path: "/contacts/groups" }
     ]
   },
   {
