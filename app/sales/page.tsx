@@ -544,7 +544,7 @@ export default function ProductPage() {
                   <th className="p-2 w-[10%]">วันที่</th>
                   <th className="p-2 w-[10%]">รายการ</th>
                   <th className="p-2 w-[25%]">ลูกค้า</th>
-                  <th className="p-2 w-[10%]">ช่องทางการขาย</th>
+                  <th className="p-2 w-[10%]">ช่องทางขาย</th>
                   <th className="p-2 flex-1">มูลค่า</th>
                   <th className="p-2 flex-1">สถานะ</th>
                   <th className="p-2 flex-1">วันส่งสินค้า</th>
@@ -645,7 +645,11 @@ export default function ProductPage() {
                       )}
                     </div>
                   </td>
-                  <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.client_name}</td>
+                  <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
+                    <Link href={`/contacts/${data.client_id}`} className=" hover:underline">
+                      {data.client_name}
+                    </Link>
+                  </td>
                   <td className="p-2 w-[10%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.sell_method}</td>
                   <td className="p-2 flex-1">{data.total_amount}</td>
                   <td className="p-2">

@@ -404,48 +404,54 @@ export default function ContactDetailsPage() {
                 </div>
                 
                 {transactions.length > 0 && (
-                  <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h2 className="text-xl font-semibold mb-4 border-b pb-2">ประวัติการทำรายการ</h2>
+                <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-6 mb-6">
+                    <h2 className="text-xl font-semibold mb-4 border-b pb-2">ประวัติการทำรายการขาย</h2>
                     
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-zinc-700">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">วันที่</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">รายการ</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">มูลค่า</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">สถานะ</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200 dark:bg-zinc-800 dark:divide-gray-700">
-                          {transactions.map((transaction) => (
-                            <tr key={transaction.transaction_id} className="hover:bg-gray-50 dark:hover:bg-zinc-700">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {formatDate(transaction.created_date)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                  {transaction.transaction_id}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                ฿{transaction.total_amount?.toLocaleString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  transaction.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                  transaction.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {transaction.status === 'COMPLETED' ? 'เสร็จสมบูรณ์' :
-                                   transaction.status === 'PENDING' ? 'รอดำเนินการ' :
-                                   'ยกเลิก'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div
+                        className="overflow-x-auto"
+                        style={{
+                            maxHeight: "480px", // 10 rows * ~48px per row
+                            overflowY: "auto",
+                        }}
+                    >
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-gray-50 dark:bg-zinc-700">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">วันที่</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">รายการ</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">มูลค่า</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200 dark:bg-zinc-800 dark:divide-gray-700">
+                                {transactions.map((transaction) => (
+                                    <tr key={transaction.transaction_id} className="hover:bg-gray-50 dark:hover:bg-zinc-700">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {formatDate(transaction.created_date)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                {transaction.transaction_id}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            ฿{transaction.total_amount?.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                transaction.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                                                transaction.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                            }`}>
+                                                {transaction.status === 'COMPLETED' ? 'เสร็จสมบูรณ์' :
+                                                 transaction.status === 'PENDING' ? 'รอดำเนินการ' :
+                                                 'ยกเลิก'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                  </div>
+                </div>
                 )}
               </div>
               
