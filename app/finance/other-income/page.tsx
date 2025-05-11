@@ -29,10 +29,11 @@ export default function OtherIncomePage() {
     title: "",
     message: "",
   });
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   
   // Calculate total
   const totalAmount = transactions.reduce((sum, transaction) => {
@@ -50,6 +51,7 @@ export default function OtherIncomePage() {
     try {
       setIsLoading(true);
       const data = await getIncomeTransactions(selectedTransactionNum);
+      console.log("Fetched transactions:", data);
       setTransactions(data);
       setError(null);
     } catch (err) {
@@ -285,8 +287,195 @@ export default function OtherIncomePage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {formatDate(transaction.created_date)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {transaction.transaction_id}
+                    <td 
+                      className="px-6 py-4 whitespace-nowrap text-sm"
+                    >
+                      <div className="cursor-pointer hover:underline" onClick={() => setHoveredRow(transaction.transaction_id ?? "")}>
+                        {transaction.transaction_id}
+                      </div>
+                      {hoveredRow === transaction.transaction_id && (
+                        <div className="fixed inset-0 bg-[#00000066] dark:bg-[#00000099] flex items-center justify-center z-50">
+                          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-4 w-full max-w-2xl border border-gray-100 dark:border-zinc-700 relative">
+                            <button
+                              className="absolute top-2 right-3 text-gray-500 hover:text-gray-800 dark:hover:text-white text-3xl font-bold p-2 rounded-full transition-colors duration-150"
+                              onClick={() => setHoveredRow(null)}
+                              aria-label="ปิด"
+                            >
+                              ×
+                            </button>
+                            {/* Header with ID and Status */}
+                            <div className="flex items-center justify-between border-b pb-2 mb-3 mt-10">
+                              <h3 className="text-lg font-bold">{transaction.transaction_id}</h3>
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                transaction.payment_status === payment_status.COMPLETED
+                                  ? "bg-green-100 text-green-800"
+                                  : transaction.payment_status === payment_status.PENDING
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}>
+                                {payment_status_display[transaction.payment_status || payment_status.PENDING]}
+                              </span>
+                            </div>
+                            {/* Summary Section */}
+                            <div className="bg-gray-50 dark:bg-zinc-700 p-3 rounded-md mb-3">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm">
+                                  <span className="font-medium">ประเภท:</span> {"รายรับ"}
+                                </span>
+                                <span className="text-sm">
+                                  <span className="font-medium">วันที่:</span> {formatDate(transaction.created_date)}
+                                </span>
+                              </div>
+                              <div className="mt-2 flex justify-between items-center">
+                                <span className="text-sm">
+                                  <span className="font-medium">ผู้ติดต่อ:</span> {transaction.client_name || "-"}
+                                </span>
+                                <span className="text-sm font-bold text-green-600">
+                                  ฿{transaction.total_amount?.toLocaleString() || 0}
+                                </span>
+                              </div>
+                            </div>
+                            {/* Tabs for different sections */}
+                            <div className="flex mb-3 border-b overflow-x-auto">
+                              <button 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const details = document.getElementById(`details-${transaction.transaction_id}`);
+                                  const financial = document.getElementById(`financial-${transaction.transaction_id}`);
+                                  const items = document.getElementById(`items-${transaction.transaction_id}`);
+                                  if (details && financial && items) {
+                                    details.classList.remove('hidden');
+                                    financial.classList.add('hidden');
+                                    items.classList.add('hidden');
+                                  }
+                                }}
+                                className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 dark:bg-zinc-700 rounded-t-md"
+                              >
+                                ข้อมูลทั่วไป
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const details = document.getElementById(`details-${transaction.transaction_id}`);
+                                  const financial = document.getElementById(`financial-${transaction.transaction_id}`);
+                                  const items = document.getElementById(`items-${transaction.transaction_id}`);
+                                  if (details && financial && items) {
+                                    details.classList.add('hidden');
+                                    financial.classList.remove('hidden');
+                                    items.classList.add('hidden');
+                                  }
+                                }}
+                                className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 dark:bg-zinc-700 rounded-t-md"
+                              >
+                                การเงิน
+                              </button>
+                              {transaction.items && transaction.items.length > 0 && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    const details = document.getElementById(`details-${transaction.transaction_id}`);
+                                    const financial = document.getElementById(`financial-${transaction.transaction_id}`);
+                                    const items = document.getElementById(`items-${transaction.transaction_id}`);
+                                    if (details && financial && items) {
+                                      details.classList.add('hidden');
+                                      financial.classList.add('hidden');
+                                      items.classList.remove('hidden');
+                                    }
+                                  }}
+                                  className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 dark:bg-zinc-700 rounded-t-md"
+                                >
+                                  รายการสินค้า <span className="ml-1 px-1.5 py-0.5 bg-gray-200 rounded-full text-xs dark:bg-gray-600">{transaction.items.length}</span>
+                                </button>
+                              )}
+                            </div>
+                            {/* General Details Panel */}
+                            <div id={`details-${transaction.transaction_id}`} className="text-sm">
+                              <div className="grid grid-cols-2 gap-y-2">
+                                <div className="font-medium">วันที่อัปเดต:</div>
+                                <div>{formatDate(transaction.updated_date)}</div>
+                                <div className="font-medium">เบอร์โทร:</div>
+                                <div>{transaction.client_tel || "-"}</div>
+                                <div className="font-medium">อีเมล:</div>
+                                <div>{transaction.client_email || "-"}</div>
+                                <div className="font-medium">ที่อยู่:</div>
+                                <div>{transaction.client_address || "-"}</div>
+                                <div className="font-medium">เลขที่ผู้เสียภาษี:</div>
+                                <div>{transaction.tax_id || "-"}</div>
+                                <div className="font-medium">ชื่อสาขา:</div>
+                                <div>{transaction.branch_name || "-"}</div>
+                                <div className="font-medium">รหัสสาขา:</div>
+                                <div>{transaction.branch_id || "-"}</div>
+                                <div className="col-span-2 mt-1">
+                                  <div className="font-medium mb-1">หมายเหตุ:</div>
+                                  <div className="bg-gray-50 dark:bg-zinc-700 p-2 rounded break-words">
+                                    {transaction.notes || "-"}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {/* Financial Panel */}
+                            <div id={`financial-${transaction.transaction_id}`} className="hidden text-sm">
+                              <div className="bg-gray-50 dark:bg-zinc-700 p-3 rounded-md mb-3">
+                                <div className="grid grid-cols-2 gap-y-2">
+                                  <div className="font-medium">ยอดรวมก่อนภาษี:</div>
+                                  <div className="text-right">฿{transaction.total_amount_no_vat?.toLocaleString() || 0}</div>
+                                  <div className="font-medium">ภาษีมูลค่าเพิ่ม:</div>
+                                  <div className="text-right">฿{transaction.total_vat?.toLocaleString() || 0}</div>
+                                  <div className="font-medium border-t pt-1 mt-1 dark:border-zinc-600">ยอดเงินรวม:</div>
+                                  <div className="text-right font-bold text-green-600 border-t pt-1 mt-1 dark:border-zinc-600">
+                                    ฿{transaction.total_amount?.toLocaleString() || 0}
+                                  </div>
+                                </div>
+                              </div>
+                              {transaction.payment_deatils && (
+                                <div className="mb-3">
+                                  <h4 className="text-sm font-semibold mb-2">รายละเอียดการชำระเงิน</h4>
+                                  <div className="grid grid-cols-2 gap-y-2">
+                                    <div className="font-medium">วันที่ชำระเงิน:</div>
+                                    <div>{transaction.payment_deatils.payment_date ? formatDate(transaction.payment_deatils.payment_date) : "-"}</div>
+                                    <div className="font-medium">ช่องทางชำระเงิน:</div>
+                                    <div>{transaction.payment_deatils.wallet_name || transaction.payment_deatils.payment_method || "-"}</div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            {/* Items Panel */}
+                            {transaction.items && transaction.items.length > 0 && (
+                              <div id={`items-${transaction.transaction_id}`} className="hidden text-sm">
+                                <table className="w-full text-xs border-collapse">
+                                  <thead>
+                                    <tr className="bg-gray-100 dark:bg-zinc-700">
+                                      <th className="border px-3 py-2 text-left">ประเภท</th>
+                                      <th className="border px-3 py-2 text-left">ชื่อรายการ</th>
+                                      <th className="border px-3 py-2 text-right">จำนวนเงิน</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {transaction.items.map((item, index) => (
+                                      <tr key={index} className="border-b hover:bg-gray-50 dark:hover:bg-zinc-700">
+                                        <td className="border px-3 py-2">{item.type || "-"}</td>
+                                        <td className="border px-3 py-2">{item.name || "-"}</td>
+                                        <td className="border px-3 py-2 text-right font-medium">
+                                          ฿{parseFloat(item.amount).toLocaleString()}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                    <tr className="bg-gray-50 dark:bg-zinc-700 font-medium">
+                                      <td colSpan={2} className="border px-3 py-2 text-right">รวมทั้งสิ้น</td>
+                                      <td className="border px-3 py-2 text-right text-green-600">
+                                        ฿{transaction.total_amount?.toLocaleString() || 0}
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {transaction.client_name || "-"}
