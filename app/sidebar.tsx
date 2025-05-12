@@ -74,7 +74,6 @@ const menuItems: MenuItem[] = [
     icon: <FaCog />,
     subMenu: [
       { title: "บริษัท", path: "/settings" },
-      { title: "กลุ่มลูกค้า", path: "/settings/contact-group" }
     ]
   }
 ];

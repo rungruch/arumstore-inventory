@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { getProductByID, getProductWarehouse, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
+import { getProductByID, getProductWarehouse, getContactsByName, getContactsPaginated, getSalesMethods } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
@@ -129,6 +129,7 @@ export default function AddPurchaseForm({
   const [totalOrderAmount, setTotalOrderAmount] = useState<number>(0);
   const [totalVatAmount, setTotalVatAmount] = useState<number>(0);
   const [totalOrderAmountNoVat, setTotalOrderAmountNoVat] = useState<number>(0);
+  const [salesMethods, setSalesMethods] = useState<Array<{value: string, label: string}>>([]);
 
   const [validationError, setValidationError] = useState<string>("");
   const [isCreateContactDisabled, setisCreateContactDisabled] = useState<boolean>(false);
@@ -176,6 +177,9 @@ export default function AddPurchaseForm({
       try {
         const warehouseData = await getProductWarehouse();
         setWarehouses(warehouseData);
+
+        const methodsData = await getSalesMethods();
+        setSalesMethods(methodsData);
       } catch (error) {
         setModalState({
           isOpen: true,
@@ -525,20 +529,32 @@ export default function AddPurchaseForm({
               </div>
               
               <div className="relative mb-3">
-                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ช่องทางการซื้อ</label> 
+                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ช่องทางการซื้อ<span className="text-red-500">*</span></label> 
                 <select
                   name="buy_method"
                   value={orderState.buy_method}
                   onChange={handleChange}
+                  required
                   className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
-                  <option value="">เลือกช่องทางการซื้อ</option>
-                  <option value="STORE">ร้านค้า</option>
-                  <option value="FACEBOOK">Facebook</option>
-                  <option value="LINE">Line</option>
-                  <option value="WEBSITE">เว็บไซต์</option>
-                  <option value="INSTAGRAM">Instagram</option>
-                  <option value="Others">อื่นๆ</option>
+                  <option value="">เลือกช่องทางการขาย</option>
+                  {salesMethods.length > 0 ? (
+                    salesMethods.map((method) => (
+                      <option key={method.value} value={method.value}>
+                        {method.label}
+                      </option>
+                    ))
+                  ) : (
+                    // Fallback options if no methods are available from Firestore
+                    <>
+                      <option value="ร้านค้า">ร้านค้า</option>
+                      <option value="Facebook">Facebook</option>
+                      <option value="Line">Line</option>
+                      <option value="เว็บไซต์">เว็บไซต์</option>
+                      <option value="Instagram">Instagram</option>
+                      <option value="อื่นๆ">อื่นๆ</option>
+                    </>
+                  )}
                 </select>
               </div>
               
@@ -558,7 +574,7 @@ export default function AddPurchaseForm({
             </div>
             <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700 bg-white dark:bg-zinc-800 shadow-md">
               <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">ข้อมูลผู้จำหน่าย</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border border-gray-200 rounded-md dark:border-gray-700 mb-3 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 rounded-md dark:border-gray-700 mb-3 shadow-sm">
                 <div className="relative">
                   <input 
                     type="text" 
@@ -571,6 +587,7 @@ export default function AddPurchaseForm({
                     autoComplete="off"
                     required
                   /> 
+                  <span className="absolute right-3 top-2 text-red-500">*</span>
                     <div ref={(node) => {
                     // Add click outside handler
                     const handleClickOutside = (e: MouseEvent) => {

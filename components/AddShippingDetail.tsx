@@ -1,11 +1,12 @@
 import { useRef,useState, useEffect } from "react";
-import { updateShippingDetails } from "@/app/firebase/firestore";
+import { updateShippingDetails, getShippingMethods } from "@/app/firebase/firestore";
 import { getFile, uploadFile } from "@/app/firebase/storage";
 import { Timestamp } from 'firebase/firestore';
 import { ModalTitle } from '@/components/enum'
 
 interface ShippingDetailsFormProps {
     transactionId: string;
+    currentShippingMethods: string;
     currentShippingDetails?: {
       shipping_date: Date;
       shipping_method: string;
@@ -18,6 +19,7 @@ interface ShippingDetailsFormProps {
   }
 export default function ShippingDetailsForm({ 
   transactionId, 
+  currentShippingMethods,
   currentShippingDetails,
   onSubmitSuccess, 
   onCancel 
@@ -34,7 +36,7 @@ export default function ShippingDetailsForm({
     currentShippingDetails ? formatDateForInput(currentShippingDetails.shipping_date) : ''
   );
   const [shippingMethod, setShippingMethod] = useState(
-    currentShippingDetails?.shipping_method || ''
+    currentShippingDetails?.shipping_method || currentShippingMethods || ''
   );
   const [recipientName, setRecipientName] = useState(
     currentShippingDetails?.recipient_name || ''
@@ -56,7 +58,17 @@ export default function ShippingDetailsForm({
         message: "",
     });
 
+  const [shippingMethods, setShippingMethods] = useState<Array<{value: string, label: string}>>([]);
+  
   useEffect(() => {
+    // Fetch shipping methods from Firestore
+    const fetchShippingMethods = async () => {
+      const shippingMethodsData = await getShippingMethods();
+      setShippingMethods(shippingMethodsData);
+    };
+    
+    fetchShippingMethods();
+
     const handleClickOutside = (event: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         onCancel();
@@ -150,7 +162,7 @@ export default function ShippingDetailsForm({
           </div>    
 
           <div>
-            <label htmlFor="shipping_date" className="block mb-2">วันส่งสินค้า</label>
+            <label htmlFor="shipping_date" className="block mb-2">วันส่งสินค้า<span className="text-red-500">*</span></label>
             <input 
               type="date" 
               id="shipping_date" 
@@ -162,25 +174,32 @@ export default function ShippingDetailsForm({
           </div>
           
           <div>
-            <label htmlFor="shipping_method" className="block mb-2">ช่องทางจัดส่ง*</label>
-            <select 
-              id="shipping_method" 
-              value={shippingMethod}
-              onChange={(e) => setShippingMethod(e.target.value)}
-              required 
-              className="w-full p-2 border rounded dark:border-gray-300"
-            >
-              <option value="">เลือกช่องทางจัดส่ง*</option>
-              <option value="Kerry">Kerry</option>
-              <option value="Thailand Post">Thailand Post</option>
-              <option value="Flash Express">Flash Express</option>
-              <option value="รับหน้าร้าน">รับหน้าร้าน</option>
-              <option value="อื่นๆ">อื่นๆ</option>
-            </select>
+            <label htmlFor="shipping_method" className="block mb-2">ช่องทางจัดส่ง<span className="text-red-500">*</span></label>
+              <select
+                  name="shipping_method"
+                  value={shippingMethod}
+                  onChange={(e) => setShippingMethod(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded dark:border-gray-300"
+                >
+                  {shippingMethods.length > 0 ? (
+                    shippingMethods.map((method) => (
+                      <option key={method.value} value={method.value}>
+                        {method.label}
+                      </option>
+                    ))
+                  ) : (
+                    // Fallback options if no methods are available from Firestore
+                    <>
+                      <option value={"หน้าร้าน"}>หน้าร้าน</option>
+                      <option value={"ไปรษณีย์"}>ไปรษณีย์</option>
+                    </>
+                  )}
+                </select>
           </div>
           
           <div>
-            <label htmlFor="recipient_name" className="block mb-2">ชื่อผู้รับ*</label>
+            <label htmlFor="recipient_name" className="block mb-2">ชื่อผู้รับ<span className="text-red-500">*</span></label>
             <input 
               type="text" 
               id="recipient_name" 

@@ -1845,11 +1845,11 @@ export async function getSellTransactionsByClientId(clientId: string) {
 // Get contact groups from settings collection
 export async function getContactGroups() {
   try {
-    const settingsRef = doc(db, "settings", "contacts_groups");
-    const settingsDoc = await getDoc(settingsRef);
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
     
-    if (settingsDoc.exists() && settingsDoc.data().contacts_groups) {
-      const groups = settingsDoc.data().contacts_groups;
+    if (companyDoc.exists() && companyDoc.data().contacts_groups) {
+      const groups = companyDoc.data().contacts_groups;
       const formattedGroups = groups.map((group: string) => ({
         value: group,
         label: group
@@ -1922,14 +1922,15 @@ export async function getContactsByGroup(group: string, lastDoc: any = null, pag
   }
 }
 
-// Add a new contact group to settings/contacts_groups
+// Add a new contact group to settings/arum_company in contacts_groups field
 export async function addContactGroup(groupName: string) {
   try {
-    const settingsRef = doc(db, "settings", "contacts_groups");
-    const settingsDoc = await getDoc(settingsRef);
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
     let groups: string[] = [];
-    if (settingsDoc.exists() && settingsDoc.data().contacts_groups) {
-      groups = settingsDoc.data().contacts_groups;
+    
+    if (companyDoc.exists() && companyDoc.data().contacts_groups) {
+      groups = companyDoc.data().contacts_groups;
       if (groups.includes(groupName)) {
         throw new Error("กลุ่มนี้มีอยู่แล้ว");
       }
@@ -1937,7 +1938,9 @@ export async function addContactGroup(groupName: string) {
     } else {
       groups = [groupName];
     }
-    await setDoc(settingsRef, { contacts_groups: groups });
+    
+    // Update just the contacts_groups field, preserving other fields
+    await updateDoc(companyRef, { contacts_groups: groups });
     return true;
   } catch (error) {
     console.error("Error adding contact group:", error);
@@ -1945,21 +1948,186 @@ export async function addContactGroup(groupName: string) {
   }
 }
 
-// Delete a contact group from settings/contacts_groups
+// Delete a contact group from settings/arum_company in contacts_groups field
 export async function deleteContactGroup(groupName: string) {
   try {
-    const settingsRef = doc(db, "settings", "contacts_groups");
-    const settingsDoc = await getDoc(settingsRef);
-    if (settingsDoc.exists() && settingsDoc.data().contacts_groups) {
-      let groups: string[] = settingsDoc.data().contacts_groups;
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    
+    if (companyDoc.exists() && companyDoc.data().contacts_groups) {
+      let groups: string[] = companyDoc.data().contacts_groups;
+      
+      // Check if group exists before attempting to remove
+      if (!groups.includes(groupName)) {
+        throw new Error(`ไม่พบกลุ่มผู้ติดต่อ "${groupName}"`);
+      }
+      
       groups = groups.filter((g) => g !== groupName);
-      await setDoc(settingsRef, { contacts_groups: groups });
+      
+      // Update just the contacts_groups field, preserving other fields
+      await updateDoc(companyRef, { contacts_groups: groups });
       return true;
     } else {
-      throw new Error("ไม่พบกลุ่มผู้ติดต่อ");
+      throw new Error("ไม่พบข้อมูลกลุ่มผู้ติดต่อ");
     }
   } catch (error) {
     console.error("Error deleting contact group:", error);
+    throw error;
+  }
+}
+
+// Get sales methods from settings collection
+export async function getSalesMethods() {
+  try {
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    
+    if (companyDoc.exists() && companyDoc.data().sales_methods) {
+      const methods = companyDoc.data().sales_methods;
+      const formattedMethods = methods.map((method: string) => ({
+        value: method,
+        label: method
+      }));
+      
+      return formattedMethods;
+    } else {
+      // Default if no methods found
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching sales methods:", error);
+    return [];
+  }
+}
+
+// Add a new sales method to settings/arum_company
+export async function addSalesMethod(methodName: string) {
+  try {
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    let methods: string[] = [];
+    
+    if (companyDoc.exists() && companyDoc.data().sales_methods) {
+      methods = companyDoc.data().sales_methods;
+      if (methods.includes(methodName)) {
+        throw new Error("วิธีการขายนี้มีอยู่แล้ว");
+      }
+      methods.push(methodName);
+    } else {
+      methods = [methodName];
+    }
+    
+    // Update just the sales_methods field, preserving other fields
+    await updateDoc(companyRef, { sales_methods: methods });
+    return true;
+  } catch (error) {
+    console.error("Error adding sales method:", error);
+    throw error;
+  }
+}
+
+// Delete a sales method from settings/arum_company
+export async function deleteSalesMethod(methodName: string) {
+  try {
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    
+    if (companyDoc.exists() && companyDoc.data().sales_methods) {
+      let methods: string[] = companyDoc.data().sales_methods;
+      
+      // Check if method exists before attempting to remove
+      if (!methods.includes(methodName)) {
+        throw new Error(`ไม่พบวิธีการขาย "${methodName}"`);
+      }
+      
+      methods = methods.filter((m) => m !== methodName);
+      
+      // Update just the sales_methods field, preserving other fields
+      await updateDoc(companyRef, { sales_methods: methods });
+      return true;
+    } else {
+      throw new Error("ไม่พบข้อมูลวิธีการขาย");
+    }
+  } catch (error) {
+    console.error("Error deleting sales method:", error);
+    throw error;
+  }
+}
+
+// Get shipping methods from settings collection
+export async function getShippingMethods() {
+  try {
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    
+    if (companyDoc.exists() && companyDoc.data().shipping_methods) {
+      const methods = companyDoc.data().shipping_methods;
+      const formattedMethods = methods.map((method: string) => ({
+        value: method,
+        label: method
+      }));
+      
+      return formattedMethods;
+    } else {
+      // Default if no methods found
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching shipping methods:", error);
+    return [];
+  }
+}
+
+// Add a new shipping method to settings/arum_company
+export async function addShippingMethod(methodName: string) {
+  try {
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    let methods: string[] = [];
+    
+    if (companyDoc.exists() && companyDoc.data().shipping_methods) {
+      methods = companyDoc.data().shipping_methods;
+      if (methods.includes(methodName)) {
+        throw new Error("วิธีการจัดส่งนี้มีอยู่แล้ว");
+      }
+      methods.push(methodName);
+    } else {
+      methods = [methodName];
+    }
+    
+    // Update just the shipping_methods field, preserving other fields
+    await updateDoc(companyRef, { shipping_methods: methods });
+    return true;
+  } catch (error) {
+    console.error("Error adding shipping method:", error);
+    throw error;
+  }
+}
+
+// Delete a shipping method from settings/arum_company
+export async function deleteShippingMethod(methodName: string) {
+  try {
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    
+    if (companyDoc.exists() && companyDoc.data().shipping_methods) {
+      let methods: string[] = companyDoc.data().shipping_methods;
+      
+      // Check if method exists before attempting to remove
+      if (!methods.includes(methodName)) {
+        throw new Error(`ไม่พบวิธีการจัดส่ง "${methodName}"`);
+      }
+      
+      methods = methods.filter((m) => m !== methodName);
+      
+      // Update just the shipping_methods field, preserving other fields
+      await updateDoc(companyRef, { shipping_methods: methods });
+      return true;
+    } else {
+      throw new Error("ไม่พบข้อมูลวิธีการจัดส่ง");
+    }
+  } catch (error) {
+    console.error("Error deleting shipping method:", error);
     throw error;
   }
 }

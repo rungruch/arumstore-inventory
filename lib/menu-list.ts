@@ -174,10 +174,6 @@ export function getMenuList(pathname: string): Group[] {
           href: "/settings",
           label: "ตั้งค่า",
           icon: Settings,
-          submenus: [
-            { label: "บริษัท", href: "/settings" },
-            { label: "กลุ่มลูกค้า", href: "/settings/contact-group" }
-          ]
         }
       ]
     }

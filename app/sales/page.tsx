@@ -44,6 +44,7 @@ export default function ProductPage() {
   const [shippingDetailsModal, setShippingDetailsModal] = useState<{
     isOpen: boolean;
     transactionId: string | null;
+    setShippingMethods?: any | null;
     currentShippingDetails?: any;
   }>({
     isOpen: false,
@@ -224,10 +225,11 @@ export default function ProductPage() {
   };
 
   // Update the function to open shipping details modal with current details
-  const openShippingDetailsModal = (transactionId: string, currentShippingDetails?: any) => {
+  const openShippingDetailsModal = (transactionId: string,shipping_method: string, currentShippingDetails?: any) => {
     setShippingDetailsModal({
       isOpen: true,
       transactionId: transactionId,
+      setShippingMethods: shipping_method,
       currentShippingDetails: currentShippingDetails
     });
   };
@@ -237,6 +239,7 @@ export default function ProductPage() {
     setShippingDetailsModal({
       isOpen: false,
       transactionId: null,
+      setShippingMethods: null,
       currentShippingDetails: undefined
     });
   };
@@ -393,6 +396,7 @@ export default function ProductPage() {
       {shippingDetailsModal.isOpen && shippingDetailsModal.transactionId && (
         <ShippingDetailsForm
           transactionId={shippingDetailsModal.transactionId}
+          currentShippingMethods={shippingDetailsModal.setShippingMethods}
           currentShippingDetails={shippingDetailsModal.currentShippingDetails?.shipping_details}
           onSubmitSuccess={() => {
             // Close the modal
@@ -708,7 +712,7 @@ export default function ProductPage() {
                   >
                     {data.shipping_details ? (
                       <div
-                        onClick={() => openShippingDetailsModal(data.transaction_id, data)}
+                        onClick={() => openShippingDetailsModal(data.transaction_id,data.shipping_method, data)}
                       >
                         <div
                           className="cursor-pointer hover:underline"
@@ -761,7 +765,7 @@ export default function ProductPage() {
                       </div>
                     ) : (
                       <button
-                        onClick={() => openShippingDetailsModal(data.transaction_id)}
+                        onClick={() => openShippingDetailsModal(data.transaction_id,data.shipping_method)}
                         className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

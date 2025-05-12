@@ -1,13 +1,13 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { getProductByID, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeductionv2, getContactsByName, getContactsPaginated } from "@/app/firebase/firestore";
+import { getProductByID, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeductionv2, getContactsByName, getContactsPaginated, getSalesMethods, getShippingMethods } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
 import { createContact } from "@/app/firebase/firestore";
 import ProductSection from "./ProductSection";
-import {VatType, TransactionType, DeliveryType} from "@/app/firebase/enum";
+import {VatType, TransactionType} from "@/app/firebase/enum";
 
 // Define types for the component
 interface Warehouse {
@@ -45,7 +45,7 @@ interface OrderState {
   branch_name: string;
   branch_id: string;
   warehouse: string;
-  shipping_method: DeliveryType;
+  shipping_method: string;
   notes: string;
   shipping_cost: number;
 }
@@ -106,6 +106,8 @@ export default function AddSellOrderForm({
   ref_transaction_id,
 }: AddSellOrderFormProps) {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [salesMethods, setSalesMethods] = useState<Array<{value: string, label: string}>>([]);
+  const [shippingMethods, setShippingMethods] = useState<Array<{value: string, label: string}>>([]);
   const router = useRouter();
 
   const [orderState, setOrderState] = useState<OrderState>({
@@ -123,7 +125,7 @@ export default function AddSellOrderForm({
     branch_name: "",
     branch_id: "",
     warehouse: "คลังสินค้าหลัก",
-    shipping_method: DeliveryType.PICKUP,
+    shipping_method: "หน้าร้าน",
     notes: "",
     shipping_cost: 0
   });
@@ -181,6 +183,14 @@ export default function AddSellOrderForm({
       try {
         const warehouseData = await getProductWarehouse();
         setWarehouses(warehouseData);
+        
+        // Fetch sales methods from Firestore
+        const methodsData = await getSalesMethods();
+        setSalesMethods(methodsData);
+
+        // Fetch shipping methods from Firestore
+        const shippingMethodsData = await getShippingMethods();
+        setShippingMethods(shippingMethodsData);
       } catch (error) {
         setModalState({
           isOpen: true,
@@ -430,7 +440,7 @@ export default function AddSellOrderForm({
         branch_name: "",
         branch_id: "",
         warehouse: "คลังสินค้าหลัก",
-        shipping_method: DeliveryType.PICKUP,
+        shipping_method: "หน้าร้าน",
         notes: "",
         shipping_cost: 0
       });
@@ -535,20 +545,32 @@ export default function AddSellOrderForm({
               </div>
               
               <div className="relative mb-3">
-                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ช่องทางการขาย</label> 
+                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ช่องทางการขาย<span className="text-red-500">*</span></label> 
                 <select
                   name="sell_method"
                   value={orderState.sell_method}
                   onChange={handleChange}
+                  required
                   className="w-full border p-2 pt-1 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="">เลือกช่องทางการขาย</option>
-                  <option value="ร้านค้า">ร้านค้า</option>
-                  <option value="FACEBOOK">Facebook</option>
-                  <option value="LINE">Line</option>
-                  <option value="เว็บไซต์">เว็บไซต์</option>
-                  <option value="INSTAGRAM">Instagram</option>
-                  <option value="Others">อื่นๆ</option>
+                  {salesMethods.length > 0 ? (
+                    salesMethods.map((method) => (
+                      <option key={method.value} value={method.value}>
+                        {method.label}
+                      </option>
+                    ))
+                  ) : (
+                    // Fallback options if no methods are available from Firestore
+                    <>
+                      <option value="ร้านค้า">ร้านค้า</option>
+                      <option value="Facebook">Facebook</option>
+                      <option value="Line">Line</option>
+                      <option value="เว็บไซต์">เว็บไซต์</option>
+                      <option value="Instagram">Instagram</option>
+                      <option value="อื่นๆ">อื่นๆ</option>
+                    </>
+                  )}
                 </select>
               </div>
               
@@ -568,7 +590,7 @@ export default function AddSellOrderForm({
             </div>
             <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700 bg-white dark:bg-zinc-800 shadow-md">
               <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">ข้อมูลลูกค้าจัดส่ง</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border border-gray-200 rounded-md dark:border-gray-700 mb-3 dark:bg-zinc-900 ">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 rounded-md dark:border-gray-700 mb-3 ">
                 <div className="relative">
                   <input 
                     type="text" 
@@ -723,14 +745,27 @@ export default function AddSellOrderForm({
               <div className="mb-4"> 
               <h3 className="text-sm font-semibold mb-2">ช่องทางจัดส่ง</h3>
               <select
-                name="shipping_method"
-                value={orderState.shipping_method}
-                onChange={handleChange}
-                className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
-              >
-                <option value={DeliveryType.PICKUP}>หน้าร้าน</option>
-                <option value={DeliveryType.SHIPPING}>ไปรษณีย์</option>
-              </select>  
+                  name="shipping_method"
+                  value={orderState.shipping_method}
+                  onChange={handleChange}
+                  required
+                  className="w-full border p-2 rounded-md mb-2 text-sm dark:border-gray-700"
+                >
+                  {shippingMethods.length > 0 ? (
+                    shippingMethods.map((method) => (
+                      <option key={method.value} value={method.value}>
+                        {method.label}
+                      </option>
+                    ))
+                  ) : (
+                    // Fallback options if no methods are available from Firestore
+                    <>
+                      <option value={"หน้าร้าน"}>หน้าร้าน</option>
+                      <option value={"ไปรษณีย์"}>ไปรษณีย์</option>
+                    </>
+                  )}
+                </select>
+              
               <h3 className="text-sm font-semibold mb-2">หมายเหตุ</h3>
               <input 
                 type="text" 

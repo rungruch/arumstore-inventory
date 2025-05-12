@@ -74,7 +74,7 @@ export enum OrderStatus {
     NO_VAT = "NO_VAT",
   }
 
-  export enum DeliveryType {
+  enum DeliveryType {
     PICKUP = "PICKUP",
     SHIPPING = "SHIPPING"
   }

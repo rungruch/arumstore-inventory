@@ -51,7 +51,6 @@ export default function OtherIncomePage() {
     try {
       setIsLoading(true);
       const data = await getIncomeTransactions(selectedTransactionNum);
-      console.log("Fetched transactions:", data);
       setTransactions(data);
       setError(null);
     } catch (err) {

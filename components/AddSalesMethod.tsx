@@ -1,48 +1,48 @@
 "use client";
 import { useState, useEffect } from "react";
-import { getContactGroups, addContactGroup, deleteContactGroup } from "@/app/firebase/firestore";
+import { getSalesMethods, addSalesMethod, deleteSalesMethod } from "@/app/firebase/firestore";
 import { Plus, Trash2 } from "lucide-react";
 
-export default function AddContactGroup() {
-  const [groups, setGroups] = useState<string[]>([]);
-  const [newGroup, setNewGroup] = useState("");
+export default function AddSalesMethod() {
+  const [methods, setMethods] = useState<string[]>([]);
+  const [newMethod, setNewMethod] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const loadGroups = async () => {
+  const loadMethods = async () => {
     setLoading(true);
     try {
-      setGroups(await getContactGroups());
+      setMethods(await getSalesMethods());
       setError("");
     } catch (e: any) {
-      setError(e.message || "โหลดกลุ่มล้มเหลว");
+      setError(e.message || "โหลดข้อมูลล้มเหลว");
     }
     setLoading(false);
   };
 
-  useEffect(() => { loadGroups(); }, []);
+  useEffect(() => { loadMethods(); }, []);
 
   const handleAdd = async () => {
-    if (!newGroup.trim()) return setError("กรุณากรอกชื่อกลุ่ม");
+    if (!newMethod.trim()) return setError("กรุณากรอกชื่อช่องทางการขาย");
     setLoading(true);
     try {
-      await addContactGroup(newGroup.trim());
-      setNewGroup("");
-      loadGroups();
+      await addSalesMethod(newMethod.trim());
+      setNewMethod("");
+      loadMethods();
     } catch (e: any) {
-      setError(e.message || "เพิ่มกลุ่มล้มเหลว");
+      setError(e.message || "เพิ่มช่องทางล้มเหลว");
     }
     setLoading(false);
   };
 
-  const handleDelete = async (group: string) => {
-    if (!confirm(`ลบกลุ่ม "${group}"?`)) return;
+  const handleDelete = async (method: string) => {
+    if (!confirm(`ลบช่องทาง "${method}"?`)) return;
     setLoading(true);
     try {
-      await deleteContactGroup(group);
-      loadGroups();
+      await deleteSalesMethod(method);
+      loadMethods();
     } catch (e: any) {
-      setError(e.message || "ลบกลุ่มล้มเหลว");
+      setError(e.message || "ลบช่องทางล้มเหลว");
     }
     setLoading(false);
   };
@@ -58,9 +58,9 @@ export default function AddContactGroup() {
         <div className="mb-4 flex gap-2">
           <input
             className="w-full border border-gray-300 p-2 rounded-md text-sm dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-            value={newGroup}
-            onChange={e => setNewGroup(e.target.value)}
-            placeholder="ชื่อกลุ่มใหม่"
+            value={newMethod}
+            onChange={e => setNewMethod(e.target.value)}
+            placeholder="ชื่อช่องทางการขาย"
             disabled={loading}
           />
           <button
@@ -74,14 +74,14 @@ export default function AddContactGroup() {
       </form>
       {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
       <ul className="divide-y divide-gray-200 dark:divide-zinc-700 mt-2">
-        {groups.map(group => (
-          <li key={(group as any).value ?? group} className="flex justify-between items-center py-2">
-            <span className="text-gray-700 dark:text-gray-200 text-sm">{(group as any).label ?? group}</span>
+        {methods.map(method => (
+          <li key={(method as any).value ?? method} className="flex justify-between items-center py-2">
+            <span className="text-gray-700 dark:text-gray-200 text-sm">{(method as any).label ?? method}</span>
             <button
               className="text-red-600 hover:text-red-800 p-1 rounded transition-colors disabled:opacity-60"
-              onClick={() => handleDelete((group as any).value ?? group)}
+              onClick={() => handleDelete((method as any).value ?? method)}
               disabled={loading}
-              title="ลบกลุ่ม"
+              title="ลบช่องทาง"
             >
               <Trash2 size={16} />
             </button>
