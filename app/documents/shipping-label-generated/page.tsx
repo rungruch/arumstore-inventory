@@ -3,13 +3,12 @@
 // OR 
 // pages/document/download.tsx (for Pages Router)
 
-import React, { JSX, useEffect, useState } from 'react';
+import React, { JSX, useEffect, useState, useRef } from 'react';
 import { useSearchParams } from "next/navigation";
-import { getSellTransactionByTransactionId } from "@/app/firebase/firestore";
+import { getSellTransactionByTransactionId, getCompanyDetails } from "@/app/firebase/firestore";
 import ReceiptDocument from "@/components/template/ShippingLabelDocument";
 import { pdf } from '@react-pdf/renderer';
-import { bahttext } from "bahttext";
-import {StoreInfo, CustomerInfo, OrderInfo, Item, Totals, PaymentSummary, DocumentData, TransactionItem, TransactionData} from '@/components/interface';
+import {TransactionData} from '@/components/interface';
 
 export default function DocumentAutoDownload(): JSX.Element {
   const searchParams = useSearchParams();
@@ -18,8 +17,14 @@ export default function DocumentAutoDownload(): JSX.Element {
   
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const downloadInitiatedRef = useRef<boolean>(false);
 
   useEffect(() => {
+    // Prevent double downloads by checking if download has already been initiated
+    if (downloadInitiatedRef.current) {
+      return;
+    }
+
     if (!transaction_id) {
       setError("No transaction ID provided");
       setIsLoading(false);
@@ -34,9 +39,15 @@ export default function DocumentAutoDownload(): JSX.Element {
 
     const fetchAndGeneratePDF = async (): Promise<void> => {
       try {
-        // Fetch transaction data
-        const transactionData = await getSellTransactionByTransactionId(transaction_id) as TransactionData;
+        // Set flag to prevent duplicate downloads
+        downloadInitiatedRef.current = true;
         
+        // Fetch transaction data and company details in parallel
+        const [transactionData, companyDetails] = await Promise.all([
+          getSellTransactionByTransactionId(transaction_id) as Promise<TransactionData>,
+          getCompanyDetails()
+        ]);
+
         if (!transactionData) {
           setError("Transaction not found");
           setIsLoading(false);
@@ -49,40 +60,14 @@ export default function DocumentAutoDownload(): JSX.Element {
           return;
         }
 
-        // Format products from transaction data
-        const products: Item[] = transactionData?.items ? transactionData.items.map((item: TransactionItem) => ({
-          id: item.sku || '',
-          name: item.name || '',
-          quantity: item.quantity || 0,
-          unitType: item.unit_type || 'ชิ้น',
-          unitPrice: item.price || 0,
-          total: (item.subtotal || 0),
-          discount: (item.discount ?? 0),
-        })) : [];
-
-        // Calculate total amount
-        const rawtotalAmount: number = transactionData.items?.reduce((acc: number, product: TransactionItem) => 
-          acc + (product.subtotal || 0), 0) || 0;
-        
-        const rawtotalDiscount: number = transactionData.items?.reduce((acc: number, product: TransactionItem) => 
-          acc + (product.quantity || 0) * (product.discount || 0), 0) || 0;
-      
-        // Format date from Firestore timestamp
-        const formattedDate: string = transactionData.created_date ? 
-          new Date(transactionData.created_date.toDate()).toLocaleString('th-TH', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }) : "-";
-
         // Prepare complete document data
         const documentData: any = {
           storeInfo: {
-            name: "บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด",
-            branch_name: "(สำนักงานใหญ่)",
-            address: "299/128 ถนนวิภาวดีรังสิต แขวงตลาดบางเขน เขตหลักสี่ กรุงเทพมหานคร 10210",
-            phone: "088-178-8669",
-            email: "icesouthmanagers@gmail.com",
+            name: companyDetails?.name || "บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด",
+            branch_name: companyDetails?.branch_name || "(สำนักงานใหญ่)",
+            address: companyDetails?.address || "299/128 ถนนวิภาวดีรังสิต แขวงตลาดบางเขน เขตหลักสี่ กรุงเทพมหานคร 10210",
+            phone: companyDetails?.phone || "088-178-8669",
+            email: companyDetails?.email || "icesouthmanagers@gmail.com",
           },
           customerInfo: {
             orderNumber: transactionData.transaction_id || '',
@@ -102,15 +87,20 @@ export default function DocumentAutoDownload(): JSX.Element {
         const url = URL.createObjectURL(blob);
 
         // Create an anchor element and programmatically trigger the download
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `ShippingLabel-${documentData.customerInfo.orderNumber}.pdf`;
-        document.body.appendChild(link);
-        link.click();
+        if (downloadInitiatedRef.current) {
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `shippingLabel-${documentData.customerInfo.orderNumber}.pdf`;
+          document.body.appendChild(link);
+          link.click();
 
-        // Clean up
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+          // Clean up
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          // Set flag to prevent further downloads
+          downloadInitiatedRef.current = false;
+        }
         
         setIsLoading(false);
         

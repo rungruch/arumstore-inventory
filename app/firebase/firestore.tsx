@@ -23,9 +23,8 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/app/firebase/clientApp";
-import { Warehouse, Contact, TransferTransaction, ProductCategoryCount } from "@/app/firebase/interfaces";
+import { Warehouse, Contact, TransferTransaction, ProductCategoryCount, StoreInfoFirestore } from "@/app/firebase/interfaces";
 import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus, TransferStatus } from "@/app/firebase/enum";
-import { get } from "http";
 
 
 export async function getProducts() {
@@ -2128,6 +2127,46 @@ export async function deleteShippingMethod(methodName: string) {
     }
   } catch (error) {
     console.error("Error deleting shipping method:", error);
+    throw error;
+  }
+}
+
+
+// Get company details from settings collection
+export async function getCompanyDetails() {
+  try {
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    
+    if (companyDoc.exists() && companyDoc.data().company_details) {
+      return companyDoc.data().company_details as StoreInfoFirestore;
+    } else {
+      // Return empty default object if no company details found
+      return {} as StoreInfoFirestore;
+    }
+  } catch (error) {
+    console.error("Error fetching company details:", error);
+    throw error;
+  }
+}
+
+// Update company details in settings collection
+export async function updateCompanyDetails(companyDetails: StoreInfoFirestore) {
+  try {
+    const companyRef = doc(db, "settings", "arum_company");
+    const companyDoc = await getDoc(companyRef);
+    
+    if (companyDoc.exists()) {
+      // Update just the company_details field, preserving other fields
+      await updateDoc(companyRef, { company_details: companyDetails });
+    } else {
+      // Create document if it doesn't exist
+      await setDoc(companyRef, { company_details: companyDetails });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating company details:", error);
     throw error;
   }
 }

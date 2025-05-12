@@ -201,3 +201,24 @@ export interface ProductCategoryCount {
     }
   }
 }[]
+
+  export interface StoreInfoFirestore{
+    name: string;
+    branch_name: string;
+    tax_id: string;
+    address: string;
+    current_address: string;
+    eng_name: string;
+    eng_branch_name: string;
+    eng_address: string;
+    eng_current_address: string;
+    phone: string;
+    email: string;
+    fax: string;
+    website: string;
+    payment_details: string;
+    logo_url: string;
+    logo_document_url: string;
+    quotation_condition: string;
+    quotation_shipping_condition: string;
+  }

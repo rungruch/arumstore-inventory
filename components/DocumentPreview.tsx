@@ -2,11 +2,11 @@
 // components/DocumentPreview.tsx
 import React, { JSX, useEffect, useState } from 'react';
 import ReceiptDocument from '../components/template/TaxInvoiceDocument';
-import { getSellTransactionByTransactionId } from "@/app/firebase/firestore";
+import { getSellTransactionByTransactionId, getCompanyDetails } from "@/app/firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import { bahttext } from "bahttext";
-import {StoreInfo, CustomerInfo, OrderInfo, Item, Totals, PaymentSummary, DocumentData, TransactionItem, TransactionData} from '../components/interface';
+import {Item, DocumentData, TransactionItem} from '../components/interface';
 
 export default function DocumentPreview(): JSX.Element {
   const searchParams = useSearchParams();
@@ -28,7 +28,11 @@ export default function DocumentPreview(): JSX.Element {
     const fetchTransactionData = async (): Promise<void> => {
       try {
         setIsLoading(true);
-        const transactionData: any = await getSellTransactionByTransactionId(transaction_id);
+
+        const [transactionData, companyDetails] = await Promise.all([
+          getSellTransactionByTransactionId(transaction_id) as Promise<any>,
+          getCompanyDetails()
+        ]);
         
         if (!transactionData) {
           setError("Transaction not found");
@@ -68,16 +72,21 @@ export default function DocumentPreview(): JSX.Element {
             day: 'numeric',
           });
 
+        // Check if company details exist, if not, use fallback values
+        if (!companyDetails || Object.keys(companyDetails).length === 0) {
+          console.warn("Company details not found, using fallback values");
+        }
+
         // Prepare complete document data
         const formattedDocumentData: DocumentData = {
           storeInfo: {
-            name: "บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด",
-            branch_name: "(สำนักงานใหญ่)",
-            address: "299/128 ถนนวิภาวดีรังสิต แขวงตลาดบางเขน เขตหลักสี่ กรุงเทพมหานคร 10210",
-            phone: "088-178-8669",
-            email: "icesouthmanagers@gmail.com",
-            tax_id: "0105566043410",
-            transferPaymentInfo:`ธนาคารกสิกรไทย ชื่อบัญชี บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด \nเลขที่บัญชี 152-8-24874-4`,
+            name: companyDetails?.name || "บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด",
+            branch_name: companyDetails?.branch_name || "(สำนักงานใหญ่)",
+            address: companyDetails?.address || "299/128 ถนนวิภาวดีรังสิต แขวงตลาดบางเขน เขตหลักสี่ กรุงเทพมหานคร 10210",
+            phone: companyDetails?.phone || "088-178-8669",
+            email: companyDetails?.email || "icesouthmanagers@gmail.com",
+            tax_id: companyDetails?.tax_id || "0105566043410",
+            transferPaymentInfo: companyDetails?.payment_details || `ธนาคารกสิกรไทย ชื่อบัญชี บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด \nเลขที่บัญชี 152-8-24874-4`,
           },
           customerInfo: {
             name: transactionData.client_name || '',
@@ -104,8 +113,8 @@ export default function DocumentPreview(): JSX.Element {
             buyerSignatureEnabled: false,
             sellerSignatureEnabled: false,
             showQuotationSection: false,
-            quotationCondition: "ชำระ 100% ก่อนส่งมอบสินค้า",
-            quotationShippingCondition: "จัดส่งฟรีภายใน 1-2 วันหลังจากได้รับการชำระเงิน จัดส่งโดย Flash Express",
+            quotationCondition: companyDetails.quotation_condition || "ชำระ 100% ก่อนส่งมอบสินค้า",
+            quotationShippingCondition: companyDetails.quotation_shipping_condition || "จัดส่งฟรีภายใน 1-2 วันหลังจากได้รับการชำระเงิน",
             quotationCredit: "7",
             quotationExpiredate: quotationExpireformattedDate
           },

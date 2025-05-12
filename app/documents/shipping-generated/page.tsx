@@ -3,13 +3,13 @@
 // OR 
 // pages/document/download.tsx (for Pages Router)
 
-import React, { JSX, useEffect, useState } from 'react';
+import React, { JSX, useEffect, useState, useRef } from 'react';
 import { useSearchParams } from "next/navigation";
-import { getSellTransactionByTransactionId } from "@/app/firebase/firestore";
+import { getSellTransactionByTransactionId, getCompanyDetails } from "@/app/firebase/firestore";
 import ReceiptDocument from "@/components/template/TaxInvoiceDocument";
 import { pdf } from '@react-pdf/renderer';
 import { bahttext } from "bahttext";
-import {StoreInfo, CustomerInfo, OrderInfo, Item, Totals, PaymentSummary, DocumentData, TransactionItem, TransactionData} from '@/components/interface';
+import {Item, DocumentData, TransactionItem, TransactionData} from '@/components/interface';
 
 export default function DocumentAutoDownload(): JSX.Element {
   const searchParams = useSearchParams();
@@ -18,8 +18,14 @@ export default function DocumentAutoDownload(): JSX.Element {
   
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const downloadInitiatedRef = useRef<boolean>(false);
 
   useEffect(() => {
+    // Prevent double downloads by checking if download has already been initiated
+    if (downloadInitiatedRef.current) {
+      return;
+    }
+
     if (!transaction_id) {
       setError("No transaction ID provided");
       setIsLoading(false);
@@ -34,8 +40,14 @@ export default function DocumentAutoDownload(): JSX.Element {
 
     const fetchAndGeneratePDF = async (): Promise<void> => {
       try {
-        // Fetch transaction data
-        const transactionData = await getSellTransactionByTransactionId(transaction_id) as TransactionData;
+        // Set flag to prevent duplicate downloads
+        downloadInitiatedRef.current = true;
+        
+        // Fetch transaction data and company details in parallel
+        const [transactionData, companyDetails] = await Promise.all([
+          getSellTransactionByTransactionId(transaction_id) as Promise<TransactionData>,
+          getCompanyDetails()
+        ]);
         
         if (!transactionData) {
           setError("Transaction not found");
@@ -75,16 +87,21 @@ export default function DocumentAutoDownload(): JSX.Element {
             day: 'numeric',
           }) : "-";
 
+        // Check if company details exist, if not, use fallback values
+        if (!companyDetails || Object.keys(companyDetails).length === 0) {
+          console.warn("Company details not found, using fallback values");
+        }
+
         // Prepare complete document data
         const documentData: DocumentData = {
           storeInfo: {
-            name: "บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด",
-            branch_name: "(สำนักงานใหญ่)",
-            address: "299/128 ถนนวิภาวดีรังสิต แขวงตลาดบางเขน เขตหลักสี่ กรุงเทพมหานคร 10210",
-            phone: "088-178-8669",
-            email: "icesouthmanagers@gmail.com",
-            tax_id: "0105566043410",
-            transferPaymentInfo:`ธนาคารกสิกรไทย ชื่อบัญชี บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด \nเลขที่บัญชี 152-8-24874-4`,
+            name: companyDetails?.name || "บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด",
+            branch_name: companyDetails?.branch_name || "(สำนักงานใหญ่)",
+            address: companyDetails?.address || "299/128 ถนนวิภาวดีรังสิต แขวงตลาดบางเขน เขตหลักสี่ กรุงเทพมหานคร 10210",
+            phone: companyDetails?.phone || "088-178-8669",
+            email: companyDetails?.email || "icesouthmanagers@gmail.com",
+            tax_id: companyDetails?.tax_id || "0105566043410",
+            transferPaymentInfo: companyDetails?.payment_details || `ธนาคารกสิกรไทย ชื่อบัญชี บริษัท อินเตอร์เน็ต เมค มี ริช จำกัด \nเลขที่บัญชี 152-8-24874-4`,
           },
           customerInfo: {
             name: transactionData.client_name || '',
@@ -146,15 +163,20 @@ export default function DocumentAutoDownload(): JSX.Element {
         const url = URL.createObjectURL(blob);
 
         // Create an anchor element and programmatically trigger the download
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `DeliveryNote-${documentData.orderInfo.orderNumber}.pdf`;
-        document.body.appendChild(link);
-        link.click();
+        if (downloadInitiatedRef.current) {
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `deliveryNote-${documentData.orderInfo.orderNumber}.pdf`;
+          document.body.appendChild(link);
+          link.click();
 
-        // Clean up
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+          // Clean up
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          // Set flag to prevent further downloads
+          downloadInitiatedRef.current = false;
+        }
         
         setIsLoading(false);
         

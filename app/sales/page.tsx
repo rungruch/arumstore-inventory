@@ -926,26 +926,26 @@ export default function ProductPage() {
                         className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
                       >
                         <div className="py-1">
-                          <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             สร้างรายการซ้ำ
                           </Link>
                           <div className="border-t border-gray-200 my-1" />
-                          <Link href={`/documents/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          <Link href={`/documents/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             พิมพ์เอกสาร
                           </Link>
-                          <Link href={`/documents/invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          <Link href={`/documents/invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             พิมพ์ใบกำกับภาษี/ใบเสร็จรับเงิน
                           </Link>
-                          <Link href={`/documents/quotation-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          <Link href={`/documents/quotation-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             พิมพ์ใบเสนอราคา
                           </Link>
-                          <Link href={`/documents/simplify-invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          <Link href={`/documents/simplify-invoice-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             พิมพ์ใบแจ้งหนี้
                           </Link>
-                          <Link href={`/documents/shipping-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          <Link href={`/documents/shipping-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             พิมพ์ใบส่งสินค้า
                           </Link>
-                          <Link href={`/documents/shipping-label-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          <Link href={`/documents/shipping-label-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             พิมพ์ฉลากจัดส่ง
                           </Link>
                         </div>
