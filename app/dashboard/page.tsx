@@ -7,7 +7,8 @@ import {
   getMonthlyIncomeByDate,
   getProductCountByWarehouse,
   getDailyIncomeSummary,
-  getYearlySales
+  getYearlySales,
+  getCachedProductCountByWarehouse
 } from "@/app/firebase/firestoreStats";
 import { 
   LineChart, 
@@ -43,6 +44,7 @@ const DashboardPage = () => {
   // State for chart data
   const [salesChart, setSalesChart] = useState<any[]>([]);
   const [pieChartData, setPieChartData] = useState<any[]>([]);
+  const [pieChartDataSelect, setPieChartDataSelect] = useState<any>("value_income");
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState<string>("");
@@ -55,7 +57,7 @@ const DashboardPage = () => {
       try {
         // Get current month and year
         const now = new Date();
-        setCurrentMonth(`${now.toLocaleString('default', { month: 'short' })}./${now.getFullYear() + 543}`);
+        setCurrentMonth(`${now.toLocaleString('th-TH', { month: 'short' })} ${now.getFullYear() + 543}`);
         
         // Fetch daily sales for today
         const todaySales = await getDailyIncomeSummary(now);
@@ -69,7 +71,6 @@ const DashboardPage = () => {
         
         // Fetch top selling products for this month
         const top = await getTopSellingProducts(now, 10);
-        console.log(top);
         setTopProducts(top);
         
         // Fetch summary for this month
@@ -79,17 +80,19 @@ const DashboardPage = () => {
         const yearly = await getYearlySales(now.getFullYear());
         
         // Fetch warehouse inventory data for pie chart
-        const warehouseData = await getProductCountByWarehouse();
-        setPieChartData(warehouseData.map((item, index) => ({
+        const warehouseData = await getCachedProductCountByWarehouse();
+        setPieChartData(warehouseData.map((item: { warehouse_name: any; count: any; totalIncome: any; }) => ({
           name: item.warehouse_name,
-          value: item.count
+          value_count: item.count,
+          value_income: item.totalIncome
         })));
+
         
         setSummary({
           todaySales: todaySales.totalIncome,
           monthlySales: monthly.allIncome,
           totalSales: yearly, // Now using the yearly sales instead of monthly
-          inventoryValue: warehouseData.reduce((sum, w) => sum + w.count, 0),
+          inventoryValue: warehouseData.reduce((sum: any, w: { count: any; }) => sum + w.count, 0),
         });
 
       } catch (error) {
@@ -126,7 +129,7 @@ const DashboardPage = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <div className="bg-white dark:bg-zinc-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700">
-          <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 block">ยอดขายวันนี้ (บาท)</span>
+          <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 block">ยอดขายวันนี้</span>
           <div className="flex items-center">
             <BadgeDollarSign className="mr-3 text-blue-500 dark:text-blue-400" size={20} />
             <span className="text-2xl font-bold text-gray-800 dark:text-white">{loading ? "-" : formatCurrency(summary.todaySales)}</span>
@@ -134,7 +137,7 @@ const DashboardPage = () => {
         </div>
         
         <div className="bg-white dark:bg-zinc-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700">
-          <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 block">ยอดขายเดือนนี้ ({currentMonth}) (บาท)</span>
+          <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 block">ยอดขายเดือน {currentMonth}</span>
           <div className="flex items-center">
             <BarChart3 className="mr-3 text-green-500 dark:text-green-400" size={20} />
             <span className="text-2xl font-bold text-gray-800 dark:text-white">{loading ? "-" : formatCurrency(summary.monthlySales)}</span>
@@ -142,7 +145,7 @@ const DashboardPage = () => {
         </div>
         
         <div className="bg-white dark:bg-zinc-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700">
-          <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 block">ยอดขายรวมทั้งปี {new Date().getFullYear()} (บาท)</span>
+          <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 block">ยอดขายรวมทั้งปี {new Date().getFullYear() + 543}</span>
           <div className="flex items-center">
             <Banknote className="mr-3 text-amber-500 dark:text-amber-400" size={20} />
             <span className="text-2xl font-bold text-gray-800 dark:text-white">{loading ? "-" : formatCurrency(summary.totalSales)}</span>
@@ -150,7 +153,7 @@ const DashboardPage = () => {
         </div>
         
         <div className="bg-white dark:bg-zinc-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700">
-          <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 block">มูลค่าสินค้าคงเหลือรายคลัง</span>
+          <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 block">จำนวนสินค้ารวม</span>
           <div className="flex items-center">
             <Building2 className="mr-3 text-purple-500 dark:text-purple-400" size={20} />
             <span className="text-2xl font-bold text-gray-800 dark:text-white">{loading ? "-" : formatCurrency(summary.inventoryValue)}</span>
@@ -200,10 +203,15 @@ const DashboardPage = () => {
         
         <div className="bg-white dark:bg-zinc-800 rounded-xl p-5 shadow-md border border-gray-100 dark:border-gray-700">
           <div className="flex justify-between items-center mb-5">
-            <span className="font-semibold text-gray-800 dark:text-white">มูลค่าสินค้าคงเหลือรายคลัง</span>
+            <span className="font-semibold text-gray-800 dark:text-white">สินค้ารายคลัง</span>
             <div className="relative">
-              <select className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm pr-8 bg-transparent text-gray-600 dark:text-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>รายคลัง</option>
+              <select 
+          className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm pr-8 bg-transparent text-gray-600 dark:text-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={(e) => setPieChartDataSelect(e.target.value === "มูลค่าสินค้า" ? "value_income" : "value_count")}
+          defaultValue="มูลค่าสินค้า"
+              >
+          <option>มูลค่าสินค้า</option>
+          <option>จำนวนสินค้า</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             </div>
@@ -215,23 +223,23 @@ const DashboardPage = () => {
               <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500">กำลังโหลด...</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                    outerRadius={90}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                </PieChart>
+          <PieChart>
+            <Pie
+              data={pieChartData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+              outerRadius={90}
+              fill="#8884d8"
+              dataKey={pieChartDataSelect}
+            >
+              {pieChartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+          </PieChart>
               </ResponsiveContainer>
             )}
           </div>

@@ -14,8 +14,10 @@ import {
   
   import { db } from "@/app/firebase/clientApp";
   import { TransactionType } from "@/app/firebase/enum";
+  import { ProductCategoryCount } from "@/app/firebase/interfaces";
   import { OrderStatus } from "@/app/firebase/enum";
   import { MonthlyIncome } from "@/app/firebase/interfaces";
+  import { getProductCategoryCount } from "@/app/firebase/firestore";
   
   /**
    * Get today's income summary from sell transactions
@@ -343,6 +345,183 @@ import {
       totalIncome: sku.totalIncome,
       quantity: Number(sku.quantity)
     }));
+  }
+
+
+  /**
+   * Get products with low stock levels
+   * @param {number} threshold - Stock threshold below which products are considered low-stock
+   * @param {string} warehouseId - Optional warehouse ID to filter by specific warehouse
+   * @returns {Promise<Array<{id: string, sku: string, name: string, stock: number, threshold: number, category: string, warning_threshold: number}>>}
+   */
+  export async function getLowStocksProducts(
+    defaultThreshold: number = 5, 
+    warehouseId?: string
+  ): Promise<Array<{
+    id: string;
+    sku: string;
+    name: string;
+    stock: number;
+    threshold: number;
+    category: string;
+    warehouse_id?: string;
+    warehouse_name?: string;
+  }>> {
+    try {
+      // Get all products
+      const productsRef = collection(db, "products");
+      const productsSnapshot = await getDocs(productsRef);
+      
+      // Get warehouse names if needed
+      const warehouseNames: Record<string, string> = {};
+      if (!warehouseId) {
+        const warehousesRef = collection(db, "product_warehouse");
+        const warehousesSnapshot = await getDocs(warehousesRef);
+        warehousesSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.warehouse_id && data.warehouse_name) {
+            warehouseNames[data.warehouse_id] = data.warehouse_name;
+          }
+        });
+      }
+      
+      const lowStockProducts = [];
+      
+      for (const doc of productsSnapshot.docs) {
+        const product = doc.data();
+        
+        // Check if the product has stocks
+        if (product.stocks && typeof product.stocks === 'object') {
+          if (warehouseId) {
+            // Check specific warehouse
+            const stockCount = Number(product.stocks[warehouseId] || 0);
+            // Use warehouse-specific threshold if defined, otherwise fall back to product default
+            const warehouseThresholds = product.warehouse_thresholds || {};
+            const productThreshold = warehouseThresholds[warehouseId] || 
+                                    product.warning_threshold || 
+                                    defaultThreshold;
+            
+            if (stockCount <= productThreshold) {
+              lowStockProducts.push({
+                id: doc.id,
+                sku: product.sku,
+                name: product.name,
+                stock: stockCount,
+                threshold: productThreshold,
+                category: product.category || 'Uncategorized',
+                warehouse_id: warehouseId,
+                warehouse_name: warehouseNames[warehouseId] || warehouseId
+              });
+            }
+          } else {
+            // Check each warehouse individually
+            Object.entries(product.stocks).forEach(([wId, stockVal]) => {
+              const stockCount = Number(stockVal);
+              const warehouseThresholds = product.warehouse_thresholds || {};
+              const productThreshold = warehouseThresholds[wId] || 
+                                      product.warning_threshold || 
+                                      defaultThreshold;
+              
+              if (stockCount <= productThreshold) {
+                lowStockProducts.push({
+                  id: doc.id,
+                  sku: product.sku,
+                  name: product.name,
+                  stock: stockCount,
+                  threshold: productThreshold,
+                  category: product.category || 'Uncategorized',
+                  warehouse_id: wId,
+                  warehouse_name: warehouseNames[wId] || wId
+                });
+              }
+            });
+          }
+        }
+      }
+      
+      // Sort by stock level (ascending)
+      return lowStockProducts.sort((a, b) => a.stock - b.stock);
+      
+    } catch (error) {
+      console.error("Error fetching low stock products:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get cached low stocks products with hourly refresh
+   * Similar to getCachedProductCountByWarehouse's caching approach
+   * @param {number} defaultThreshold - Stock threshold below which products are considered low-stock
+   * @param {string} warehouseId - Optional warehouse ID to filter by specific warehouse
+   * @returns {Promise<Array<{id: string, sku: string, name: string, stock: number, threshold: number, category: string, warehouse_id?: string, warehouse_name?: string}>>}
+   */
+  export async function getCachedLowStocksProducts(
+    defaultThreshold: number = 5, 
+    warehouseId?: string
+  ): Promise<Array<{
+    id: string;
+    sku: string;
+    name: string;
+    stock: number;
+    threshold: number;
+    category: string;
+    warehouse_id?: string;
+    warehouse_name?: string;
+  }>> {
+    try {
+      // Create a unique cache ID based on parameters
+      const cacheDocId = warehouseId 
+        ? `low_stocks_${warehouseId}_${defaultThreshold}` 
+        : `low_stocks_all_${defaultThreshold}`;
+      
+      const docRef = doc(db, "hourly_stats", cacheDocId);
+      const docSnap = await getDoc(docRef);
+
+      let lowStocksData;
+
+      if (!docSnap.exists()) {
+        // Get fresh low stocks data
+        lowStocksData = await getLowStocksProducts(defaultThreshold, warehouseId);
+        
+        // Set the data in the hourly_stats document
+        await setDoc(docRef, {
+          products: lowStocksData,
+          updated_at: Timestamp.now(),
+          parameters: {
+            threshold: defaultThreshold,
+            warehouseId: warehouseId || "all"
+          }
+        });
+      }
+      else {
+        const cachedData = docSnap.data();
+        
+        // If the data is older than 1 hour, refresh it
+        if (cachedData.updated_at.seconds < Date.now() / 1000 - 3600) {
+          // Get fresh low stocks data
+          lowStocksData = await getLowStocksProducts(defaultThreshold, warehouseId);
+          
+          // Update the cached data
+          await setDoc(docRef, {
+            products: lowStocksData,
+            updated_at: Timestamp.now(),
+            parameters: {
+              threshold: defaultThreshold,
+              warehouseId: warehouseId || "all"
+            }
+          });
+        } else {
+          // Use cached data
+          lowStocksData = cachedData.products;
+        }
+      }
+
+      return lowStocksData;
+    } catch (error) {
+      console.error("Error fetching cached low stocks products:", error);
+      // Fallback to non-cached function if cache fails
+      return getLowStocksProducts(defaultThreshold, warehouseId);
+    }
   }
 
   /**
@@ -686,6 +865,9 @@ import {
     }
   }
 
+
+  
+
   /**
    * Get all transactions that include a specific product SKU in their items
    * @param {string} sku - The SKU of the product to search for
@@ -797,7 +979,42 @@ import {
     }
   }
 
+  /**
+   * Get cached product category count with hourly refresh
+   * Similar to getCachedProductCountByWarehouse caching approach
+   * @returns {Promise<ProductCategoryCount>} - Product category count data
+   */
+  export async function getCachedProductCategoryCount(): Promise<ProductCategoryCount> {
+    try {
+      
+      const docRef = doc(db, "hourly_stats", "product_category_count");
+      const docSnap = await getDoc(docRef);
 
+      let categoryCountData;
 
+      if (!docSnap.exists()) {
+        // Get product category count data
+        categoryCountData = await getProductCategoryCount();
+        
+        // Set the data in the hourly_stats document
+        await setDoc(docRef, categoryCountData);
+      }
+      else {
+        categoryCountData = docSnap.data() as ProductCategoryCount;
 
+        // If the data is older than 1 hour, refresh it
+        if (categoryCountData.date.seconds < Date.now() / 1000 - 3600) {
+          // Get fresh product category count data
+          categoryCountData = await getProductCategoryCount();
+          
+          // Update the cached data
+          await setDoc(docRef, categoryCountData);
+        }
+      }
 
+      return categoryCountData;
+    } catch (error) {
+      console.error("Error fetching cached category counts:", error);
+      throw error;
+    }
+  }

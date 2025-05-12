@@ -341,13 +341,13 @@ export default function AddSellOrderForm({
       return {
         id: item.sku,
         product_code: item.sku,
-        product_name: leatest_product[0].name,
+        product_name: leatest_product.name,
         quantity: item.quantity ?? 0,
         price: item.price,
         discount: item.discount ?? 0,
         total: item.subtotal ?? 0,
-        stock: leatest_product[0].stocks[orderState.warehouse] ?? 0,
-        unit_type: leatest_product[0].unit_type
+        stock: leatest_product.stocks[orderState.warehouse] ?? 0,
+        unit_type: leatest_product.unit_type
       };
     }));
   }
