@@ -49,7 +49,10 @@ const DashboardPage = () => {
   const [categoryChartDataSelect, setCategoryChartDataSelect] = useState<any>("totalIncome");
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [topProductsLoading, setTopProductsLoading] = useState(true); // Separate loading state for top products
+  const [selectedMonthOffset, setSelectedMonthOffset] = useState<number>(0); // 0 = current month, 1 = previous month, etc.
   const [currentMonth, setCurrentMonth] = useState<string>("");
+  const [displayMonth, setDisplayMonth] = useState<string>("");
   const [totalProductCount, setTotalProductCount] = useState<number>(0);
   const [totalIncome, setTotalIncome] = useState<number>(0);
   const [totalPendingIncome, setTotalPendingIncome] = useState<number>(0);
@@ -66,6 +69,13 @@ const DashboardPage = () => {
         const now = new Date();
         setCurrentMonth(`${now.toLocaleString('th-TH', { month: 'short' })} ${now.getFullYear() + 543}`);
         
+        // Calculate the selected month date based on offset
+        const selectedDate = new Date();
+        selectedDate.setMonth(selectedDate.getMonth() - selectedMonthOffset);
+        
+        // Set the display month for the selected date
+        setDisplayMonth(`${selectedDate.toLocaleString('th-TH', { month: 'short' })} ${selectedDate.getFullYear() + 543}`);
+        
         // Fetch daily sales for today
         const todaySales = await getDailyIncomeSummary(now);
         
@@ -76,10 +86,6 @@ const DashboardPage = () => {
           value: m.totalIncome 
         })).reverse());
         
-        // Fetch top selling products for this month
-        const top = await getTopSellingProducts(now, 10);
-        setTopProducts(top);
-
         const lowStocks = await getCachedLowStocksProducts();
         setLowStocks(lowStocks);
         
@@ -122,7 +128,6 @@ const DashboardPage = () => {
           totalSales: yearly, // Now using the yearly sales instead of monthly
           inventoryValue: warehouseData.reduce((sum: any, w: { count: any; }) => sum + w.count, 0),
         });
-
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -131,7 +136,32 @@ const DashboardPage = () => {
     }
     
     fetchData();
-  }, []);
+  }, []); // Remove selectedMonthOffset dependency from main useEffect
+
+  // Separate useEffect for fetching top products based on selectedMonthOffset
+  useEffect(() => {
+    async function fetchTopProducts() {
+      setTopProductsLoading(true);
+      try {
+        // Calculate the selected month date based on offset
+        const selectedDate = new Date();
+        selectedDate.setMonth(selectedDate.getMonth() - selectedMonthOffset);
+        
+        // Set the display month for the selected date
+        setDisplayMonth(`${selectedDate.toLocaleString('th-TH', { month: 'short' })} ${selectedDate.getFullYear() + 543}`);
+        
+        // Fetch top selling products for the selected month
+        const top = await getTopSellingProducts(selectedDate, 10);
+        setTopProducts(top);
+      } catch (error) {
+        console.error("Error fetching top products data:", error);
+      } finally {
+        setTopProductsLoading(false);
+      }
+    }
+    
+    fetchTopProducts();
+  }, [selectedMonthOffset]); // This useEffect depends only on selectedMonthOffset
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -378,13 +408,17 @@ const DashboardPage = () => {
       {/* Table for best selling products in month */}
       <div className="bg-white dark:bg-zinc-800 rounded-xl p-5 shadow-md border border-gray-100 dark:border-gray-700 mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4">
-          <span className="font-semibold text-gray-800 dark:text-white">สินค้าขายดีประจำเดือน {currentMonth}</span>
+          <span className="font-semibold text-gray-800 dark:text-white">สินค้าขายดีประจำเดือน {displayMonth}</span>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <select className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm pr-8 bg-transparent text-gray-600 dark:text-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>เดือนนี้</option>
-                <option>3 เดือน</option>
-                <option>6 เดือน</option>
+              <select 
+                className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm pr-8 bg-transparent text-gray-600 dark:text-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedMonthOffset}
+                onChange={(e) => setSelectedMonthOffset(Number(e.target.value))}
+              >
+                <option value="0">เดือนนี้</option>
+                <option value="1">1 เดือนก่อน</option>
+                <option value="2">2 เดือนก่อน</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             </div>
@@ -410,7 +444,7 @@ const DashboardPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {loading ? (
+              {topProductsLoading ? (
                 <tr>
                   <td colSpan={5} className="text-center py-6 text-gray-400 dark:text-gray-500">กำลังโหลดข้อมูล...</td>
                 </tr>

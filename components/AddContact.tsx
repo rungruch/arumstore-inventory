@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createContact, updateContact, getContactGroups } from "@/app/firebase/firestore";
 import { Timestamp } from "firebase/firestore";
+import { province_th } from "@/components/enum";
 
 interface AddContactPopupProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
   const [contactData, setContactData] = useState({
     name: "",
     client_id: "",
+    province: "",
     tax_reference: {
       tax_id: "",
       branch_name: "",
@@ -92,6 +94,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
       setContactData({
         name: "",
         client_id: "",
+        province: "",
         tax_reference: {
           tax_id: "",
           branch_name: "",
@@ -131,6 +134,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
     setContactData({
       name: "",
       client_id: "",
+      province: "",
       tax_reference: {
         tax_id: "",
         branch_name: "",
@@ -187,6 +191,24 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
                     onChange={handleChange}
                     disabled={isSubmitting}
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">จังหวัด</label>
+                  <select
+                  name="province"
+                  className="w-full border border-gray-300 p-2 rounded-md"
+                  value={contactData.province || ""}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  >
+                  <option value="">เลือกจังหวัด</option>
+                  {province_th.map((province) => (
+                    <option key={province} value={province}>
+                    {province}
+                    </option>
+                  ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -344,7 +366,7 @@ export default function AddContactPopup({ isOpen, onClose }: AddContactPopupProp
               <h3 className="font-medium mb-2">ข้อมูลเพิ่มเติม</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">ที่อยู่</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200 ">ที่อยู่ออกใบกำกับภาษี</label>
                   <textarea
                     name="address"
                     className="w-full border border-gray-300 p-2 rounded-md"
@@ -429,6 +451,7 @@ export function EditContactPopup({ isOpen, onClose, contact, onSuccess }: EditCo
   const [contactData, setContactData] = useState({
     name: "",
     client_id: "",
+    province: "",
     tax_reference: {
       tax_id: "",
       branch_name: "",
@@ -468,6 +491,7 @@ export function EditContactPopup({ isOpen, onClose, contact, onSuccess }: EditCo
       setContactData({
         name: contact.name || "",
         client_id: contact.client_id || "",
+        province: contact.province || "",
         tax_reference: {
           tax_id: contact.tax_reference?.tax_id || "",
           branch_name: contact.tax_reference?.branch_name || "",
@@ -595,6 +619,24 @@ export function EditContactPopup({ isOpen, onClose, contact, onSuccess }: EditCo
                     onChange={handleChange}
                     disabled={isSubmitting}
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">จังหวัด</label>
+                  <select
+                  name="province"
+                  className="w-full border border-gray-300 p-2 rounded-md"
+                  value={contactData.province || ""}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  >
+                  <option value="">เลือกจังหวัด</option>
+                  {province_th.map((province) => (
+                    <option key={province} value={province}>
+                    {province}
+                    </option>
+                  ))}
+                  </select>
                 </div>
               </div>
             </div>

@@ -55,7 +55,7 @@ export function getMenuList(pathname: string): Group[] {
             label: "สินค้า"
           },
           {
-            href: "/dashboard/contacts",
+            href: "/dashboard/customers",
             label: "ลูกค้า"
           }
         ]

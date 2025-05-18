@@ -251,7 +251,7 @@ const DashboardPage = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4">
           <span className="font-semibold text-gray-800 dark:text-white">สินค้าขายดีประจำเดือน {currentMonth}</span>
           <div className="flex items-center gap-3">
-            <div className="relative">
+            <div className="relative hidden">
               <select className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm pr-8 bg-transparent text-gray-600 dark:text-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option>เดือนนี้</option>
                 <option>3 เดือน</option>

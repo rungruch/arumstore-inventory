@@ -21,7 +21,7 @@ const menuItems: MenuItem[] = [
       { title: "ยอดขาย", path: "/dashboard/sales" },
       { title: "ยอดซื้อ", path: "/dashboard/purchases" },
       { title: "สินค้า", path: "/dashboard/products" },
-      { title: "ลูกค้า", path: "/dashboard/contacts" }
+      { title: "ลูกค้า", path: "/dashboard/customers" }
     ]
   },
   {

@@ -156,12 +156,21 @@ export interface MonthlyIncome {
   str_date: string; // date in format yyyy-mm // 2025-04
   date: Timestamp; //calculate date
   created_date: Timestamp;
-  allIncome:number
+  allIncome: number;
+  bySellMethod: {
+    [method: string]: number;
+  };
   skus: {
-    name:string,
-    sku:string,
-    quantity:number,
-    totalIncome:number
+    name: string,
+    sku: string,
+    quantity: number,
+    totalIncome: number,
+    bySellMethod?: {
+      [method: string]: {
+        quantity: number,
+        totalIncome: number
+      }
+    }
   }[]
 }
 export interface YearlyIncome {
