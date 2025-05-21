@@ -115,7 +115,7 @@ const DashboardPage = () => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-2 border shadow-sm rounded">
-          <p className="text-sm">{`${label} : ฿${formatCurrency(payload[0].value)}`}</p>
+          <p className="text-sm font-medium text-gray-800 dark:text-black">{`${label} : ${formatCurrency(payload[0].value)} บาท`}</p>
         </div>
       );
     }

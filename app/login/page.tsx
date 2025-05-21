@@ -101,7 +101,7 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right hidden sm:block">
                         <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
                             ลืมรหัสผ่าน?
                         </Link>
@@ -118,7 +118,7 @@ export default function LoginPage() {
                 </form>
 
                 {/* Add sign up section */}
-                <div className="mt-6 text-center">
+                <div className="mt-6 text-center hidden sm:block">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                         ยังไม่มีบัญชีผู้ใช้งาน?{' '}
                         <button
