@@ -76,8 +76,8 @@ export default function DocumentAutoDownload(): JSX.Element {
         const rawtotalAmount: number = transactionData.items?.reduce((acc: number, product: TransactionItem) => 
           acc + (product.subtotal || 0), 0) || 0;
         
-        const rawtotalDiscount: number = transactionData.items?.reduce((acc: number, product: TransactionItem) => 
-          acc + (product.quantity || 0) * (product.discount || 0), 0) || 0;
+        // const rawtotalDiscount: number = transactionData.items?.reduce((acc: number, product: TransactionItem) => 
+        //   acc + (product.quantity || 0) * (product.discount || 0), 0) || 0;
       
         // Format date from Firestore timestamp
         const formattedDate: string = transactionData.created_date ? 
@@ -145,7 +145,7 @@ export default function DocumentAutoDownload(): JSX.Element {
           totals: {
             textTotal: "บาท",
             rawTotal: rawtotalAmount || 0,
-            discount: rawtotalDiscount || 0,
+            discount: transactionData.total_discount || 0,
             total_amount: transactionData.total_amount || 0,
             total_amount_no_vat: transactionData.total_amount_no_vat || 0,
             total_vat: transactionData.total_vat || 0,

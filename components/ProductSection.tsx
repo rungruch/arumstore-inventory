@@ -24,7 +24,7 @@ interface ProductData {
 }
 
 interface ProductSectionProps {
-  onProductsChange?: (products: Product[], totalAmount: number, totalAmountNoVat: number, totalVat: number) => void;
+  onProductsChange?: (products: Product[], totalAmount: number, totalAmountNoVat: number, totalVat: number, totalDiscount?: number) => void;
   warehouseName: string;
   vatType: VatType;
   shippingCost: number;
@@ -44,31 +44,51 @@ interface PaginatedResponse {
   const [totalAmountNoVat, setTotalAmountNoVat] = useState<number>(0);
   const [totalVat, setTotalVat] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [totalDiscount, setTotalDiscount] = useState<string>('0');
+  const [isPercentDiscount, setIsPercentDiscount] = useState<boolean>(false);
+  const [calculatedTotalDiscount, setCalculatedTotalDiscount] = useState<number>(0);
   
 
 
   useEffect(() => {
     // Calculate total amount whenever products change
     const sum:number = products.reduce((acc, product) => acc + (product.total || 0), 0);
+    
+    // Calculate total discount amount
+    let discountAmount = 0;
+    if (isPercentDiscount) {
+      const discountPercent = parseFloat(totalDiscount) || 0;
+      discountAmount = (sum * discountPercent) / 100;
+    } else {
+      discountAmount = parseFloat(totalDiscount) || 0;
+    }
+    
+    // Ensure discount doesn't exceed total sum
+    discountAmount = Math.min(discountAmount, sum);
+    setCalculatedTotalDiscount(discountAmount);
+
+    // Apply discount to the sum
+    const sumAfterDiscount = sum - discountAmount;
+
     if (vatType === VatType.VAT7) {
-        setTotalAmountNoVat(Number(sum));
-        setTotalVat(Number(sum) * 0.07);
-        setTotalAmount(Number(sum + (sum * 0.07)) + Number(shippingCost));
+        setTotalAmountNoVat(Number(sumAfterDiscount));
+        setTotalVat(Number(sumAfterDiscount) * 0.07);
+        setTotalAmount(Number(sumAfterDiscount + (sumAfterDiscount * 0.07)) + Number(shippingCost));
     } else if (vatType === VatType.VAT0) {
-        setTotalAmount(Number(sum) + Number(shippingCost));
-        setTotalAmountNoVat(Number(sum) * (100/107));
-        setTotalVat(sum * (7/107));
-    }else{
-        setTotalAmount(Number(sum) + Number(shippingCost));
-        setTotalAmountNoVat(sum);
+        setTotalAmount(Number(sumAfterDiscount) + Number(shippingCost));
+        setTotalAmountNoVat(Number(sumAfterDiscount) * (100/107));
+        setTotalVat(sumAfterDiscount * (7/107));
+    } else {
+        setTotalAmount(Number(sumAfterDiscount) + Number(shippingCost));
+        setTotalAmountNoVat(sumAfterDiscount);
         setTotalVat(0);
     }
     
     // Send the updated products to parent component
     if (onProductsChange) {
-      onProductsChange(products, totalAmount, totalAmountNoVat, totalVat,);
+      onProductsChange(products, totalAmount, totalAmountNoVat, totalVat, calculatedTotalDiscount);
     }
-  }, [products, onProductsChange, vatType]);
+  }, [products, onProductsChange, vatType, totalDiscount, isPercentDiscount, shippingCost]);
 
   useEffect(() => {
     // Reset products when warehouseName changes
@@ -334,6 +354,39 @@ if (numericValue < 0) {
             ))}
           </tbody>
           <tfoot>
+            <tr>
+              <td colSpan={5} className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium">ส่วนลด</td>
+              <td className="px-4 py-3 border-t border-r border-gray-200 text-right">
+                <div className="flex items-center justify-end">
+                  <input
+                    type="text"
+                    value={totalDiscount}
+                    onChange={(e) => {
+                      // Only allow numbers, decimals, and empty string
+                      const value = e.target.value;
+                      if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                        setTotalDiscount(value);
+                      }
+                    }}
+                    className="w-24 text-right border border-gray-300 rounded p-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none mr-2"
+                  />
+                  <select
+                    value={isPercentDiscount ? "percent" : "fixed"}
+                    onChange={(e) => setIsPercentDiscount(e.target.value === "percent")}
+                    className="border border-gray-300 rounded p-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="fixed">฿</option>
+                    <option value="percent">%</option>
+                  </select>
+                </div>
+              </td>
+              <td className="px-4 py-3 border-t border-gray-200"></td>
+            </tr>
+            <tr>
+              <td colSpan={5} className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium">จำนวนส่วนลด</td>
+              <td className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium text-black-700">{formatCurrency(calculatedTotalDiscount)}</td>
+              <td className="px-4 py-3 border-t border-gray-200"></td>
+            </tr>
             <tr>
               <td colSpan={5} className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium">มูลค่ารวมก่อนภาษี</td>
               <td className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium text-black-700">{formatCurrency(totalAmountNoVat)}</td>

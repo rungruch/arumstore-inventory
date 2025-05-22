@@ -106,6 +106,7 @@ export interface StoreInfo {
     total_amount?: number;
     total_amount_no_vat?: number;
     total_vat?: number;
+    total_discount?: number;
     shipping_cost?: number;
     payment_method?: string;
   }

@@ -69,6 +69,7 @@ interface AddSellOrderFormProps {
 interface FormattedOrderData extends OrderState {
   status: string;
   items: formOrderItem[];
+  total_discount: number;
   total_amount: number;
   total_vat: number;
   total_amount_no_vat: number;
@@ -144,6 +145,7 @@ export default function AddSellOrderForm({
   const [totalOrderAmount, setTotalOrderAmount] = useState<number>(0);
   const [totalVatAmount, setTotalVatAmount] = useState<number>(0);
   const [totalOrderAmountNoVat, setTotalOrderAmountNoVat] = useState<number>(0);
+  const [totalDiscountAmount, setTotalDiscountAmount] = useState<number>(0);
 
   const [validationError, setValidationError] = useState<string>("");
   const [isCreateContactDisabled, setisCreateContactDisabled] = useState<boolean>(false);
@@ -362,11 +364,12 @@ export default function AddSellOrderForm({
     }));
   }
 
-  const handleProductsChange = (products: OrderItem[], totalAmount: number, totalAmountNoVat: number, vatAmount: number): void => {
+  const handleProductsChange = (products: OrderItem[], totalAmount: number, totalAmountNoVat: number, vatAmount: number, totalDiscount: number = 0): void => {
     setOrderItems(products);
     setTotalOrderAmount(totalAmount);
     setTotalOrderAmountNoVat(totalAmountNoVat);
     setTotalVatAmount(vatAmount);
+    setTotalDiscountAmount(totalDiscount);
   };
 
   const handleSave = async (): Promise<void> => {
@@ -421,6 +424,7 @@ export default function AddSellOrderForm({
         subtotal: item.total,
         warehouse_id: orderState.warehouse
       })),
+      total_discount: totalDiscountAmount,
       total_amount_no_vat: totalOrderAmountNoVat,
       total_vat: totalVatAmount,
       total_amount: totalOrderAmount,

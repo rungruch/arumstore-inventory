@@ -336,7 +336,7 @@ const TaxInvoiceDocument = ({ data }: { data: any }) => (
 
         <View style={styles.totalsTable}>
           <View style={styles.totalsRow}>
-            <Text style={styles.totalsLabel}>รวมส่วนลดเงินสด</Text>
+            <Text style={styles.totalsLabel}>ส่วนลด</Text>
             <Text style={styles.totalsValue}>{data.totals.discount.toLocaleString()}</Text>
           </View>
           <View style={styles.totalsRow}>

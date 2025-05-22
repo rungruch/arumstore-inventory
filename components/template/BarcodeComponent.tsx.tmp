@@ -1,0 +1,115 @@
+import React, { useEffect, useState } from 'react';
+import { Image, View, Text, StyleSheet } from '@react-pdf/renderer';
+// import JsBarcode from 'jsbarcode';
+
+const styles = StyleSheet.create({
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  barcodeValue: {
+    fontSize: 10,
+    marginTop: 5,
+  },
+});
+
+interface BarcodeProps {
+  value: string;
+  width?: number;
+  height?: number;
+  displayValue?: boolean;
+  style?: any;
+  textStyle?: any;
+}
+
+// Static barcode generation function
+const generateBarcodeDataURL = (value: string): string => {
+  // Create a canvas element (only in browser)
+  if (typeof window !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    
+    try {
+      JsBarcode(canvas, value, {
+        format: 'CODE128',
+        width: 2,
+        height: 50,
+        displayValue: false,
+      });
+      
+      return canvas.toDataURL('image/png');
+    } catch (err) {
+      console.error('Error generating barcode:', err);
+      return '';
+    }
+  }
+  
+  // Return a placeholder for server-side rendering
+  return '';
+};
+
+// Pre-rendered barcodes for common values (optional)
+const BARCODE_CACHE: Record<string, string> = {};
+
+// A PDF-compatible barcode component
+const BarcodeComponent: React.FC<BarcodeProps> = ({ 
+  value, 
+  width = 200, 
+  height = 50, 
+  displayValue = true,
+  style = {},
+  textStyle = {}
+}) => {
+  const [barcodeUrl, setBarcodeUrl] = useState<string>('');
+
+  // Generate the barcode on mount (client-side only)
+  useEffect(() => {
+    if (!value) return;
+
+    // Check if we have a cached version
+    if (BARCODE_CACHE[value]) {
+      setBarcodeUrl(BARCODE_CACHE[value]);
+      return;
+    }
+
+    // Generate the barcode
+    const dataUrl = generateBarcodeDataURL(value);
+    BARCODE_CACHE[value] = dataUrl;
+    setBarcodeUrl(dataUrl);
+  }, [value]);
+
+  // If no value or we're server-side rendering
+  if (!value || (typeof window === 'undefined')) {
+    return (
+      <View style={[styles.container, style]}>
+        <View style={{ width, height, border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 9 }}>Barcode: {value || 'N/A'}</Text>
+        </View>
+        {displayValue && (
+          <Text style={[styles.barcodeValue, textStyle]}>
+            {value || 'N/A'}
+          </Text>
+        )}
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, style]}>
+      {barcodeUrl ? (
+        <Image src={barcodeUrl} style={{ width, height }} />
+      ) : (
+        <View style={{ width, height, border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 9 }}>Loading...</Text>
+        </View>
+      )}
+      {displayValue && (
+        <Text style={[styles.barcodeValue, textStyle]}>
+          {value}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+export default BarcodeComponent;

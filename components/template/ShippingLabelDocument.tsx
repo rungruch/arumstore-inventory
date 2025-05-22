@@ -1,5 +1,8 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+// You can use either BarcodeComponent (client-side) or StaticBarcodeComponent (works everywhere)
+import BarcodeComponent from './StaticBarcodeComponent';
+// import BarcodeComponent from './BarcodeComponent'; // Alternative that uses jsbarcode (client-side only)
 
 // Register Thai font (you'll need to add these font files to your project)
 Font.register({
@@ -99,10 +102,10 @@ const ShippingLabelDocument = ({ data }: { data: any }) => (
           </Text>
         </View>
         
-        {/* Barcode Section */}
-        <View style={styles.barcode}>
-          <Text style={styles.barcodeText}>{data.customerInfo.orderNumber || ''}</Text>
-        </View>
+{/* Barcode Section */}
+<View style={styles.barcode}>
+  <BarcodeComponent value={data.customerInfo.orderNumber || ''} />
+</View>
       </View>
     </Page>
   </Document>

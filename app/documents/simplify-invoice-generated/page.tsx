@@ -144,7 +144,7 @@ export default function DocumentAutoDownload(): JSX.Element {
           totals: {
             textTotal: "บาท",
             rawTotal: rawtotalAmount || 0,
-            discount: rawtotalDiscount || 0,
+            discount: transactionData.total_discount || 0,
             total_amount: transactionData.total_amount || 0,
             total_amount_no_vat: transactionData.total_amount_no_vat || 0,
             total_vat: transactionData.total_vat || 0,
