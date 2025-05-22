@@ -1,6 +1,6 @@
 "use client";
 
-import { getSellTransactionPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus, getSellTransactionsByDate } from "@/app/firebase/firestore";
+import { getSellTransactionPaginated, getTotalSellTransactionCount, getSellTransactionbyName, updateOrderTransactionStatus, getSellTransactionsByDate, deleteSellTransaction } from "@/app/firebase/firestore";
 import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -24,6 +24,13 @@ interface ModalState {
   message: string;
 }
 
+interface ModalState2 {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  id: string;
+}
+
 export default function ProductPage() {
   const [search, setSearch] = useState(""); // Search input state
   const [data, setDatas] = useState<any>([]); // Current categories
@@ -41,6 +48,12 @@ export default function ProductPage() {
     title: "",
     message: "",
   });
+   const [modalState2, setModalState2] = useState<ModalState2>({
+      isOpen: false,
+      title: "",
+      message: "",
+      id: ""
+    });
   const [shippingDetailsModal, setShippingDetailsModal] = useState<{
     isOpen: boolean;
     transactionId: string | null;
@@ -217,8 +230,48 @@ export default function ProductPage() {
     }
   };
 
+  const handleDeleteTransaction = async (transactionId: string) => {
+
+    try {
+      setLoading(true);
+      
+      // Delete transaction (mark as deleted and update status to CANCELLED)
+      await deleteSellTransaction(transactionId, true);
+
+      closeModal2();
+
+      // Show success message
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.SUCCESS,
+        message: "ลบรายการขายเรียบร้อยแล้ว"
+      });
+
+      // Refresh data
+      setTrigger(prev => !prev);
+    } catch (error) {
+      console.error("Delete transaction error:", error);
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: error instanceof Error
+          ? error.message
+          : "เกิดข้อผิดพลาดในการลบรายการขาย"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const closeModal = (): void => {
     setModalState(prev => ({
+      ...prev,
+      isOpen: false
+    }));
+  };
+
+    const closeModal2 = (): void => {
+    setModalState2(prev => ({
       ...prev,
       isOpen: false
     }));
@@ -392,6 +445,14 @@ export default function ProductPage() {
         title={modalState.title}
         message={modalState.message}
       />
+
+      <Modal
+        isOpen={modalState2.isOpen}
+        onClose={closeModal2}
+        title={modalState2.title}
+        message={modalState2.message}
+        onConfirm={() => handleDeleteTransaction(modalState2.id)}  
+        />
 
       {shippingDetailsModal.isOpen && shippingDetailsModal.transactionId && (
         <ShippingDetailsForm
@@ -667,7 +728,7 @@ export default function ProductPage() {
                             <div className="col-span-2 mt-2 text-xs text-gray-500 border-t pt-1">
                               <div className="flex flex-col xs:flex-row xs:justify-between">
                                 <p className="truncate">สร้างโดย: {data.created_by}</p>
-                                <p className="truncate">อัพเดตโดย: {data.updated_by}</p>
+                                <p className="truncate">อัพเดตล่าสุด: {data.updated_by}</p>
                               </div>
                             </div>
                           </div>
@@ -920,7 +981,25 @@ export default function ProductPage() {
 
                               // Set position styles
                               dropdown.style.position = 'fixed';
-                              dropdown.style.top = `${rect.bottom}px`;
+                              
+                              // Check if dropdown would go off bottom of viewport
+                              const viewportHeight = window.innerHeight;
+                              const dropdownHeight = dropdown.offsetHeight;
+                              const spaceBelow = viewportHeight - rect.bottom;
+                              
+                              if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+                                // Not enough space below, position above if there's space
+                                dropdown.style.top = `${rect.top - dropdownHeight}px`;
+                              } else if (spaceBelow < dropdownHeight) {
+                                // Not enough space above or below, position at top of screen with scrolling
+                                dropdown.style.top = '10px';
+                                dropdown.style.maxHeight = `${viewportHeight - 20}px`;
+                                dropdown.style.overflowY = 'auto';
+                              } else {
+                                // Enough space below
+                                dropdown.style.top = `${rect.bottom}px`;
+                              }
+                              
                               dropdown.style.left = `${rect.left - dropdown.offsetWidth + button.offsetWidth}px`;
                               dropdown.style.zIndex = '9999';
 
@@ -949,7 +1028,7 @@ export default function ProductPage() {
                       {/* Move dropdown to portal root to avoid table containment issues */}
                       <div
                         id={`more-dropdown-${data.transaction_id}`}
-                        className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
+                        className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800 max-h-[80vh] overflow-y-auto"
                       >
                         <div className="py-1">
                           <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
@@ -974,6 +1053,30 @@ export default function ProductPage() {
                           <Link href={`/documents/shipping-label-generated?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             พิมพ์ฉลากจัดส่ง
                           </Link>
+                          {(data.status === OrderStatus.PENDING || data.status === OrderStatus.SHIPPING) && hasPermission('sales', 'delete') && (
+                            <>
+                              <div className="border-t border-gray-200 my-1" />
+                              <button
+                                onClick={() => {
+                                  // Close the dropdown
+                                  const dropdown = document.getElementById(`more-dropdown-${data.transaction_id}`);
+                                  if (dropdown) {
+                                    dropdown.classList.add('hidden');
+                                  }
+
+                                  setModalState2({
+                                    isOpen: true,
+                                    title: ModalTitle.DELETE,
+                                    message: `คุณต้องการลบรายการ ${data.transaction_id} ใช่หรือไม่?`,
+                                    id: data.transaction_id
+                                  });
+                                }}
+                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-700"
+                              >
+                                ลบรายการขาย
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

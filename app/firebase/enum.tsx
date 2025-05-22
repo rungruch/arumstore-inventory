@@ -52,7 +52,7 @@ export enum OrderStatus {
 
   export enum OrderStatusDisplay {
     PENDING = "รออนุมัติ",
-    SHIPPING = "เตรียมส่ง",
+    SHIPPING = "อนุมัติ",
     SHIPPED = "จัดส่งแล้ว",
     PICKED_UP = "รับสินค้าแล้ว",
     CANCELLED = "ยกเลิก",

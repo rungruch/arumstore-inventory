@@ -572,6 +572,65 @@ export async function getSellTransactionByTransactionId(transactionId: string) {
   }
 }
 
+/**
+ * Deletes a sell transaction or marks it as deleted
+ * @param transaction_id The ID of the transaction to delete
+ * @param permanently If true, permanently removes the document from Firestore, otherwise marks it as deleted
+ * @returns Promise with deletion result
+ */
+export async function deleteSellTransaction(transaction_id: string, permanently: boolean = false) {
+  try {
+    return await runTransaction(db, async (transaction) => {
+      // Find the transaction document
+      const transactionRef = doc(db, "transactions", transaction_id);
+      const transactionDoc = await transaction.get(transactionRef);
+
+      // Validate transaction exists
+      if (!transactionDoc.exists()) {
+        throw new Error(`Transaction with ID "${transaction_id}" not found`);
+      }
+
+      const transactionData = transactionDoc.data();
+
+      // If the transaction is in PENDING or SHIPPING status, restore stock
+      if (transactionData.status === OrderStatus.PENDING) {
+        await handleCancelledOrderStockUpdatePending(transaction, transactionData.items);
+      } else if (transactionData.status === OrderStatus.SHIPPING) {
+        await handleCancelledOrderStockUpdateShipping(transaction, transactionData.items);
+      }
+
+      // If permanently deleting, remove the document
+      if (permanently) {
+        transaction.delete(transactionRef);
+        return { 
+          id: transaction_id, 
+          deleted: true, 
+          permanent: true 
+        };
+      } 
+      // Otherwise mark as deleted
+      else {
+        transaction.update(transactionRef, {
+          status: OrderStatus.CANCELLED,
+          deleted: true,
+          updated_date: Timestamp.now()
+        });
+        
+        return { 
+          id: transaction_id, 
+          deleted: true, 
+          permanent: false,
+          ...transactionData,
+          status: OrderStatus.CANCELLED
+        };
+      }
+    });
+  } catch (error) {
+    console.error("Error deleting transaction:", error);
+    throw error;
+  }
+}
+
 
 export async function getProductCategory() {
   try {
