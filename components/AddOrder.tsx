@@ -8,6 +8,9 @@ import { Timestamp } from "firebase/firestore";
 import { createContact } from "@/app/firebase/firestore";
 import ProductSection from "./ProductSection";
 import {VatType, TransactionType} from "@/app/firebase/enum";
+import { OrderHistoryEntry, StatusChangeEntry } from "@/app/firebase/interfaces";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { OrderStatus } from "@/app/firebase/enum";
 
 // Define types for the component
 interface Warehouse {
@@ -35,6 +38,7 @@ interface OrderState {
   transaction_type: TransactionType;
   sell_method: string;
   vat_type: VatType;
+  client_chat_name: string;
   client_name: string;
   client_id: string;
   client_tel: string;
@@ -72,8 +76,10 @@ interface FormattedOrderData extends OrderState {
   payment_status: string;
   created_by: string;
   updated_by: string;
-  created_date: any; // Using any for Firestore Timestamp
+  created_date: any;
   updated_date: any;
+  status_history: StatusChangeEntry[];
+  edit_history: OrderHistoryEntry[];
 }
 
 interface Contact {
@@ -109,12 +115,16 @@ export default function AddSellOrderForm({
   const [salesMethods, setSalesMethods] = useState<Array<{value: string, label: string}>>([]);
   const [shippingMethods, setShippingMethods] = useState<Array<{value: string, label: string}>>([]);
   const router = useRouter();
-
+  const { currentUser } = useAuth(); // Get the current user from AuthContext
+  
+  // Use user email for tracking who created and modified records
+  const userEmail = currentUser?.email || "UNKNOW"; // Fallback to "admin" if user is not available
   const [orderState, setOrderState] = useState<OrderState>({
     transaction_id: "",
     transaction_type: TransactionType.SELL,
     sell_method: "",
     vat_type: VatType.VAT0,
+    client_chat_name: "",
     client_name: "",
     client_id: "",
     client_tel: "",
@@ -397,30 +407,39 @@ export default function AddSellOrderForm({
       setValidationError("");
 
     const formattedTransactionData: FormattedOrderData = {
-        ...orderState,
-        shipping_cost: Number(orderState.shipping_cost),
-        status: "PENDING",
-        items: orderItems.filter(item => item.id !== '').map(item => ({
-            name: item.product_name,
-            sku: item.product_code,
-            quantity: item.quantity,
-            unit_type: item.unit_type,
-            initial_quantity: item.stock,
-            price: item.price,
-            discount: item.discount,
-            subtotal: item.total,
-            warehouse_id: orderState.warehouse
-        })),
-        total_amount_no_vat: totalOrderAmountNoVat,
-        total_vat: totalVatAmount,
-        total_amount: totalOrderAmount,
-        payment_method: "",
-        payment_status: "",
-        created_by: "admin",
-        updated_by: "admin",
-        created_date: Timestamp.now(),
-        updated_date: Timestamp.now(),
-      };
+      ...orderState,
+      shipping_cost: Number(orderState.shipping_cost),
+      status: OrderStatus.PENDING,
+      items: orderItems.filter(item => item.id !== '').map(item => ({
+        name: item.product_name,
+        sku: item.product_code,
+        quantity: item.quantity,
+        unit_type: item.unit_type,
+        initial_quantity: item.stock,
+        price: item.price,
+        discount: item.discount,
+        subtotal: item.total,
+        warehouse_id: orderState.warehouse
+      })),
+      total_amount_no_vat: totalOrderAmountNoVat,
+      total_vat: totalVatAmount,
+      total_amount: totalOrderAmount,
+      payment_method: "",
+      payment_status: "",
+      created_by: userEmail,
+      updated_by: userEmail,
+      created_date: Timestamp.now(),
+      updated_date: Timestamp.now(),
+      status_history: [
+        {
+          timestamp: Timestamp.now(),
+          created_by: userEmail,
+          old_status: OrderStatus.PENDING,
+          new_status: OrderStatus.PENDING
+        }
+      ],
+      edit_history: []
+    };
 
       await createSellTransactionWithStockDeductionv2(formattedTransactionData);
 
@@ -430,6 +449,7 @@ export default function AddSellOrderForm({
         transaction_type: TransactionType.SELL,
         sell_method: "",
         vat_type: VatType.VAT0,
+        client_chat_name: "",
         client_name: "",
         client_id: "",
         client_tel: "",
@@ -572,6 +592,18 @@ export default function AddSellOrderForm({
                     </>
                   )}
                 </select>
+              </div>
+
+              <div className="relative mb-3">
+                <label className="absolute -top-2 left-2 text-xs bg-white dark:bg-zinc-800 px-1 text-gray-500 dark:text-gray-400">ชื่อแชท</label> 
+                <input 
+                  type="text" 
+                  name="client_chat_name" 
+                  placeholder="ชื่อแชท" 
+                  value={orderState.client_chat_name} 
+                  onChange={handleChange} 
+                  className="w-full border p-2 pt-1 rounded-md text-sm  dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                />
               </div>
               
               <div className="relative">

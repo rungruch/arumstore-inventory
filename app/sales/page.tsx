@@ -548,7 +548,7 @@ export default function ProductPage() {
                   <th className="p-2 w-[10%]">วันที่</th>
                   <th className="p-2 w-[10%]">รายการ</th>
                   <th className="p-2 w-[25%]">ลูกค้า</th>
-                  <th className="p-2 w-[10%]">ช่องทางขาย</th>
+                  <th className="p-2 w-[10%]">ชื่อแชท</th>
                   <th className="p-2 flex-1">มูลค่า</th>
                   <th className="p-2 flex-1">สถานะ</th>
                   <th className="p-2 flex-1">วันส่งสินค้า</th>
@@ -589,23 +589,38 @@ export default function ProductPage() {
                       {data.transaction_id}
                       {hoveredRow === data.transaction_id && (
                         <div
-                          className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 dark:bg-zinc-800"
+                          className="absolute bg-white border border-gray-200 shadow-lg rounded-md p-3 z-50 dark:bg-zinc-800 transaction-tooltip"
                           style={{
                             top: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.y - 90}px`,
                             left: window.innerWidth <= 768 ? '50%' : `${tooltipPosition.x + 20}px`,
                             transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
-                            maxWidth: window.innerWidth <= 768 ? '90vw' : '450px',
-                            maxHeight: '80vh',
+                            width: window.innerWidth <= 768 ? '90vw' : '350px',
+                            maxHeight: '70vh',
                             overflow: 'auto',
                             position: window.innerWidth <= 768 ? 'fixed' : 'absolute'
                           }}
                         >
-                          <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white">{data.transaction_id}</h3>
-                          <div className="text-sm space-y-1">
+                          <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white flex items-center justify-between">
+                            <span>{data.transaction_id}</span>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setHoveredRow(null);
+                              }}
+                              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </button>
+                          </h3>
+                          
+                          <div className="text-sm grid grid-cols-2 gap-x-2 gap-y-1">
                             <p><span className="font-semibold dark:text-gray-200">วันที่:</span> {data.created_date ?
                               new Date(data.created_date.toDate()).toLocaleString('th-TH', {
                                 year: 'numeric',
-                                month: 'long',
+                                month: 'short',
                                 day: 'numeric',
                                 hour: '2-digit',
                                 minute: '2-digit'
@@ -613,37 +628,48 @@ export default function ProductPage() {
                             </p>
                             <p><span className="font-semibold">ลูกค้า:</span> {data.client_name}</p>
                             <p><span className="font-semibold">มูลค่า:</span> {data.total_amount} บาท</p>
-                            <p><span className="font-semibold">หมายเหตุ:</span> {data.notes}</p>
-                            <div className="mt-2 border-t pt-2">
-                              <p className="font-semibold">คลังสินค้า: {data.warehouse}</p>
-                              <p className="font-semibold">รายการสินค้า:</p>
-                              {data.items.map((item: any, idx: any) => (
-                                <div key={idx} className="pl-2 mt-1 break-words">
-                                  - {item.name} ({item.price}฿) : {item.quantity} ชิ้น
-                                </div>
-                              ))}
-                            </div>
+                            <p><span className="font-semibold">ช่องทางขาย:</span> {data.sell_method}</p>
+                            
                             {data.payment_method && (
                               <p><span className="font-semibold">ชำระโดย:</span> {data.payment_method}</p>
                             )}
                             {data.note && (
                               <p><span className="font-semibold">หมายเหตุ:</span> {data.note}</p>
                             )}
+                            
+                            <div className="col-span-2 mt-2 border-t pt-2">
+                              <p className="font-semibold">คลังสินค้า: {data.warehouse}</p>
+                              <p className="font-semibold">รายการสินค้า:</p>
+                              <div className="pl-2 mt-1 max-h-28 overflow-y-auto">
+                                {data.items.map((item: any, idx: any) => (
+                                  <div key={idx} className="break-words text-xs">
+                                    - {item.name} ({item.price}฿) : {item.quantity} ชิ้น
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
                             {data.shipping_details && (
-                              <div className="mt-2 pt-1 border-t">
+                              <div className="col-span-2 mt-2 pt-1 border-t">
                                 <p><span className="font-semibold">ส่งโดย:</span> {data.shipping_details.shipping_method}</p>
-                                <p><span className="font-semibold">วันที่ส่ง:</span> {
-                                  new Date(data.shipping_details.shipping_date.toDate()).toLocaleString('th-TH', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })
-                                }</p>
                                 {data.shipping_details.tracking_number && (
                                   <p><span className="font-semibold">เลขพัสดุ:</span> {data.shipping_details.tracking_number}</p>
                                 )}
                               </div>
                             )}
+                            
+                            {data.notes && (
+                              <div className="col-span-2 mt-1">
+                                <p><span className="font-semibold">หมายเหตุ:</span> {data.notes}</p>
+                              </div>
+                            )}
+                            
+                            <div className="col-span-2 mt-2 text-xs text-gray-500 border-t pt-1">
+                              <div className="flex flex-col xs:flex-row xs:justify-between">
+                                <p className="truncate">สร้างโดย: {data.created_by}</p>
+                                <p className="truncate">อัพเดตโดย: {data.updated_by}</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -654,7 +680,7 @@ export default function ProductPage() {
                       {data.client_name}
                     </Link>
                   </td>
-                  <td className="p-2 w-[10%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.sell_method}</td>
+                  <td className="p-2 w-[10%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.client_chat_name}</td>
                   <td className="p-2 flex-1">{data.total_amount}</td>
                   <td className="p-2">
                     <div className="relative" style={{ width: "120px" }}>

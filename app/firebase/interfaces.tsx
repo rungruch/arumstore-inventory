@@ -1,5 +1,6 @@
 // interfaces/warehouse.ts
 import { Timestamp } from "firebase/firestore";
+import { OrderStatus } from "@/app/firebase/enum";
 
 export interface Warehouse {
   id: string;
@@ -231,3 +232,22 @@ export interface ProductCategoryCount {
     quotation_condition: string;
     quotation_shipping_condition: string;
   }
+
+
+
+  
+
+  export interface OrderHistoryEntry {
+  updated_at: Timestamp;
+  created_by: string;
+  old_value: any;
+  new_value: any;
+}
+
+// Define a specific history entry for status changes
+export interface StatusChangeEntry {
+  timestamp: Timestamp;
+  created_by: string;
+  old_status: OrderStatus;
+  new_status: OrderStatus;
+}
