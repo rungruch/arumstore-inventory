@@ -5,6 +5,8 @@ import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ClientThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/app/contexts/AuthContext";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { NavigationLoadingProvider } from "@/components/providers/navigation-loading-provider";
+import { NavigationLoadingIndicator } from "@/components/providers/navigation-loading-indicator";
 
 // Use consistent naming for font variables
 const geistSans = Geist({
@@ -44,9 +46,12 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <ClientThemeProvider>
-            <AdminPanelLayout>
-              <ContentLayout>{children}</ContentLayout>
-            </AdminPanelLayout>
+            <NavigationLoadingProvider>
+              <NavigationLoadingIndicator />
+              <AdminPanelLayout>
+                <ContentLayout>{children}</ContentLayout>
+              </AdminPanelLayout>
+            </NavigationLoadingProvider>
           </ClientThemeProvider>
         </AuthProvider>
       </body>

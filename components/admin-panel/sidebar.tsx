@@ -6,7 +6,7 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
 import { PanelsTopLeft } from "lucide-react";
-import Link from "next/link";
+import { NavigationLink } from "@/components/providers/navigation-link";
 
 export function Sidebar() {
   const sidebar = useStore(useSidebar, (x) => x);
@@ -34,7 +34,7 @@ export function Sidebar() {
           variant="link"
           asChild
         >
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <NavigationLink href="/dashboard" className="flex items-center gap-2">
             {/* <PanelsTopLeft className="w-6 h-6 mr-1" /> */}
             <img src="/favicon.ico" alt="Arum Logo" width={32} height={32} className="w-8 h-8"/>
             <h1
@@ -47,7 +47,7 @@ export function Sidebar() {
             >
               Arum
             </h1>
-          </Link>
+          </NavigationLink>
         </Button>
         <Menu isOpen={getOpenState()} />
       </div>

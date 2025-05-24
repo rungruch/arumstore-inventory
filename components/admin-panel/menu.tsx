@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Ellipsis } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { NavigationLink } from "@/components/providers/navigation-link";
 
 import { cn } from "@/lib/utils";
 import { getMenuList } from "@/lib/menu-list";
@@ -116,7 +116,7 @@ export function Menu({ isOpen }: MenuProps) {
                                 className="w-full justify-start h-10 mb-1"
                                 asChild
                               >
-                                <Link href={href}>
+                                <NavigationLink href={href}>
                                   <span
                                     className={cn(isOpen === false ? "" : "mr-4")}
                                   >
@@ -132,7 +132,7 @@ export function Menu({ isOpen }: MenuProps) {
                                   >
                                     {label}
                                   </p>
-                                </Link>
+                                </NavigationLink>
                               </Button>
                             </TooltipTrigger>
                             {isOpen === false && (

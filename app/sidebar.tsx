@@ -3,7 +3,7 @@
 import { JSX, useState } from "react";
 import { FaShoppingCart, FaChartBar, FaCog, FaUsers, FaBoxOpen } from "react-icons/fa";
 import { MdOutlineShoppingCart, MdAttachMoney } from "react-icons/md";
-import Link from "next/link";
+import { NavigationLink } from "@/components/providers/navigation-link";
 import { usePathname } from "next/navigation"; // Import the usePathname hook
 
 interface MenuItem {
@@ -115,11 +115,9 @@ const Sidebar: React.FC = () => {
                     className={`p-2 cursor-pointer ${pathname === sub.path ? "text-blue-600 font-semibold" : "text-gray-700"} hover:bg-gray-200 rounded-lg`}
                   >
                     {/* Link now uses subMenu's path */}
-                    <Link href={sub.path} passHref>
-                      <div className="block w-full p-2 cursor-pointer rounded-lg">
-                        {sub.title}
-                      </div>
-                    </Link>
+                    <NavigationLink href={sub.path} className="block w-full p-2 cursor-pointer rounded-lg">
+                      {sub.title}
+                    </NavigationLink>
                   </li>
                 ))}
               </ul>

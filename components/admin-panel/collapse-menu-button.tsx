@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, Dot, LucideIcon } from "lucide-react";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { NavigationLink } from "@/components/providers/navigation-link";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -149,7 +149,7 @@ export function CollapseMenuButton({
             className="w-full justify-start h-10 mb-1"
             asChild
           >
-            <Link href={href}>
+            <NavigationLink href={href}>
               <span className="mr-4 ml-2">
                 <Dot size={18} />
               </span>
@@ -163,7 +163,7 @@ export function CollapseMenuButton({
               >
                 {label}
               </p>
-            </Link>
+            </NavigationLink>
           </Button>
         ))}
       </CollapsibleContent>
@@ -208,7 +208,7 @@ export function CollapseMenuButton({
         <DropdownMenuSeparator />
         {filteredSubmenus.map(({ href, label, active }, index) => (
           <DropdownMenuItem key={index} asChild>
-            <Link
+            <NavigationLink
               className={`cursor-pointer ${
                 ((active === undefined && pathname === href) || active) &&
                 "bg-secondary"
@@ -216,7 +216,7 @@ export function CollapseMenuButton({
               href={href}
             >
               <p className="max-w-[180px] truncate">{label}</p>
-            </Link>
+            </NavigationLink>
           </DropdownMenuItem>
         ))}
         <DropdownMenuArrow className="fill-border" />
