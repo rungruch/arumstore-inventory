@@ -9,6 +9,7 @@ import { createContact } from "@/app/firebase/firestore";
 import PurchaseProductSection from "./ProductSectionPurchase";
 import {VatType, TransactionType, PurchaseStatus} from "@/app/firebase/enum";
 import { getPurchaseTransactionByTransactionId, createPurchaseTransactionWithStockAddition, generateRandomBuyTransactionId } from "@/app/firebase/firestoreBuy";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 // Define types for the component
 interface Warehouse {
@@ -107,6 +108,7 @@ export default function AddPurchaseForm({
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const router = useRouter();
 
+  const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
   const [orderState, setOrderState] = useState<OrderState>({
     transaction_id: "",
     transaction_type: TransactionType.BUY,
@@ -697,6 +699,7 @@ export default function AddPurchaseForm({
                 </div>
               </div>
               
+              {hasPermission('customers', 'create') ? (
               <button
                 type="button"
                 className={`w-fit h-fit p-2 px-4 text-sm rounded-md text-white ${
@@ -713,6 +716,9 @@ export default function AddPurchaseForm({
                 </svg>
                 เพิ่มผู้จำหน่าย
               </button>
+              ) : (
+                null
+              )}
             </div>
           </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Ellipsis, LogOut } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
 
@@ -38,15 +38,29 @@ export function Menu({ isOpen }: MenuProps) {
   const menuList = getMenuList(pathname);
   const { hasPermission } = useAuth();
   
-  // Check if user has permission to access a menu item
+  // Helper function to check multiple permissions
+  const hasAllPermissions = (moduleKey: string, actions: string[]): boolean => {
+    return actions.every(action => hasPermission(moduleKey, action as any));
+  };
+  
+  // Check if user has permission for a menu item
   const hasMenuPermission = (label: string): boolean => {
+    // Dashboard has no permission restrictions
+    if (label === "Dashboard") return true;
+    
     const moduleKey = menuModuleMap[label];
-    if (!moduleKey) return true; // If no mapping exists, allow access (default behavior)
+    if (!moduleKey) return true; // If no mapping exists, allow access by default
+    
+    // Settings requires ALL permissions
+    if (label === "ตั้งค่า") {
+      return hasAllPermissions(moduleKey, ['view', 'edit', 'create', 'delete']);
+    }
+    
+    // Other modules just need view permission
     return hasPermission(moduleKey, 'view');
   };
   
-  // Filter submenu items based on permissions
-  // For simplicity, we're using the parent menu's permissions for all submenu items
+  // Filter menus based on permissions
   const filterMenusByPermission = (menus: any[]) => {
     return menus.filter(menu => hasMenuPermission(menu.label));
   };

@@ -25,7 +25,11 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
     permissionModules.forEach(mod => {
       perms[mod.key] = {};
       mod.actions.forEach(action => {
+      if (["view", "create", "edit"].includes(action) && mod.key !== "users" && mod.key !== "settings") {
+        perms[mod.key][action] = true;
+      } else {
         perms[mod.key][action] = false;
+      }
       });
     });
     return perms;
@@ -52,9 +56,13 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
       const perms: any = {};
       permissionModules.forEach(mod => {
         perms[mod.key] = {};
-        mod.actions.forEach(action => {
-          perms[mod.key][action] = true;
-        });
+      mod.actions.forEach(action => {
+      if (["view", "create", "edit"].includes(action) && mod.key !== "users" && mod.key !== "settings") {
+        perms[mod.key][action] = true;
+      } else {
+        perms[mod.key][action] = false;
+      }
+      });
       });
       setPermissions(perms);
     }
@@ -64,7 +72,7 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
       permissionModules.forEach(mod => {
         perms[mod.key] = {};
         mod.actions.forEach(action => {
-          if (["view", "create", "edit"].includes(action)) {
+          if (["view", "create", "edit", "delete"].includes(action)) {
             perms[mod.key][action] = true;
           } else {
             perms[mod.key][action] = false;

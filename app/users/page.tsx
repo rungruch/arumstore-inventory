@@ -7,6 +7,7 @@ import AddUserPopup from '@/components/AddNewUser';
 import Modal from '@/components/modal';
 import { ModalTitle } from '@/components/enum';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -18,6 +19,7 @@ export default function UsersPage() {
     message: '',
     userId: ''
   });
+  const { hasPermission } = useAuth();
 
   // Fetch users
   useEffect(() => {
@@ -99,6 +101,7 @@ export default function UsersPage() {
         </div>
         <button
           onClick={() => setIsAddPopupOpen(true)}
+          disabled={!hasPermission('users', 'create')}
           className="text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full sm:w-auto"
         >
           เพิ่มผู้ใช้งาน
@@ -127,7 +130,7 @@ export default function UsersPage() {
                     บทบาท
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-zinc-300">
-                    การกระทำ
+                    จัดการ
                   </th>
                 </tr>
               </thead>
@@ -167,18 +170,22 @@ export default function UsersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a 
+                        {hasPermission('users', 'edit') && (
+                        <a
                           href={`/users/edit?uid=${user.uid}`}
                           className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
                         >
                           แก้ไข
                         </a>
+                        )}
+                        {hasPermission('users', 'delete') && (
                         <button 
                           onClick={() => handleDeleteUser(user.uid)}
                           className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                         >
                           ลบ
                         </button>
+                        )}
                       </td>
                     </tr>
                   ))

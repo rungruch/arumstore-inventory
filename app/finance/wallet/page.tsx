@@ -5,6 +5,7 @@ import { WalletCollection } from "../interface";
 import { wallet_type, wallet_type_display } from "../enum";
 import { v4 as uuidv4 } from "uuid";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 const WalletPage = () => {
   const [wallets, setWallets] = useState<WalletCollection[]>([]);
@@ -12,6 +13,8 @@ const WalletPage = () => {
   const [isAddWalletModalOpen, setIsAddWalletModalOpen] = useState(false);
   const [isEditWalletModalOpen, setIsEditWalletModalOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<WalletCollection | null>(null);
+  const { hasPermission } = useAuth();
+
   
   const [newWallet, setNewWallet] = useState<WalletCollection>({
     wallet_id: "",
@@ -113,6 +116,7 @@ const WalletPage = () => {
         <h1 className="text-2xl font-bold">กระเป๋าเงิน</h1>
         <button
           onClick={() => setIsAddWalletModalOpen(true)}
+          disabled={!hasPermission('finance', 'create')}
           className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-[200px] sm:w-auto"
         >
           เพิ่มกระเป๋าเงิน
@@ -166,12 +170,14 @@ const WalletPage = () => {
               <div className="p-4 bg-gray-50 dark:bg-zinc-800 flex justify-end space-x-2">
                 <button
                   onClick={() => openEditWalletModal(wallet)}
+                  disabled={!hasPermission('finance', 'edit')}
                   className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
                 >
                   แก้ไข
                 </button>
                 <button
                   onClick={() => handleDeleteWallet(wallet.wallet_id)}
+                  disabled={!hasPermission('finance', 'delete')}
                   className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
                 >
                   ลบ

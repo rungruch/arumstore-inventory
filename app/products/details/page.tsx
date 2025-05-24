@@ -23,6 +23,7 @@ import { ModalTitle } from '@/components/enum';
 import StockDetailsPopup from "@/components/StockDetailsPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { TransactionType, OrderStatusDisplay, OrderStatus } from "@/app/firebase/enum";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface ModalState {
   isOpen: boolean;
@@ -67,6 +68,7 @@ export default function ProductDetails() {
     stocks: Record<string, number>;
     pendingStocks: Record<string, number>;
   } | null>(null);
+  const { hasPermission } = useAuth();
 
   useEffect(() => {
     if (!psku) return;
@@ -253,6 +255,8 @@ export default function ProductDetails() {
         <div className="max-w-7xl mx-auto px-4">
           {/* Tabs */}
           <div className="flex space-x-1 mb-6 bg-white rounded-lg shadow-sm p-1 overflow-x-auto dark:bg-zinc-800">
+            {hasPermission('products', 'edit') && (
+              <>
             <Link
               href={`/products/edit?psku=${product.sku}`}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center whitespace-nowrap text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -260,20 +264,6 @@ export default function ProductDetails() {
               <Settings size={16} className="mr-2" />
               แก้ไข
             </Link>
-            <button
-              className="px-4 py-2 rounded-md text-sm font-medium flex items-center whitespace-nowrap text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-              onClick={() => {
-                setModalState({
-                  isOpen: true,
-                  title: ModalTitle.DELETE,
-                  message: `คุณต้องการลบสินค้า ${product.name} ใช่หรือไม่?`,
-                  sku: product.sku
-                });
-              }}
-            >
-              <Trash size={16} className="mr-2" />
-              ลบ
-            </button>
             <Link
               href={`/products/addtransfer?psku=${product.sku}`}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center whitespace-nowrap text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -291,6 +281,23 @@ export default function ProductDetails() {
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center whitespace-nowrap text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700">
               <Edit3 size={16} className="mr-2" />
               ปรับจำนวน
+            </button>
+            </>
+            )}
+            <button
+              className="px-4 py-2 rounded-md text-sm font-medium flex items-center whitespace-nowrap text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+              disabled={!hasPermission('products', 'delete')}
+              onClick={() => {
+                setModalState({
+                  isOpen: true,
+                  title: ModalTitle.DELETE,
+                  message: `คุณต้องการลบสินค้า ${product.name} ใช่หรือไม่?`,
+                  sku: product.sku
+                });
+              }}
+            >
+              <Trash size={16} className="mr-2" />
+              ลบ
             </button>
           </div>
 

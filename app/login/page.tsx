@@ -1,8 +1,10 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from '@/app/firebase/clientApp';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth, db } from '@/app/firebase/clientApp';
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { getPermissionModulesAndActions } from '@/lib/menu-list';
 import Image from 'next/image';
 import Link from 'next/link';
 import AddUserPopup from '@/components/AddUser'; // Import AddUserPopup component
@@ -12,24 +14,60 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isSignUpOpen, setIsSignUpOpen] = useState(false); // State for sign up popup
+    const [isSignUpOpen, setIsSignUpOpen] = useState(false);
     const router = useRouter();
+
+    // Get default permissions for staff role
+    const getDefaultGooglePermissions = () => {
+        const permissionModules = getPermissionModulesAndActions();
+        const permissions: any = {};
+
+        permissionModules.forEach(mod => {
+            permissions[mod.key] = {};
+            mod.actions.forEach(action => {
+                if (mod.key === "dashboard" && action === "view") {
+                    permissions[mod.key][action] = true;
+                } else {
+                    permissions[mod.key][action] = false;
+                }
+            });
+        });
+
+        return permissions;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-        // Update your error handling in handleSubmit:
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            const user = result.user;
+
+            // Update last login timestamp for email/password login
+            try {
+                await setDoc(doc(db, 'users', user.uid), {
+                    lastLogin: serverTimestamp(),
+                    updated_date: serverTimestamp()
+                }, { merge: true });
+            } catch (dbError) {
+                console.warn('Failed to update last login:', dbError);
+                // Don't block login if database update fails
+            }
+
             router.push('/dashboard');
         } catch (error: any) {
             console.error('Login error:', error);
 
             switch (error.code) {
                 case 'auth/invalid-credential':
+                case 'auth/wrong-password':
+                case 'auth/user-not-found':
                     setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+                    break;
+                case 'auth/invalid-email':
+                    setError('รูปแบบอีเมลไม่ถูกต้อง');
                     break;
                 case 'auth/operation-not-allowed':
                     setError('ระบบการเข้าสู่ระบบด้วยอีเมลและรหัสผ่านยังไม่เปิดใช้งาน');
@@ -40,10 +78,101 @@ export default function LoginPage() {
                 case 'auth/too-many-requests':
                     setError('มีการพยายามเข้าสู่ระบบมากเกินไป โปรดลองใหม่ภายหลัง');
                     break;
+                case 'auth/network-request-failed':
+                    setError('เกิดปัญหาเครือข่าย โปรดตรวจสอบการเชื่อมต่อของคุณ');
+                    break;
                 default:
-                    setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+                    setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ โปรดลองใหม่อีกครั้ง');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setLoading(true);
+        setError('');
+
+        try {
+            const provider = new GoogleAuthProvider();
+            // Add scopes for better user info
+            provider.addScope('profile');
+            provider.addScope('email');
+
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            // Validate user email exists
+            if (!user.email) {
+                throw new Error('Google account must have an email address');
             }
 
+            // Check if user exists in Firestore
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+            if (!userDoc.exists()) {
+                // Create new user document with proper default permissions
+                const defaultPermissions = getDefaultGooglePermissions();
+
+                await setDoc(doc(db, 'users', user.uid), {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || user.email.split('@')[0] || 'Google User',
+                    role: 'staff', // Default role for new Google users
+                    permissions: defaultPermissions,
+                    lastLogin: serverTimestamp(),
+                    created_date: serverTimestamp(),
+                    updated_date: serverTimestamp(),
+                    provider: 'google'
+                });
+
+                console.log('New Google user created:', user.email);
+            } else {
+                // Update last login for existing user
+                await setDoc(doc(db, 'users', user.uid), {
+                    lastLogin: serverTimestamp(),
+                    updated_date: serverTimestamp()
+                }, { merge: true });
+
+                console.log('Existing user login updated:', user.email);
+            }
+
+            router.push('/dashboard');
+        } catch (error: any) {
+            console.error('Google login error:', error);
+
+            // Production-ready error handling
+            if (error.code) {
+                switch (error.code) {
+                    case 'auth/popup-closed-by-user':
+                        setError('การเข้าสู่ระบบถูกยกเลิก');
+                        break;
+                    case 'auth/popup-blocked':
+                        setError('โปรดอนุญาตให้เบราว์เซอร์เปิด popup window');
+                        break;
+                    case 'auth/operation-not-allowed':
+                        setError('ระบบการเข้าสู่ระบบด้วย Google ยังไม่เปิดใช้งาน');
+                        break;
+                    case 'auth/cancelled-popup-request':
+                        setError('การเข้าสู่ระบบถูกยกเลิก');
+                        break;
+                    case 'auth/account-exists-with-different-credential':
+                        setError('บัญชีนี้มีอยู่แล้วด้วยวิธีการเข้าสู่ระบบอื่น');
+                        break;
+                    case 'auth/network-request-failed':
+                        setError('เกิดปัญหาเครือข่าย โปรดลองใหม่อีกครั้ง');
+                        break;
+                    case 'auth/too-many-requests':
+                        setError('มีการพยายามเข้าสู่ระบบมากเกินไป โปรดลองใหม่ภายหลัง');
+                        break;
+                    default:
+                        setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย Google');
+                }
+            } else {
+                // Handle non-Firebase errors
+                setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ โปรดลองใหม่อีกครั้ง');
+            }
+        } finally {
             setLoading(false);
         }
     };
@@ -101,12 +230,6 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <div className="text-right hidden sm:block">
-                        <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
-                            ลืมรหัสผ่าน?
-                        </Link>
-                    </div>
-
                     <button
                         type="submit"
                         className={`w-full py-2 px-4 rounded-md text-white ${loading ? 'bg-gray-500' : 'bg-black hover:bg-gray-800'
@@ -117,17 +240,32 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                {/* Add sign up section */}
-                <div className="mt-6 text-center hidden sm:block">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        ยังไม่มีบัญชีผู้ใช้งาน?{' '}
-                        <button
-                            onClick={() => setIsSignUpOpen(true)}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 font-medium"
-                        >
-                            สมัครใช้งาน
-                        </button>
-                    </p>
+                <div className="mt-4">
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white dark:bg-zinc-900 text-gray-500">หรือ</span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleGoogleSignIn}
+                        className={`w-full mt-4 py-2 px-4 rounded-md border border-gray-300 dark:border-gray-600 ${loading
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700'
+                            } transition-colors duration-200 flex items-center justify-center gap-2`}
+                        disabled={loading}
+                    >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        เข้าสู่ระบบด้วย Google
+                    </button>
                 </div>
             </div>
         </div>

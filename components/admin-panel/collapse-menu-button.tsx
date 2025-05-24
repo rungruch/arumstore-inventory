@@ -37,8 +37,10 @@ const submenuModuleMap: Record<string, {module: string, action: string}> = {
   "/finance/other-income": { module: "finance", action: "view" },
   "/finance/other-outcome": { module: "finance", action: "view" },
   "/products": { module: "products", action: "view" },
+  "/products/add": { module: "products", action: "create" },
   "/products/categories": { module: "products", action: "view" },
   "/products/warehouse": { module: "products", action: "view" },
+  "/products/addtransfer": { module: "products", action: "create" },
   "/contacts": { module: "customers", action: "view" },
   "/sales": { module: "sales", action: "view" },
   "/sales/create": { module: "sales", action: "create" },
@@ -73,6 +75,9 @@ export function CollapseMenuButton({
   
   // Filter submenus based on user permissions
   const filteredSubmenus = submenus.filter(submenu => {
+    // Dashboard submenus have no permission restrictions
+    if (submenu.href.startsWith('/dashboard')) return true;
+    
     const mapping = submenuModuleMap[submenu.href];
     if (!mapping) return true; // If no mapping exists, allow access by default
     return hasPermission(mapping.module, mapping.action);

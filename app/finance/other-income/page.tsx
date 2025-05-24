@@ -11,6 +11,7 @@ import { getWallets } from "@/app/firebase/firestoreFinance";
 import { WalletCollection } from "@/app/finance/interface";
 import { getFile, uploadFile } from "@/app/firebase/storage";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function OtherIncomePage() {
   const [transactions, setTransactions] = useState<IncomeTransaction[]>([]);
@@ -33,6 +34,7 @@ export default function OtherIncomePage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState<boolean>(false);
+  const { hasPermission } = useAuth();
 
   
   // Calculate total
@@ -196,6 +198,7 @@ export default function OtherIncomePage() {
         <h1 className="text-2xl font-bold">รายรับอื่นๆ</h1>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
+          disabled={!hasPermission("finance", "create")}
           className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-[200px] sm:w-auto"
         >
           {showAddForm ? "ปิดฟอร์ม" : "สร้างรายรับ"}
@@ -501,6 +504,7 @@ export default function OtherIncomePage() {
                         {transaction.payment_status === payment_status.PENDING && (
                           <button
                             onClick={() => handleStatusChange(transaction.transaction_id || "", payment_status.COMPLETED)}
+                            disabled={!hasPermission("finance", "edit")}
                             className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                           >
                             ชำระเงิน
@@ -528,6 +532,7 @@ export default function OtherIncomePage() {
                         {transaction.payment_status === payment_status.PENDING && (
                           <button
                             onClick={() => handleStatusChange(transaction.transaction_id || "", payment_status.CANCELLED)}
+                            disabled={!hasPermission("finance", "edit")}
                             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium"
                           >
                             ยกเลิก

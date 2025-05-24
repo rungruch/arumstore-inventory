@@ -8,6 +8,8 @@ import Modal from '@/components/modal';
 import { ModalTitle } from '@/components/enum';
 import { getPermissionModulesAndActions } from '@/lib/menu-list';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from '@/app/firebase/clientApp';
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -17,6 +19,7 @@ export default function EditUserPage() {
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sendingPasswordReset, setSendingPasswordReset] = useState(false);
   const [modalState, setModalState] = useState({
     isOpen: false,
     title: '',
@@ -112,6 +115,30 @@ export default function EditUserPage() {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!userData?.email) return;
+    
+    try {
+      setSendingPasswordReset(true);
+      
+      await sendPasswordResetEmail(auth, userData.email);
+      
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.SUCCESS,
+        message: 'ส่งอีเมลรีเซ็ตรหัสผ่านเรียบร้อยแล้ว'
+      });
+    } catch (error) {
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: `เกิดข้อผิดพลาด: ${error}`
+      });
+    } finally {
+      setSendingPasswordReset(false);
+    }
+  };
+
   const closeModal = () => {
     setModalState({...modalState, isOpen: false});
     if (modalState.title === ModalTitle.SUCCESS) {
@@ -194,6 +221,26 @@ export default function EditUserPage() {
             <option value="manager">ผู้จัดการ</option>
             <option value="staff">พนักงาน</option>
           </select>
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-1">รีเซ็ตรหัสผ่าน</label>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handlePasswordReset}
+              disabled={sendingPasswordReset}
+              className={`py-2 px-4 rounded-md text-white ${
+                sendingPasswordReset 
+                  ? "bg-gray-500 cursor-not-allowed" 
+                  : "bg-red-600 hover:bg-red-700"
+              } transition`}
+            >
+              {sendingPasswordReset ? "กำลังส่งอีเมล..." : "ส่งอีเมลรีเซ็ตรหัสผ่าน"}
+            </button>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              ระบบจะส่งอีเมลรีเซ็ตรหัสผ่านไปยัง {userData.email}
+            </span>
+          </div>
         </div>
 
         <div className="mb-6">

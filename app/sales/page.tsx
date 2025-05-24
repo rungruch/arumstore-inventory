@@ -746,14 +746,15 @@ export default function ProductPage() {
                   <td className="p-2">
                     <div className="relative" style={{ width: "120px" }}>
                         <select
-                        value={data.status}
-                        onChange={(e) => handleStatusChange(
-                          data.transaction_id,
-                          data.status,
-                          e.target.value as OrderStatus
-                        )}
-                        className={`w-full px-3 py-2 text-sm appearance-none rounded-md bg-white dark:bg-gray-800 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors ${data.status === OrderStatus.SHIPPING ? 'text-yellow-600 dark:text-yellow-500' : ''} ${data.status === OrderStatus.SHIPPED || data.status === OrderStatus.PICKED_UP ? 'text-green-600' : ''} ${data.status === OrderStatus.CANCELLED ? 'text-red-500 dark:text-red-600' : ''}`}
-                        style={{ paddingRight: "2.5rem" }}
+                          value={data.status}
+                          onChange={(e) => handleStatusChange(
+                            data.transaction_id,
+                            data.status,
+                            e.target.value as OrderStatus
+                          )}
+                          disabled={!hasPermission('sales', 'edit')}
+                          className={`w-full px-3 py-2 text-sm appearance-none rounded-md bg-white dark:bg-gray-800 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors ${data.status === OrderStatus.SHIPPING ? 'text-yellow-600 dark:text-yellow-500' : ''} ${data.status === OrderStatus.SHIPPED || data.status === OrderStatus.PICKED_UP ? 'text-green-600' : ''} ${data.status === OrderStatus.CANCELLED ? 'text-red-500 dark:text-red-600' : ''} ${!hasPermission('sales', 'edit') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          style={{ paddingRight: "2.5rem" }}
                         >
                         <option value={OrderStatus.PENDING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PENDING)}>
                           {OrderStatusDisplay.PENDING}
@@ -851,16 +852,18 @@ export default function ProductPage() {
                         </div>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => openShippingDetailsModal(data.transaction_id,data.shipping_method)}
-                        className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        hasPermission('sales', 'edit') ? (
+                        <button
+                          onClick={() => openShippingDetailsModal(data.transaction_id,data.shipping_method)}
+                          className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                        เพิ่มข้อมูลส่ง
-                      </button>
+                          </svg>
+                          เพิ่มข้อมูลส่ง
+                        </button>
+                        ) : null
                     )}
                   </td>
                   <td 
@@ -937,12 +940,14 @@ export default function ProductPage() {
                         </div>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
-                        className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
-                      >
-                        รอชำระ
-                      </button>
+                      hasPermission('sales', 'edit') && (
+                        <button
+                          onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
+                          className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
+                        >
+                          รอชำระ
+                        </button>
+                      )
                     )}
                   </td>
                   <td className="p-2 w-[5%] relative">
@@ -1031,10 +1036,14 @@ export default function ProductPage() {
                         className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800 max-h-[80vh] overflow-y-auto"
                       >
                         <div className="py-1">
+                          {hasPermission('sales', 'create') && (
+                            <>
                           <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             สร้างรายการซ้ำ
                           </Link>
                           <div className="border-t border-gray-200 my-1" />
+                          </>
+                          )}
                           <Link href={`/documents/tax?transaction_id=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             พิมพ์เอกสาร
                           </Link>

@@ -64,6 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     action: keyof User['permissions'][keyof User['permissions']]
   ): boolean => {
     if (!currentUser) return false;
+    // Check if permissions exist at all
+    if (!currentUser.permissions) return false;
     // Check if the module exists before trying to access the action
     if (!currentUser.permissions[module]) return false;
     return currentUser.permissions[module][action];

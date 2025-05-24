@@ -10,6 +10,7 @@ import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { EditContactPopup } from "@/components/AddContact";
 import Link from "next/link";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function ContactsPage() {
   const [search, setSearch] = useState("");
@@ -40,6 +41,7 @@ export default function ContactsPage() {
   const [contactGroups, setContactGroups] = useState<{value: string, label: string}[]>([]);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [totalData, setTotalData] = useState(0);
+  const { hasPermission } = useAuth();
 
   // Fetch contact groups from Firebase using the imported function
   useEffect(() => {
@@ -277,12 +279,14 @@ export default function ContactsPage() {
             }
           }}
         />
+        {hasPermission('customers', 'create') && (
         <button
           onClick={togglePopup}
           className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
         >
           เพิ่มผู้ติดต่อ
         </button>
+        )}
       </div>
 
       {loading ? (
@@ -302,7 +306,7 @@ export default function ContactsPage() {
                 <th className="p-2 w-[150px] whitespace-nowrap">เบอร์โทรศัพท์</th>
                 <th className="p-2 w-[120px] whitespace-nowrap">อีเมล</th>
                 <th className="p-2 w-[180px] whitespace-nowrap">อัพเดทล่าสุด</th>
-                <th className="p-2 w-[100px] text-center">ลบ</th>
+                <th className="p-2 w-[100px] text-center"> </th>
               </tr>
             }
             customRow={(contact, index) => (
@@ -360,6 +364,7 @@ export default function ContactsPage() {
                       >
                         <button
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          disabled={!hasPermission('customers', 'edit')}
                           onClick={() => {
                             setEditContact(contact);
                             setEditModalOpen(true);
@@ -370,6 +375,7 @@ export default function ContactsPage() {
                         </button>
                         <button
                           className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          disabled={!hasPermission('customers', 'delete')}
                           onClick={() => {
                             setModalState({
                               isOpen: true,

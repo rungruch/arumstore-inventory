@@ -412,7 +412,9 @@ export default function ProductPage() {
                         <Link href={`/products/details?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                           ดูภาพรวม
                         </Link>
-                        <div className="border-t border-gray-200 my-1" />
+                        {hasPermission('products', 'edit') && (
+                          <>
+                          <div className="border-t border-gray-200 my-1" />
                         <button
                           onClick={() => setSelectedStock({
                           productName: product.name,
@@ -430,6 +432,9 @@ export default function ProductPage() {
                         <Link href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                           แก้ไข
                         </Link>
+                        </>
+                        )}
+                        {hasPermission('products', 'delete') && (
                         <button 
                           onClick={() => {
                             setModalState({
@@ -443,6 +448,7 @@ export default function ProductPage() {
                         >
                           ลบ
                         </button>
+                        )}
                       </div>
                     </div>
                   </div>

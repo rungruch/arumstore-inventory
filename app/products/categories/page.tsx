@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Link from "next/link";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function ProductCategoryPage() {
   const [search, setSearch] = useState(""); // Search input state
@@ -30,6 +31,7 @@ export default function ProductCategoryPage() {
   });
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<any>(null);
+  const { hasPermission } = useAuth();
 
   // Fetch initial data on component mount
   useEffect(() => {
@@ -204,12 +206,14 @@ export default function ProductCategoryPage() {
             }
           }}
         />
+        {hasPermission('products', 'create') && (
         <button
           onClick={togglePopup}
           className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
         >
           เพิ่มหมวดหมู่
         </button>
+        )}
       </div>
 
       {/* Data Table with Loading State */}
@@ -276,6 +280,7 @@ export default function ProductCategoryPage() {
                         >
                           <button
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                            disabled={!hasPermission('products', 'edit')}
                             onClick={() => {
                               setEditCategory(category);
                               setEditModalOpen(true);
@@ -286,6 +291,7 @@ export default function ProductCategoryPage() {
                           </button>
                           <button
                             className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                            disabled={!hasPermission('products', 'delete')}
                             onClick={() => {
                               setModalState({
                                 isOpen: true,

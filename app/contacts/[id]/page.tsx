@@ -11,7 +11,7 @@ import { Contact } from "@/app/firebase/interfaces";
 import { getSellTransactionsByClientId, deleteContact } from "@/app/firebase/firestore";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/app/firebase/clientApp";
-import Link from "next/link";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function ContactDetailsPage() {
   const router = useRouter();
@@ -31,6 +31,7 @@ export default function ContactDetailsPage() {
   const [monthlySales, setMonthlySales] = useState(0);
   const [yearlySales, setYearlySales] = useState(0);
   const [pendingAmount, setPendingAmount] = useState(0);
+  const { hasPermission } = useAuth();
 
   // Modal state
   const [modalState, setModalState] = useState({
@@ -261,6 +262,7 @@ export default function ContactDetailsPage() {
           <div className="flex space-x-2">
             <button
               onClick={() => setEditModalOpen(true)}
+              disabled={!hasPermission('customers', 'edit')}
               className="py-2 px-4 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center text-sm font-medium border border-gray-200 dark:border-zinc-700"
             >
               <Edit3 size={16} className="mr-2" />
@@ -268,6 +270,7 @@ export default function ContactDetailsPage() {
             </button>
             <button
               onClick={() => setDeleteModalOpen(true)}
+              disabled={!hasPermission('customers', 'delete')}
               className="py-2 px-4 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center text-sm font-medium border border-gray-200 dark:border-zinc-700"
             >
               <Trash size={16} className="mr-2" />

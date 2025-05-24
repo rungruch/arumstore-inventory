@@ -507,8 +507,13 @@ export default function PurchasePage() {
                           data.status,
                           e.target.value as PurchaseStatus
                         )}
-                        className={`w-full px-3 py-2 text-sm appearance-none rounded-md bg-white dark:bg-gray-800 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors ${data.status === PurchaseStatus.PENDING ? 'text-yellow-600 dark:text-yellow-500' : ''} ${data.status === PurchaseStatus.COMPLETED ? 'text-green-600' : ''} ${data.status === PurchaseStatus.CANCELLED ? 'text-red-500 dark:text-red-600' : ''}`}
+                        className={`w-full px-3 py-2 text-sm appearance-none rounded-md border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors ${
+                          !hasPermission('purchases', 'edit') 
+                            ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60' 
+                            : 'bg-white dark:bg-gray-800'
+                        } ${data.status === PurchaseStatus.PENDING ? 'text-yellow-600 dark:text-yellow-500' : ''} ${data.status === PurchaseStatus.COMPLETED ? 'text-green-600' : ''} ${data.status === PurchaseStatus.CANCELLED ? 'text-red-500 dark:text-red-600' : ''}`}
                         style={{ paddingRight: "2.5rem" }}
+                        disabled={!hasPermission('purchases', 'edit')}
                       >
                         <option value={PurchaseStatus.PENDING} disabled={!PURCHASE_STATUS_TRANSITIONS[data.status as keyof typeof PURCHASE_STATUS_TRANSITIONS]?.includes(PurchaseStatus.PENDING)}>
                           {PurchaseStatusDisplay.PENDING}

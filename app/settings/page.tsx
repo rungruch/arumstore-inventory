@@ -12,6 +12,7 @@ import { Timestamp } from "firebase/firestore";
 import { StoreInfoFirestore } from "@/app/firebase/interfaces";
 import Modal from "@/components/modal";
 import { ModalTitle } from "@/components/enum";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 const menu = [
   { key: "company", label: "บริษัท / ร้านค้า" },
@@ -21,6 +22,7 @@ const menu = [
 ];
 
 export default function SettingsPage() {
+  const { hasPermission } = useAuth();
   const [selected, setSelected] = useState("company");
   const [companyDetails, setCompanyDetails] = useState<StoreInfoFirestore>({
     name: "",
@@ -85,7 +87,7 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute module='settings' actions={["view", "edit", "delete", "create"]} requireAll={true}>
       <div className="space-y-4 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">ตั้งค่า</h1>

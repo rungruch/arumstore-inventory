@@ -27,10 +27,10 @@ export default function ProductListPage() {
   const warehouseFilter = searchParams.get('warehouse');
   const categoryFilter = searchParams.get('category');
 
-  const [search, setSearch] = useState(""); 
-  const [data, setDatas] = useState<any>([]); 
+  const [search, setSearch] = useState("");
+  const [data, setDatas] = useState<any>([]);
   const [showPopup, setShowPopup] = useState(false);
-  const [lastDoc, setLastDoc] = useState<any | null>(null); 
+  const [lastDoc, setLastDoc] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalData, setTotalData] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -75,13 +75,13 @@ export default function ProductListPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Use the new combined filter function
         const filters: { category?: string; warehouse?: string } = {};
         if (categoryFilter) filters.category = categoryFilter;
-        if (warehouseFilter) filters.warehouse = warehouseFilter; 
+        if (warehouseFilter) filters.warehouse = warehouseFilter;
         const result = await getProductFiltered(filters, null, pageSize);
-        
+
         setDatas(result.data);
         setLastDoc(result.lastDoc);
         setTotalData(result.totalCount);
@@ -106,14 +106,14 @@ export default function ProductListPage() {
 
     try {
       setLoading(true);
-      
+
       // Use the new combined filter function
       const filters: { category?: string; warehouse?: string } = {};
       if (categoryFilter) filters.category = categoryFilter;
       if (warehouseFilter) filters.warehouse = warehouseFilter;
-      
+
       const result = await getProductFiltered(filters, null, newSize);
-      
+
       setDatas(result.data);
       setLastDoc(result.lastDoc);
       setTotalData(result.totalCount);
@@ -133,14 +133,14 @@ export default function ProductListPage() {
         // Reset to paginated behavior when search is cleared
         setCurrentPage(1);
         setLastDoc(null);
-        
+
         // Use the new combined filter function
         const filters: { category?: string; warehouse?: string } = {};
         if (categoryFilter) filters.category = categoryFilter;
         if (warehouseFilter) filters.warehouse = warehouseFilter;
-        
+
         const result = await getProductFiltered(filters, null, pageSize);
-        
+
         setDatas(result.data);
         setLastDoc(result.lastDoc);
         setTotalData(result.totalCount);
@@ -148,14 +148,14 @@ export default function ProductListPage() {
       } else {
         // Perform search and reset pagination
         const searchResults = await getProductByName(search, ProductStatus.ACTIVE);
-        
+
         // Apply filters client-side to search results
         let filteredResults = [...searchResults];
-        
+
         if (categoryFilter) {
           filteredResults = filteredResults.filter(product => (product as any).category === categoryFilter);
         }
-        
+
         if (warehouseFilter) {
           filteredResults = filteredResults.filter(product => {
             const prod = product as { stocks?: Record<string, number> };
@@ -185,14 +185,14 @@ export default function ProductListPage() {
     if (!lastDoc || !hasMore || currentPage === Math.ceil(totalData / pageSize)) return; // Prevent invalid navigation
     try {
       setLoading(true);
-      
+
       // Use the new combined filter function for pagination
       const filters: { category?: string; warehouse?: string } = {};
       if (categoryFilter) filters.category = categoryFilter;
       if (warehouseFilter) filters.warehouse = warehouseFilter;
-      
+
       const result = await getProductFiltered(filters, lastDoc, pageSize);
-      
+
       setDatas(result.data);
       setLastDoc(result.lastDoc);
       setHasMore(result.hasMore || false);
@@ -210,17 +210,17 @@ export default function ProductListPage() {
     try {
       setLoading(true);
       setCurrentPage(currentPage - 1);
-      
+
       // For previous page, we need to start from the beginning and page forward
       // Use the new combined filter function
       const filters: { category?: string; warehouse?: string } = {};
       if (categoryFilter) filters.category = categoryFilter;
       if (warehouseFilter) filters.warehouse = warehouseFilter;
-      
+
       // This is simplified - in a production app you might want to maintain
       // a history of lastDoc values to navigate backward more efficiently
       const result = await getProductFiltered(filters, null, pageSize);
-      
+
       setDatas(result.data);
       setLastDoc(result.lastDoc);
       setHasMore(result.hasMore || false);
@@ -263,19 +263,19 @@ export default function ProductListPage() {
   // Render filter feedback text
   const renderFilterText = () => {
     let filterText = [];
-    
+
     if (categoryFilter) {
       const category = categories.find(cat => cat.id === categoryFilter);
       if (category) {
         filterText.push(`หมวดหมู่: ${category.category_name}`);
       }
     }
-    
+
     if (warehouseFilter) {
       // We no longer need to find the warehouse by ID since the filter is now the warehouse name
       filterText.push(`คลัง: ${warehouseFilter}`);
     }
-    
+
     return filterText.length > 0 ? `กรองตาม ${filterText.join(', ')}` : '';
   };
 
@@ -308,7 +308,7 @@ export default function ProductListPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Search and Add */}
           <div className="flex justify-between items-center mb-4">
             <input
@@ -363,7 +363,7 @@ export default function ProductListPage() {
                     <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                     <td className="p-2 w-[50px] ">{product.sku}</td>
                     <td className="p-2 w-[300px] flex items-center gap-2">
-                        {product.sku_image && (
+                      {product.sku_image && (
                         <Image
                           priority={true}
                           src={product.sku_image}
@@ -373,7 +373,7 @@ export default function ProductListPage() {
                           className="transition-opacity duration-500 ease-in-out opacity-0 w-auto h-auto max-h-[100px] rounded-md"
                           onLoad={(img) => (img.currentTarget as HTMLImageElement).classList.remove("opacity-0")}
                         />
-                        )}
+                      )}
                       <div>
                         <Link
                           href={`/products/details?psku=${product.sku}`}
@@ -401,10 +401,10 @@ export default function ProductListPage() {
                           buyPrice: product.price.buy_price
                         })}
                         className={`cursor-pointer hover:opacity-80 text-left ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
-                            ? 'text-red-500' // red if stock is 0 or less
-                            : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
-                              ? 'text-yellow-500' // yellow if stock is less than 5
-                              : 'text-green-500' // green if stock is greater than 5
+                          ? 'text-red-500' // red if stock is 0 or less
+                          : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
+                            ? 'text-yellow-500' // yellow if stock is less than 5
+                            : 'text-green-500' // green if stock is greater than 5
                           }`}
                       >
                         {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)}
@@ -420,15 +420,14 @@ export default function ProductListPage() {
                           pendingStocks: product.pending_stock,
                           buyPrice: product.price.buy_price
                         })}
-                        className={`cursor-pointer hover:opacity-80 ${
-                          Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) >
+                        className={`cursor-pointer hover:opacity-80 ${Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) >
                           Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)
-                            ? 'text-red-500'
-                            : Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) ===
-                              Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)
-                              ? 'text-yellow-500'
-                              : 'text-green-500'
-                        }`}
+                          ? 'text-red-500'
+                          : Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) ===
+                            Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)
+                            ? 'text-yellow-500'
+                            : 'text-green-500'
+                          }`}
                       >
                         {Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)}
                         {" " + product.unit_type}
@@ -519,29 +518,37 @@ export default function ProductListPage() {
                             </Link>
                             <div className="border-t border-gray-200 my-1" />
                             <button
+                              disabled={!hasPermission('products', 'edit')}
                               onClick={() => setSelectedStock({
-                              productName: product.name,
-                              productSKU: product.sku,
-                              stocks: product.stocks,
-                              pendingStocks: product.pending_stock,
-                              buyPrice: product.price.buy_price
+                                productName: product.name,
+                                productSKU: product.sku,
+                                stocks: product.stocks,
+                                pendingStocks: product.pending_stock,
+                                buyPrice: product.price.buy_price
                               })}
                               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                               ปรับจำนวน
                             </button>
-                            <Link href={`/products/addtransfer?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-                              โอนสินค้า
-                            </Link>
-                            <Link href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-                              แก้ไข
-                            </Link>
-                            <button 
+                            {hasPermission('products', 'edit') ? (
+                              <>
+                                <Link href={`/products/addtransfer?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                                  โอนสินค้า
+                                </Link>
+                                <Link href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                                  แก้ไข
+                                </Link>
+                              </>
+                            ) : (
+                              null
+                            )}
+                            <button
+                            disabled={!hasPermission('products', 'delete')}
                               onClick={() => {
                                 setModalState({
-                                    isOpen: true,
-                                    title: ModalTitle.DELETE,
-                                    message: `คุณต้องการลบสินค้า ${product.name} ใช่หรือไม่?`,
-                                    sku: product.sku
+                                  isOpen: true,
+                                  title: ModalTitle.DELETE,
+                                  message: `คุณต้องการลบสินค้า ${product.name} ใช่หรือไม่?`,
+                                  sku: product.sku
                                 });
                               }}
                               className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
