@@ -95,7 +95,7 @@ export default function SettingsPage() {
         
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar */}
-          <aside className="w-full md:w-64 bg-white dark:bg-zinc-800 rounded-lg shadow p-4 flex-shrink-0 h-fit">
+          <aside className="w-full md:w-64 bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex-shrink-0 h-fit">
             <nav>
               <ul className="space-y-1">
                 {menu.map((item) => (
@@ -117,7 +117,7 @@ export default function SettingsPage() {
           </aside>
           
           {/* Main Content */}
-          <main className="flex-1 bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
+          <main className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             {selected === "company" && (
               <div>
                 <Modal 

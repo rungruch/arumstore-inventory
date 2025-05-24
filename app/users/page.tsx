@@ -118,7 +118,7 @@ export default function UsersPage() {
         <div className="bg-white rounded-lg shadow-md overflow-hidden dark:bg-zinc-800">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-              <thead className="bg-gray-50 dark:bg-zinc-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-zinc-300">
                     ชื่อผู้ใช้
@@ -134,7 +134,7 @@ export default function UsersPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200 dark:bg-zinc-800 dark:divide-zinc-700">
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-zinc-700">
                 {users.length === 0 ? (
                   <tr key="no-users">
                     <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-zinc-400">

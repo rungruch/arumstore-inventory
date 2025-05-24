@@ -185,14 +185,14 @@ export default function EditUserPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 dark:bg-zinc-800">
+      <div className="bg-white rounded-lg shadow-md p-6 dark:bg-gray-800">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium mb-1">อีเมล</label>
             <input
               type="email"
               value={userData.email}
-              className="w-full border p-2 rounded-md bg-gray-100 dark:bg-zinc-700"
+              className="w-full border p-2 rounded-md bg-gray-100 dark:bg-gray-700"
               disabled
             />
           </div>
@@ -204,7 +204,7 @@ export default function EditUserPage() {
               name="displayName"
               value={userData.displayName}
               onChange={handleChange}
-              className="w-full border p-2 rounded-md dark:bg-zinc-700 dark:border-zinc-600"
+              className="w-full border p-2 rounded-md dark:bg-gray-700 "
             />
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function EditUserPage() {
             name="role"
             value={userData.role}
             onChange={handleChange}
-            className="w-full border p-2 rounded-md dark:bg-zinc-700 dark:border-zinc-600"
+            className="w-full border p-2 rounded-md dark:bg-gray-700"
           >
             <option value="admin">ผู้ดูแลระบบ</option>
             <option value="manager">ผู้จัดการ</option>
@@ -247,34 +247,35 @@ export default function EditUserPage() {
           <h2 className="text-lg font-semibold mb-4">สิทธิ์การใช้งาน</h2>
           
           {/* Permissions Table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-xs">
+            <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse bg-white dark:bg-gray-800 rounded-lg shadow-sm">
               <thead>
-                <tr>
-                  <th className="border px-2 py-1">โมดูล</th>
-                  {permissionModules[0].actions.map(action => (
-                    <th key={action} className="border px-2 py-1 text-center">{action}</th>
-                  ))}
-                </tr>
+              <tr className="bg-gray-50 dark:bg-gray-700">
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200">โมดูล</th>
+                {permissionModules[0].actions.map(action => (
+                <th key={action} className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">{action}</th>
+                ))}
+              </tr>
               </thead>
               <tbody>
-                {permissionModules.map(mod => (
-                  <tr key={mod.key}>
-                    <td className="border px-2 py-1">{mod.label}</td>
-                    {mod.actions.map(action => (
-                      <td key={action} className="border px-2 py-1 text-center">
-                        <input
-                          type="checkbox"
-                          checked={userData.permissions[mod.key]?.[action] || false}
-                          onChange={e => handlePermissionChange(e, mod.key, action)}
-                        />
-                      </td>
-                    ))}
-                  </tr>
+              {permissionModules.map((mod, index) => (
+                <tr key={mod.key} className={`${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors`}>
+                <td className="border border-gray-300 dark:border-gray-600 px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{mod.label}</td>
+                {mod.actions.map(action => (
+                  <td key={action} className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-center">
+                  <input
+                    type="checkbox"
+                    checked={userData.permissions[mod.key]?.[action] || false}
+                    onChange={e => handlePermissionChange(e, mod.key, action)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  </td>
                 ))}
+                </tr>
+              ))}
               </tbody>
             </table>
-          </div>
+            </div>
         </div>
         
         <div className="flex justify-end">
