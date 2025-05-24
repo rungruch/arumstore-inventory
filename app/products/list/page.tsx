@@ -457,6 +457,10 @@ export default function ProductListPage() {
                             document.querySelectorAll('[id^="more-dropdown-"]').forEach(el => {
                               if (el.id !== `more-dropdown-${product.sku}`) {
                                 el.classList.add('hidden');
+                                // Cleanup listeners for other dropdowns
+                                if ((el as any)._cleanup) {
+                                  (el as any)._cleanup();
+                                }
                               }
                             });
 
@@ -467,23 +471,45 @@ export default function ProductListPage() {
                               if (!dropdown.classList.contains('hidden')) {
                                 const button = e.currentTarget;
                                 const rect = button.getBoundingClientRect();
-                                const scrollY = window.scrollY || document.documentElement.scrollTop;
-                                const scrollX = window.scrollX || document.documentElement.scrollLeft;
 
-                                // Calculate position - default to right-aligned
-                                let topPosition = rect.bottom + scrollY;
-                                let leftPosition = rect.right + scrollX - dropdown.offsetWidth;
+                                // Calculate position for fixed positioning (no scroll offsets needed)
+                                let leftPosition = rect.left - dropdown.offsetWidth + button.offsetWidth;
 
-                                // Check if dropdown would go off right edge
+                                // Check if dropdown would go off left edge
                                 if (leftPosition < 0) {
-                                  leftPosition = rect.left + scrollX;
+                                  leftPosition = rect.left;
                                 }
 
-                                // Set position styles
-                                dropdown.style.position = 'fixed';
+                                // Set position styles for fixed positioning
                                 dropdown.style.top = `${rect.bottom}px`;
-                                dropdown.style.left = `${rect.left - dropdown.offsetWidth + button.offsetWidth}px`;
+                                dropdown.style.left = `${leftPosition}px`;
                                 dropdown.style.zIndex = '9999';
+
+                                // Function to update position when scrolling or resizing
+                                const updatePosition = () => {
+                                  const newRect = button.getBoundingClientRect();
+                                  let newLeftPosition = newRect.left - dropdown.offsetWidth + button.offsetWidth;
+                                  
+                                  if (newLeftPosition < 0) {
+                                    newLeftPosition = newRect.left;
+                                  }
+                                  
+                                  dropdown.style.top = `${newRect.bottom}px`;
+                                  dropdown.style.left = `${newLeftPosition}px`;
+                                };
+
+                                // Add scroll and resize listeners
+                                const scrollHandler = updatePosition;
+                                const resizeHandler = updatePosition;
+                                
+                                window.addEventListener('scroll', scrollHandler, { passive: true });
+                                window.addEventListener('resize', resizeHandler, { passive: true });
+
+                                // Store cleanup function
+                                (dropdown as any)._cleanup = () => {
+                                  window.removeEventListener('scroll', scrollHandler);
+                                  window.removeEventListener('resize', resizeHandler);
+                                };
 
                                 // Add click event listener to document to close dropdown when clicking outside
                                 setTimeout(() => {
@@ -491,10 +517,19 @@ export default function ProductListPage() {
                                     if (!dropdown.contains(event.target as Node) && event.target !== button) {
                                       dropdown.classList.add('hidden');
                                       document.removeEventListener('click', clickHandler);
+                                      // Cleanup scroll/resize listeners
+                                      if ((dropdown as any)._cleanup) {
+                                        (dropdown as any)._cleanup();
+                                      }
                                     }
                                   };
                                   document.addEventListener('click', clickHandler);
                                 }, 0);
+                              } else {
+                                // Cleanup listeners when hiding dropdown
+                                if ((dropdown as any)._cleanup) {
+                                  (dropdown as any)._cleanup();
+                                }
                               }
                             }
                           }}

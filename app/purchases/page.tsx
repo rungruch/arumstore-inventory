@@ -504,7 +504,9 @@ export default function PurchasePage() {
                       )}
                     </div>
                   </td>
-                  <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.supplier_name}</td>
+                  <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
+                  title={data.supplier_name}
+                  >{data.supplier_name}</td>
                   <td className="p-2 flex-1">{data.total_amount}</td>
                   {/* <td className="p-2">{PurchaseStatusDisplay[data.status]}</td> */}
                   <td className="p-2">
@@ -551,6 +553,10 @@ export default function PurchasePage() {
                           document.querySelectorAll('[id^="more-dropdown-"]').forEach(el => {
                             if (el.id !== `more-dropdown-${data.transaction_id}`) {
                               el.classList.add('hidden');
+                              // Cleanup listeners for other dropdowns
+                              if ((el as any)._cleanup) {
+                                (el as any)._cleanup();
+                              }
                             }
                           });
 
@@ -560,23 +566,64 @@ export default function PurchasePage() {
                             if (!dropdown.classList.contains('hidden')) {
                               const button = e.currentTarget;
                               const rect = button.getBoundingClientRect();
-                              const scrollY = window.scrollY || document.documentElement.scrollTop;
-                              const scrollX = window.scrollX || document.documentElement.scrollLeft;
 
-                              dropdown.style.position = 'fixed';
+                              // Calculate position for fixed positioning (no scroll offsets needed)
+                              let leftPosition = rect.left - dropdown.offsetWidth + button.offsetWidth;
+
+                              // Check if dropdown would go off left edge
+                              if (leftPosition < 0) {
+                                leftPosition = rect.left;
+                              }
+
+                              // Set position styles for fixed positioning
                               dropdown.style.top = `${rect.bottom}px`;
-                              dropdown.style.left = `${rect.left - dropdown.offsetWidth + button.offsetWidth}px`;
+                              dropdown.style.left = `${leftPosition}px`;
                               dropdown.style.zIndex = '9999';
+
+                              // Function to update position when scrolling or resizing
+                              const updatePosition = () => {
+                                const newRect = button.getBoundingClientRect();
+                                let newLeftPosition = newRect.left - dropdown.offsetWidth + button.offsetWidth;
+                                
+                                if (newLeftPosition < 0) {
+                                  newLeftPosition = newRect.left;
+                                }
+                                
+                                dropdown.style.top = `${newRect.bottom}px`;
+                                dropdown.style.left = `${newLeftPosition}px`;
+                              };
+
+                              // Add scroll and resize listeners
+                              const scrollHandler = updatePosition;
+                              const resizeHandler = updatePosition;
+                              
+                              window.addEventListener('scroll', scrollHandler, { passive: true });
+                              window.addEventListener('resize', resizeHandler, { passive: true });
+
+                              // Store cleanup function
+                              (dropdown as any)._cleanup = () => {
+                                window.removeEventListener('scroll', scrollHandler);
+                                window.removeEventListener('resize', resizeHandler);
+                              };
 
                               setTimeout(() => {
                                 const clickHandler = (event: MouseEvent) => {
                                   if (!dropdown.contains(event.target as Node) && event.target !== button) {
                                     dropdown.classList.add('hidden');
                                     document.removeEventListener('click', clickHandler);
+                                    // Cleanup scroll/resize listeners
+                                    if ((dropdown as any)._cleanup) {
+                                      (dropdown as any)._cleanup();
+                                    }
                                   }
                                 };
                                 document.addEventListener('click', clickHandler);
                               }, 0);
+                            } else {
+                              // Cleanup listeners when hiding dropdown
+                              if ((dropdown as any)._cleanup) {
+                                (dropdown as any)._cleanup();
+                              }
                             }
                           }
                         }}

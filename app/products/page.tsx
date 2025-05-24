@@ -266,28 +266,32 @@ export default function ProductPage() {
               <tr key={product.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                 <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                 <td className="p-2 w-[50px] ">{product.sku}</td>
-                <td className="p-2 w-[300px] flex items-center gap-2">
+                <td className="p-2 w-[300px] flex items-center gap-2 group">
                     {product.sku_image && (
-                    <Image
-                      priority={true}
-                      src={product.sku_image}
-                      alt={product.name}
-                      width={50}
-                      height={50}
-                      className="transition-opacity duration-500 ease-in-out opacity-0 w-auto h-auto max-h-[100px] rounded-md"
-                      onLoad={(img) => (img.currentTarget as HTMLImageElement).classList.remove("opacity-0")}
-                    />
+                      <div className="group-image">
+                      <Image
+                        priority={true}
+                        src={product.sku_image}
+                        alt={product.name}
+                        width={70}
+                        height={70}
+                        className="h-20 w-20 object-cover rounded border cursor-pointer transition-transform duration-100 hover:scale-210 hover:z-50 hover:shadow-lg hover:w-auto hover:h-20 transition-opacity duration-500 ease-in-out opacity-0"
+                        onLoad={(img) => (img.currentTarget as HTMLImageElement).classList.remove("opacity-0")}
+                      />
+                      </div>
                     )}
                   <div>
                     <NavigationLink
                       href={`/products/details?psku=${product.sku}`}
                       passHref
                     >
-                      <span className="text-blue-500 hover:underline cursor-pointer">
+                      <span className="text-blue-500 hover:underline truncate cursor-pointer max-w-[200px] block overflow-hidden text-ellipsis whitespace-nowrap" title={product.name}>
                         {product.name}
                       </span>
                     </NavigationLink>
-                    <div className="text-sm text-gray-500">{product.description}</div>
+                    <div className="text-sm text-gray-500 truncate max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" title={product.description}>
+                      {product.description}
+                    </div>
                     {product.category && (
                       <div className="text-sm text-gray-500">{'หมวดหมู่: ' + product.category}</div>
                     )}
@@ -362,6 +366,10 @@ export default function ProductPage() {
                         document.querySelectorAll('[id^="more-dropdown-"]').forEach(el => {
                           if (el.id !== `more-dropdown-${product.sku}`) {
                             el.classList.add('hidden');
+                            // Cleanup listeners for other dropdowns
+                            if ((el as any)._cleanup) {
+                              (el as any)._cleanup();
+                            }
                           }
                         });
 
@@ -372,23 +380,45 @@ export default function ProductPage() {
                           if (!dropdown.classList.contains('hidden')) {
                             const button = e.currentTarget;
                             const rect = button.getBoundingClientRect();
-                            const scrollY = window.scrollY || document.documentElement.scrollTop;
-                            const scrollX = window.scrollX || document.documentElement.scrollLeft;
 
-                            // Calculate position - default to right-aligned
-                            let topPosition = rect.bottom + scrollY;
-                            let leftPosition = rect.right + scrollX - dropdown.offsetWidth;
+                            // Calculate position for fixed positioning (no scroll offsets needed)
+                            let leftPosition = rect.left - dropdown.offsetWidth + button.offsetWidth;
 
-                            // Check if dropdown would go off right edge
+                            // Check if dropdown would go off left edge
                             if (leftPosition < 0) {
-                              leftPosition = rect.left + scrollX;
+                              leftPosition = rect.left;
                             }
 
-                            // Set position styles
-                            dropdown.style.position = 'fixed';
+                            // Set position styles for fixed positioning
                             dropdown.style.top = `${rect.bottom}px`;
-                            dropdown.style.left = `${rect.left - dropdown.offsetWidth + button.offsetWidth}px`;
+                            dropdown.style.left = `${leftPosition}px`;
                             dropdown.style.zIndex = '9999';
+
+                            // Function to update position when scrolling or resizing
+                            const updatePosition = () => {
+                              const newRect = button.getBoundingClientRect();
+                              let newLeftPosition = newRect.left - dropdown.offsetWidth + button.offsetWidth;
+                              
+                              if (newLeftPosition < 0) {
+                                newLeftPosition = newRect.left;
+                              }
+                              
+                              dropdown.style.top = `${newRect.bottom}px`;
+                              dropdown.style.left = `${newLeftPosition}px`;
+                            };
+
+                            // Add scroll and resize listeners
+                            const scrollHandler = updatePosition;
+                            const resizeHandler = updatePosition;
+                            
+                            window.addEventListener('scroll', scrollHandler, { passive: true });
+                            window.addEventListener('resize', resizeHandler, { passive: true });
+
+                            // Store cleanup function
+                            (dropdown as any)._cleanup = () => {
+                              window.removeEventListener('scroll', scrollHandler);
+                              window.removeEventListener('resize', resizeHandler);
+                            };
 
                             // Add click event listener to document to close dropdown when clicking outside
                             setTimeout(() => {
@@ -396,10 +426,19 @@ export default function ProductPage() {
                                 if (!dropdown.contains(event.target as Node) && event.target !== button) {
                                   dropdown.classList.add('hidden');
                                   document.removeEventListener('click', clickHandler);
+                                  // Cleanup scroll/resize listeners
+                                  if ((dropdown as any)._cleanup) {
+                                    (dropdown as any)._cleanup();
+                                  }
                                 }
                               };
                               document.addEventListener('click', clickHandler);
                             }, 0);
+                          } else {
+                            // Cleanup listeners when hiding dropdown
+                            if ((dropdown as any)._cleanup) {
+                              (dropdown as any)._cleanup();
+                            }
                           }
                         }
                       }}

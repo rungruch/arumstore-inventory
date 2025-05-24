@@ -313,10 +313,11 @@ export default function ContactsPage() {
               <tr key={contact.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
                 <td className="p-2 w-[50px] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
                 <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{contact.client_id}</td>
-                <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">
+                <td className="text-blue-500 p-2 w-[150px] whitespace-nowrap overflow-hidden  text-ellipsis max-w-[150px] hover:underline cursor-pointer"
+                title={contact.name}>
                   <Link
                   href={`/contacts/${contact.client_id}`}
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-500 hover:underline"
                   >
                   {contact.name}
                   </Link>
