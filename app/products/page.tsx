@@ -208,17 +208,17 @@ export default function ProductPage() {
   message={modalState.message}
   onConfirm={() => handleDeleteProduct(modalState.sku)}
 />
-    <div className="container mx-auto p-5">
-      <div className="flex flex-col items-start mb-4">
-        <h1 className="text-2xl font-bold">สินค้า</h1>
-        <h2 className="text-1xl font-semibold text-gray-700 dark:text-gray-200">จำนวน {totalData} รายการ</h2>
+    <div className="container mx-auto p-3 sm:p-5 min-h-screen bg-gray-50 dark:bg-zinc-900">
+      <div className="flex flex-col items-start mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">สินค้า</h1>
+        <h2 className="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-300">จำนวน {totalData} รายการ</h2>
       </div>
       {/* Search and Add */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center mb-4 sm:mb-6">
         <input
           type="text"
           placeholder="ค้นหาโดยชื่อสินค้า"
-          className="border p-2 rounded-md w-1/3"
+          className="border border-gray-200 dark:border-zinc-700 p-3 rounded-lg w-full sm:w-1/2 lg:w-1/3 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-slate-500 dark:focus:ring-slate-400 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => {
@@ -231,7 +231,7 @@ export default function ProductPage() {
         {hasPermission('products', 'create') && (
           <button
             onClick={togglePopup}
-            className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
+            className="text-white py-3 px-4 sm:px-6 rounded-lg bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold tracking-wide text-sm sm:text-base whitespace-nowrap"
           >
             เพิ่มสินค้า
           </button>
@@ -241,32 +241,33 @@ export default function ProductPage() {
       {/* Data Table with Loading State */}
       {loading ? (
         <div className="flex justify-center items-center py-20 opacity-100 transition-opacity duration-500 animate-pulse">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-solid"></div>
-          <span className="ml-4 text-gray-500">Loading...</span>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-slate-600 dark:border-slate-400 border-solid"></div>
+          <span className="ml-4 text-slate-600 dark:text-slate-400">กำลังโหลด...</span>
         </div>
       ) : (
         <div className={`transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}>
           {showPopup && <div className="mb-6"><AddProductPopup trigger={trigger} setTrigger={setTrigger} /></div>}
-          <FlexTable
-            datas={data}
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg overflow-hidden">
+            <FlexTable
+              datas={data}
             customHeader={
-              <tr className="text-left h-[9vh]">
-                <th className="p-2 w-[5%] text-center">#</th>
-                <th className="p-2 w-[50px] ">รหัส</th>
-                <th className="p-2 w-[300px]">ชื่อสินค้า</th>
-                <th className="p-2 ">ราคาซื้อ</th>
-                <th className="p-2 ">ราคาขาย</th>
-                <th className="p-2 ">คงเหลือ</th>
-                <th className="p-2 ]">รอยืนยัน</th>
-                <th className="p-2 ]">เคลื่อนไหวล่าสุด</th>
-                <th className="p-2 whitespace-nowrap"></th>
+              <tr className="text-left h-[9vh] bg-gray-50 dark:bg-zinc-700">
+                <th className="p-3 w-[5%] text-center font-semibold text-gray-900 dark:text-gray-100">#</th>
+                <th className="p-3 w-[50px] font-semibold text-gray-900 dark:text-gray-100">รหัส</th>
+                <th className="p-3 w-[300px] font-semibold text-gray-900 dark:text-gray-100">ชื่อสินค้า</th>
+                <th className="p-3 font-semibold text-gray-900 dark:text-gray-100">ราคาซื้อ</th>
+                <th className="p-3 font-semibold text-gray-900 dark:text-gray-100">ราคาขาย</th>
+                <th className="p-3 font-semibold text-gray-900 dark:text-gray-100">คงเหลือ</th>
+                <th className="p-3 font-semibold text-gray-900 dark:text-gray-100">รอยืนยัน</th>
+                <th className="p-3 font-semibold text-gray-900 dark:text-gray-100">เคลื่อนไหวล่าสุด</th>
+                <th className="p-3 whitespace-nowrap font-semibold text-gray-900 dark:text-gray-100"></th>
               </tr>
             }
             customRow={(product, index) => (
-              <tr key={product.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
-                <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
-                <td className="p-2 w-[50px] ">{product.sku}</td>
-                <td className="p-2 w-[300px] flex items-center gap-2 group">
+              <tr key={product.id} className="border-b border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-in-out hover:bg-gray-50 dark:hover:bg-zinc-700">
+                <td className="p-3 w-[5%] text-center text-gray-700 dark:text-gray-300">{index + 1 + (currentPage - 1) * pageSize}</td>
+                <td className="p-3 w-[50px] font-mono text-sm text-gray-700 dark:text-gray-300">{product.sku}</td>
+                <td className="p-3 w-[300px] flex items-center gap-2 group">
                     {product.sku_image && (
                       <div className="group-image">
                       <Image
@@ -275,7 +276,7 @@ export default function ProductPage() {
                         alt={product.name}
                         width={70}
                         height={70}
-                        className="h-20 w-20 object-cover rounded border cursor-pointer transition-transform duration-100 hover:scale-210 hover:z-50 hover:shadow-lg hover:w-auto hover:h-20 transition-opacity duration-500 ease-in-out opacity-0"
+                        className="h-20 w-20 object-cover rounded border cursor-pointer transition-transform duration-100 hover:scale-170 hover:z-50 hover:shadow-lg hover:w-auto hover:h-20 transition-opacity duration-500 ease-in-out opacity-0"
                         onLoad={(img) => (img.currentTarget as HTMLImageElement).classList.remove("opacity-0")}
                       />
                       </div>
@@ -285,21 +286,21 @@ export default function ProductPage() {
                       href={`/products/details?psku=${product.sku}`}
                       passHref
                     >
-                      <span className="text-blue-500 hover:underline truncate cursor-pointer max-w-[200px] block overflow-hidden text-ellipsis whitespace-nowrap" title={product.name}>
+                      <span className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:underline truncate cursor-pointer max-w-[200px] block overflow-hidden text-ellipsis whitespace-nowrap font-medium" title={product.name}>
                         {product.name}
                       </span>
                     </NavigationLink>
-                    <div className="text-sm text-gray-500 truncate max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" title={product.description}>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" title={product.description}>
                       {product.description}
                     </div>
                     {product.category && (
-                      <div className="text-sm text-gray-500">{'หมวดหมู่: ' + product.category}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{'หมวดหมู่: ' + product.category}</div>
                     )}
                   </div>
                 </td>
-                <td className="p-2">{product.price.buy_price.toLocaleString()}</td>
-                <td className="p-2">{product.price.sell_price.toLocaleString()}</td>
-                <td className="p-2">
+                <td className="p-3 font-mono text-gray-900 dark:text-gray-100">{product.price.buy_price.toLocaleString()}</td>
+                <td className="p-3 font-mono text-gray-900 dark:text-gray-100">{product.price.sell_price.toLocaleString()}</td>
+                <td className="p-3">
                   <span
                     onClick={() => setSelectedStock({
                       productName: product.name,
@@ -308,18 +309,19 @@ export default function ProductPage() {
                       pendingStocks: product.pending_stock,
                       buyPrice: product.price.buy_price
                     })}
-                    className={`cursor-pointer hover:opacity-80 text-left ${Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
-                        ? 'text-red-500' // red if stock is 0 or less
+                    className={`cursor-pointer hover:opacity-80 font-semibold text-left transition-all duration-200 px-2 py-1 rounded-md ${
+                      Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
+                        ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30' // red if stock is 0 or less
                         : Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0) < 5
-                          ? 'text-yellow-500' // yellow if stock is less than 5
-                          : 'text-green-500' // green if stock is greater than 5
-                      }`}
+                          ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30' // amber if stock is less than 5
+                          : 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30' // green if stock is greater than 5
+                    }`}
                   >
                     {Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)}
-                    {" " + product.unit_type}
+                    <span className="text-xs ml-1 opacity-75">{product.unit_type}</span>
                   </span>
                 </td>
-                <td className="p-2 w-[10%] text-left">
+                <td className="p-3 w-[10%] text-left">
                   <span
                     onClick={() => setSelectedStock({
                       productName: product.name,
@@ -328,21 +330,23 @@ export default function ProductPage() {
                       pendingStocks: product.pending_stock,
                       buyPrice: product.price.buy_price
                     })}
-                    className={`cursor-pointer hover:opacity-80 ${
-                      Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) >
-                      Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)
-                        ? 'text-red-500'
-                        : Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) ===
+                    className={`cursor-pointer hover:opacity-80 font-semibold text-left transition-all duration-200 px-2 py-1 rounded-md ${
+                      Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) <= 0
+                        ? 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20 hover:bg-gray-100 dark:hover:bg-gray-900/30' // gray if no pending stock
+                        : Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) > 
                           Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)
-                          ? 'text-yellow-500'
-                          : 'text-green-500'
+                          ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30' // red if pending stock > current stock
+                          : Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0) ===
+                            Object.values(product.stocks as Record<string, number>).reduce((a, b) => a + b, 0)
+                            ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30' // amber if pending stock equals current stock
+                            : 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30' // green if pending stock < current stock
                     }`}
                   >
                     {Object.values(product.pending_stock as Record<string, number>).reduce((a, b) => a + b, 0)}
-                    {" " + product.unit_type}
+                    <span className="text-xs ml-1 opacity-75">{product.unit_type}</span>
                   </span>
                 </td>
-                <td className="p-2 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
+                <td className="p-3 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 dark:text-gray-300">
                   {product.updated_date ?
                     new Date(product.updated_date.toDate()).toLocaleString('th-TH', {
                       year: 'numeric',
@@ -354,7 +358,7 @@ export default function ProductPage() {
                     })
                     : "-"}
                 </td>
-                <td className="p-2 w-[5%] relative">
+                <td className="p-3 w-[5%] relative">
                   <div className="relative inline-block">
                     <button
                       onClick={(e) => {
@@ -442,7 +446,7 @@ export default function ProductPage() {
                           }
                         }
                       }}
-                      className="flex items-center text-blue-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-gray-300 whitespace-nowrap text-sm hover:bg-gray-300 dark:hover:bg-zinc-700 rounded transition-colors duration-200"
+                      className="flex items-center justify-center p-2 text-slate-700 hover:text-slate-900 dark:text-gray-200 dark:hover:text-white whitespace-nowrap text-sm hover:bg-slate-100 dark:hover:bg-zinc-600 rounded-md transition-colors duration-200"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <circle cx="12" cy="5" r="1.5" fill="currentColor" />
@@ -454,15 +458,15 @@ export default function ProductPage() {
                     {/* Move dropdown to portal root to avoid table containment issues */}
                     <div
                       id={`more-dropdown-${product.sku}`}
-                      className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
+                      className="fixed hidden z-50 w-56 bg-white shadow-xl rounded-lg border border-gray-200 dark:bg-zinc-800 dark:border-zinc-600"
                     >
                       <div className="py-1">
-                        <NavigationLink href={`/products/details?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                        <NavigationLink href={`/products/details?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-zinc-700">
                           ดูภาพรวม
                         </NavigationLink>
                         {hasPermission('products', 'edit') && (
                           <>
-                          <div className="border-t border-gray-200 my-1" />
+                          <div className="border-t border-gray-200 dark:border-zinc-600 my-1" />
                         <button
                           onClick={() => setSelectedStock({
                           productName: product.name,
@@ -471,13 +475,13 @@ export default function ProductPage() {
                           pendingStocks: product.pending_stock,
                           buyPrice: product.price.buy_price
                           })}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-zinc-700">
                           ปรับจำนวน
                         </button>
-                        <NavigationLink href={`/products/addtransfer?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                        <NavigationLink href={`/products/addtransfer?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-zinc-700">
                           โอนสินค้า
                         </NavigationLink>
-                        <NavigationLink href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                        <NavigationLink href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-zinc-700">
                           แก้ไข
                         </NavigationLink>
                         </>
@@ -492,7 +496,7 @@ export default function ProductPage() {
                                 sku: product.sku
                             });
                           }}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                         >
                           ลบ
                         </button>
@@ -505,17 +509,18 @@ export default function ProductPage() {
               </tr>
             )}
           />
+          </div>
         </div>
       )}
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
-        <div className="flex items-center space-x-2">
-          <span className="text-gray-700 dark:text-white">แถว/หน้า:</span>
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 p-4 bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 gap-4">
+        <div className="flex items-center space-x-3">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">แถว/หน้า:</span>
           <select
             value={pageSize}
             onChange={handlePageSizeChange}
-            className="border rounded-md p-2"
+            className="border border-gray-200 dark:border-zinc-600 rounded-lg p-2 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-slate-500 dark:focus:ring-slate-400 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
           >
             <option value="5">5</option>
             <option value="10">10</option>
@@ -524,28 +529,29 @@ export default function ProductPage() {
           </select>
         </div>
 
-        {/* Pagination (unchanged) */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <button
             onClick={handlePrevPage}
             disabled={currentPage === 1 || search.trim() !== ""}
-            className={`px-3 py-2 rounded-md transition ${currentPage === 1 || search.trim() !== ""
-              ? "bg-gray-300 cursor-not-allowed dark:bg-zinc-700"
-              : "bg-gray-800 text-white hover:bg-gray-700"
+            className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center min-w-[40px] ${currentPage === 1 || search.trim() !== ""
+              ? "bg-gray-100 dark:bg-zinc-700 text-gray-400 dark:text-zinc-500 cursor-not-allowed"
+              : "bg-slate-700 dark:bg-slate-600 text-white hover:bg-slate-800 dark:hover:bg-slate-700 shadow-md hover:shadow-lg transform hover:scale-105"
               }`}
           >
-            <ChevronLeft size={16} className="inline-block" />
+            <ChevronLeft size={16} />
           </button>
-          <span className="py-2 text-gray-700 dark:text-white">{currentPage} / {totalPages}</span>
+          <div className="px-4 py-2 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{currentPage} / {totalPages}</span>
+          </div>
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages || !lastDoc || search.trim() !== ""}
-            className={`px-3 py-2 rounded-md transition ${currentPage === totalPages || !lastDoc || search.trim() !== ""
-              ? "bg-gray-300 dark:bg-zinc-700 cursor-not-allowed"
-              : "bg-gray-800 text-white hover:bg-gray-700"
+            className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center min-w-[40px] ${currentPage === totalPages || !lastDoc || search.trim() !== ""
+              ? "bg-gray-100 dark:bg-zinc-700 text-gray-400 dark:text-zinc-500 cursor-not-allowed"
+              : "bg-slate-700 dark:bg-slate-600 text-white hover:bg-slate-800 dark:hover:bg-slate-700 shadow-md hover:shadow-lg transform hover:scale-105"
               }`}
           >
-            <ChevronRight size={16} className="inline-block" />
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
