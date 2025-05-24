@@ -83,7 +83,6 @@ const PurchaseDashboardPage = () => {
         
         // Fetch daily purchase data for today
         const todayPurchases = await getDailyPurchaseSummary(now);
-        console.log("Today Purchases:", todayPurchases);
         
         // Calculate months between start date and end date
         const start = dateRange.startDate;
@@ -115,9 +114,6 @@ const PurchaseDashboardPage = () => {
         // Get period comparison data
         const periodComparison = await getCachedPurchasePeriodComparison(start, end);
         setIsGrowth(periodComparison.growthPercent > 0);
-
-        console.log("Period Comparison:", periodComparison);
-        console.log("Monthly Purchase:", monthlyPurchase);
         
         // Update summary data
         setSummary({

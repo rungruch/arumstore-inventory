@@ -72,8 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
-          console.log('Auth state changed: User logged in', firebaseUser.uid);
-          
           // Fetch user data from Firestore with retry logic
           const userData = await fetchUserData(firebaseUser.uid);
           setCurrentUser(userData);
@@ -88,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.warn('User authenticated but no Firestore document found');
           }
         } else {
-          console.log('Auth state changed: User logged out');
           setCurrentUser(null);
           
           // Redirect to login if not on login page

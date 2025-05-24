@@ -11,9 +11,7 @@ export async function updateLastLogin(uid: string): Promise<void> {
     await setDoc(doc(db, 'users', uid), {
       lastLogin: serverTimestamp(),
       updated_date: serverTimestamp()
-    }, { merge: true });
-    
-    console.log('Last login updated for user:', uid);
+    }, { merge: true });   
   } catch (error) {
     console.warn('Failed to update last login for user:', uid, error);
     // Don't throw error to avoid blocking login flow
@@ -81,7 +79,6 @@ export async function updateUserSession(
 
     await setDoc(doc(db, 'users', uid), updateData, { merge: true });
     
-    console.log('User session updated for:', uid);
   } catch (error) {
     console.warn('Failed to update user session for:', uid, error);
     // Don't throw error to avoid blocking user experience
@@ -138,7 +135,6 @@ export async function trackUserActivity(
     };
     
     await addDoc(collection(db, 'activity_logs'), activityData);
-    console.log(`Activity logged: ${activityType} for user ${uid}`);
     
   } catch (error) {
     console.warn('Failed to track user activity for:', uid, error);

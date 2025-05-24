@@ -174,16 +174,11 @@ export function getMenuList(pathname: string): Group[] {
           href: "/settings",
           label: "ตั้งค่า",
           icon: Settings,
-        }
-      ]
-    },
-    {
-      groupLabel: "Debug",
-      menus: [
+        },
         {
-          href: "/debug/activity",
-          label: "Activity Logs",
-          icon: LayoutGrid
+          href: "/admin/user-tracking",
+          label: "การติดตามผู้ใช้",
+          icon: Users
         }
       ]
     }
@@ -204,6 +199,7 @@ export function getPermissionModulesAndActions() {
     'บัญชี': 'users',
     'ตั้งค่า': 'settings',
     'Dashboard': 'dashboard',
+    'การติดตามผู้ใช้': 'users',
     'Activity Logs': 'activity_logs',
   };
   const groups = getMenuList('');

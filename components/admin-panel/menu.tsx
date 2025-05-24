@@ -26,7 +26,8 @@ const menuModuleMap: Record<string, string> = {
   "ลูกค้า": "customers",
   "การเงิน": "finance",
   "บัญชี": "users",
-  "ตั้งค่า": "settings"
+  "ตั้งค่า": "settings",
+  "การติดตามผู้ใช้": "users"
 };
 
 interface MenuProps {

@@ -155,14 +155,12 @@ export default function LoginPage() {
                     provider: 'google'
                 });
 
-                console.log('New Google user created:', user.email, 'with displayName:', displayName);
             } else {
                 // Update last login for existing user
                 await updateUserSession(user.uid, { 
                   loginMethod: 'google',
                   userAgent: navigator.userAgent 
                 });
-                console.log('Existing user login updated:', user.email);
             }
             
             // Track detailed login activity

@@ -32,6 +32,7 @@ import { usePathname } from "next/navigation";
 // Maps submenu paths to permission module names
 const submenuModuleMap: Record<string, {module: string, action: string}> = {
   "/users": { module: "users", action: "view" },
+  "/admin/user-tracking": { module: "users", action: "view" },
   "/finance": { module: "finance", action: "view" },
   "/finance/wallet": { module: "finance", action: "view" },
   "/finance/other-income": { module: "finance", action: "view" },
