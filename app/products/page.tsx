@@ -14,6 +14,7 @@ import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from '@/app/contexts/AuthContext';
+import { useUserActivity } from "@/hooks/useUserActivity";
 
 interface ModalState {
   isOpen: boolean;
@@ -47,6 +48,14 @@ export default function ProductPage() {
       sku: ""
     });
 
+
+  // Track user activity on products page
+  useUserActivity({
+    trackOnMount: true,
+    trackOnVisibilityChange: true,
+    trackOnClick: true,
+    throttleMs: 60000 // Track every minute
+  });
 
   // Fetch initial data on component mount
   useEffect(() => {

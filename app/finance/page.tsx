@@ -7,6 +7,7 @@ import { payment_status, finance_transaction_type } from "@/app/finance/enum";
 import { NavigationLink } from "@/components/providers/navigation-link";
 import { Timestamp } from "firebase/firestore";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useUserActivity } from "@/hooks/useUserActivity";
 
 export default function FinancePage() {
   const [wallets, setWallets] = useState<WalletCollection[]>([]);
@@ -14,6 +15,14 @@ export default function FinancePage() {
   const [selectedTransactionNum, setSelectedTransactionNum] = useState<number>(5);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Track user activity on finance page
+  useUserActivity({
+    trackOnMount: true,
+    trackOnVisibilityChange: true,
+    trackOnClick: true,
+    throttleMs: 60000 // Track every minute
+  });
 
   useEffect(() => {
     async function fetchData() {

@@ -17,6 +17,7 @@ import * as XLSX from 'xlsx-js-style';
 import { newTransaction, ExcelExportRow } from '@/components/interface';
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from '@/app/contexts/AuthContext';
+import { useUserActivity } from "@/hooks/useUserActivity";
 
 
 interface ModalState {
@@ -44,6 +45,15 @@ export default function ProductPage() {
   const [pageSize, setPageSize] = useState(10); // Default page size is 10
   const [trigger, setTrigger] = useState(false);
   const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
+
+  // Track user activity on sales page  
+  useUserActivity({
+    trackOnMount: true,
+    trackOnVisibilityChange: true,
+    trackOnClick: true,
+    throttleMs: 60000 // Track every minute
+  });
+
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     title: "",

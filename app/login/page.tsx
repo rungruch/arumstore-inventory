@@ -5,8 +5,9 @@ import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 
 import { auth, db } from '@/app/firebase/clientApp';
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getPermissionModulesAndActions } from '@/lib/menu-list';
+import { updateLastLogin, createUserDocument, updateUserSession } from '@/lib/auth-utils';
+import { useAuth } from '@/app/contexts/AuthContext';
 import Image from 'next/image';
-import Link from 'next/link';
 import AddUserPopup from '@/components/AddUser'; // Import AddUserPopup component
 
 export default function LoginPage() {
@@ -16,6 +17,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [isSignUpOpen, setIsSignUpOpen] = useState(false);
     const router = useRouter();
+    const { refreshUser } = useAuth();
 
     // Get default permissions for staff role
     const getDefaultGooglePermissions = () => {
@@ -46,19 +48,44 @@ export default function LoginPage() {
             const user = result.user;
 
             // Update last login timestamp for email/password login
-            try {
-                await setDoc(doc(db, 'users', user.uid), {
-                    lastLogin: serverTimestamp(),
-                    updated_date: serverTimestamp()
-                }, { merge: true });
-            } catch (dbError) {
-                console.warn('Failed to update last login:', dbError);
-                // Don't block login if database update fails
-            }
+            await updateUserSession(user.uid, { 
+              loginMethod: 'email',
+              userAgent: navigator.userAgent 
+            });
+            
+            // Track detailed login activity
+            const { trackUserActivity } = await import('@/lib/auth-utils');
+            await trackUserActivity(user.uid, 'login_success', {
+              method: 'email',
+              page: '/login',
+              browser: navigator.userAgent
+            });
+
+            // Refresh AuthContext user data to ensure proper state sync
+            await refreshUser();
 
             router.push('/dashboard');
         } catch (error: any) {
             console.error('Login error:', error);
+            
+            // Track login failure
+            try {
+              const { trackUserActivity } = await import('@/lib/auth-utils');
+              // Use anonymous tracking for failed logins (no uid)
+              const errorData = {
+                errorCode: error.code || 'unknown_error',
+                errorMessage: error.message,
+                email: email, // Safe to track email for security monitoring
+                page: '/login',
+                method: 'email',
+                browser: navigator.userAgent
+              };
+              
+              // Use a special collection entry with null user
+              await trackUserActivity('anonymous', 'login_failure', errorData);
+            } catch (trackingError) {
+              console.error('Failed to track login error:', trackingError);
+            }
 
             switch (error.code) {
                 case 'auth/invalid-credential':
@@ -113,33 +140,64 @@ export default function LoginPage() {
             if (!userDoc.exists()) {
                 // Create new user document with proper default permissions
                 const defaultPermissions = getDefaultGooglePermissions();
+                
+                // Ensure we have a valid displayName
+                const displayName = user.displayName && user.displayName.trim().length > 0 
+                    ? user.displayName.trim()
+                    : user.email.split('@')[0] || 'Google User';
 
-                await setDoc(doc(db, 'users', user.uid), {
+                await createUserDocument({
                     uid: user.uid,
                     email: user.email,
-                    displayName: user.displayName || user.email.split('@')[0] || 'Google User',
-                    role: 'staff', // Default role for new Google users
+                    displayName: displayName,
+                    role: 'staff',
                     permissions: defaultPermissions,
-                    lastLogin: serverTimestamp(),
-                    created_date: serverTimestamp(),
-                    updated_date: serverTimestamp(),
                     provider: 'google'
                 });
 
-                console.log('New Google user created:', user.email);
+                console.log('New Google user created:', user.email, 'with displayName:', displayName);
             } else {
                 // Update last login for existing user
-                await setDoc(doc(db, 'users', user.uid), {
-                    lastLogin: serverTimestamp(),
-                    updated_date: serverTimestamp()
-                }, { merge: true });
-
+                await updateUserSession(user.uid, { 
+                  loginMethod: 'google',
+                  userAgent: navigator.userAgent 
+                });
                 console.log('Existing user login updated:', user.email);
             }
+            
+            // Track detailed login activity
+            const { trackUserActivity } = await import('@/lib/auth-utils');
+            await trackUserActivity(user.uid, 'login_success', {
+              method: 'google',
+              page: '/login',
+              browser: navigator.userAgent,
+              email: user.email,
+              isNewAccount: !userDoc.exists()
+            });
+
+            // Refresh AuthContext user data to ensure proper state sync
+            await refreshUser();
 
             router.push('/dashboard');
         } catch (error: any) {
             console.error('Google login error:', error);
+            
+            // Track Google login failure
+            try {
+              const { trackUserActivity } = await import('@/lib/auth-utils');
+              const errorData = {
+                errorCode: error.code || 'unknown_error',
+                errorMessage: error.message,
+                page: '/login',
+                method: 'google',
+                browser: navigator.userAgent
+              };
+              
+              // Use a special collection entry with null user
+              await trackUserActivity('anonymous', 'login_failure', errorData);
+            } catch (trackingError) {
+              console.error('Failed to track login error:', trackingError);
+            }
 
             // Production-ready error handling
             if (error.code) {

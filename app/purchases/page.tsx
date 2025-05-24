@@ -12,6 +12,7 @@ import { PurchaseStatusDisplay, PURCHASE_STATUS_TRANSITIONS, PurchaseStatus } fr
 import AddPurchase from "@/components/AddPurchase";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from '@/app/contexts/AuthContext';
+import { useUserActivity } from "@/hooks/useUserActivity";
 
 interface ModalState {
   isOpen: boolean;
@@ -41,6 +42,14 @@ export default function PurchasePage() {
   const [dateRange, setDateRange] = useState({
     startDate: new Date(),
     endDate: new Date()
+  });
+
+  // Track user activity on purchases page
+  useUserActivity({
+    trackOnMount: true,
+    trackOnVisibilityChange: true,
+    trackOnClick: true,
+    throttleMs: 60000 // Track every minute
   });
 
   // Fetch initial data on component mount

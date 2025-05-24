@@ -26,7 +26,10 @@ export function UserNav() {
   const { currentUser, signOut } = useAuth();
   
   // Get first letter of each word in the name for avatar
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null | undefined) => {
+    if (!name || typeof name !== 'string') {
+      return 'U';
+    }
     return name
       .split(' ')
       .map(word => word.charAt(0))
@@ -47,7 +50,7 @@ export function UserNav() {
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="#" alt="Avatar" />
                   <AvatarFallback className="bg-transparent">
-                    {currentUser ? getInitials(currentUser.displayName) : 'U'}
+                    {currentUser ? getInitials(currentUser.displayName || currentUser.email) : 'U'}
                   </AvatarFallback>
                 </Avatar>
               </Button>

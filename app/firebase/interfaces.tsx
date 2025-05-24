@@ -199,6 +199,12 @@ export interface User {
   lastLogin: Timestamp;
   created_date: Timestamp;
   updated_date: Timestamp;
+  // Enhanced session tracking fields
+  lastActive?: Timestamp;
+  lastLoginMethod?: 'email' | 'google' | 'facebook';
+  lastUserAgent?: string;
+  lastIpAddress?: string;
+  provider?: string;
 }
 
 export interface ProductCategoryCount {

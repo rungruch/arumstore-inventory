@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUserActivity } from "@/hooks/useUserActivity";
 import { 
   getPeriodMonthlyIncomeSummary, 
   getTopSellingProducts, 
@@ -33,6 +34,15 @@ import {
 } from "lucide-react";
 
 const DashboardPage = () => {
+  // Initialize user activity tracking
+  useUserActivity({
+    trackOnMount: true,
+    trackOnVisibilityChange: true,
+    trackOnClick: false, // Avoid too frequent updates on dashboard
+    trackOnKeyboard: false,
+    throttleMs: 60000 // Update every minute for dashboard
+  });
+
   // State for summary cards
   const [summary, setSummary] = useState({
     todaySales: 0,
