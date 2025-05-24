@@ -4,9 +4,8 @@ import Link from 'next/link';
 import { ComponentProps } from 'react';
 import { useNavigationLoading } from './navigation-loading-provider';
 
-interface NavigationLinkProps extends Omit<ComponentProps<typeof Link>, 'onClick'> {
+interface NavigationLinkProps extends ComponentProps<typeof Link> {
   showLoading?: boolean;
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export function NavigationLink({ 
@@ -16,7 +15,7 @@ export function NavigationLink({
   onClick,
   ...props 
 }: NavigationLinkProps) {
-  const { navigateTo } = useNavigationLoading();
+  const { navigate } = useNavigationLoading();
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Call original onClick if provided
@@ -25,9 +24,15 @@ export function NavigationLink({
       if (e.defaultPrevented) return;
     }
 
+    // Only intercept internal navigation that should show loading
     if (showLoading && href) {
-      e.preventDefault();
-      navigateTo(href.toString());
+      const hrefString = href.toString();
+      
+      // Only for internal links (not external URLs, anchors, mailto, tel, etc.)
+      if (hrefString.startsWith('/') && !hrefString.startsWith('/#')) {
+        e.preventDefault();
+        navigate(hrefString);
+      }
     }
   };
 

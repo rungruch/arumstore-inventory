@@ -27,7 +27,7 @@ import {
   Users, 
   UserCircle
 } from "lucide-react";
-import Link from "next/link";
+import { NavigationLink } from "@/components/providers/navigation-link";
 
 const CustomerDashboardPage = () => {
   // State for summary cards
@@ -285,9 +285,9 @@ const CustomerDashboardPage = () => {
                     <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors">
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{idx + 1}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                        <Link href={`/contacts/${customer.id}`} className="hover:underline text-blue-600 dark:text-blue-400">
+                        <NavigationLink href={`/contacts/${customer.id}`} className="hover:underline text-blue-600 dark:text-blue-400">
                           {customer.name}
-                        </Link>
+                        </NavigationLink>
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{customer.transactions}</td>
                       <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300 font-medium">{formatCurrency(customer.value)}</td>

@@ -1,20 +1,24 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { createContext, useContext, ReactNode, useTransition, startTransition } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface NavigationLoadingContextType {
-  isLoading: boolean;
-  navigateTo: (url: string) => void;
+  isPending: boolean;
+  navigate: (url: string) => void;
 }
 
 const NavigationLoadingContext = createContext<NavigationLoadingContextType>({
-  isLoading: false,
-  navigateTo: () => {},
+  isPending: false,
+  navigate: () => {},
 });
 
 export const useNavigationLoading = () => {
-  return useContext(NavigationLoadingContext);
+  const context = useContext(NavigationLoadingContext);
+  if (!context) {
+    throw new Error('useNavigationLoading must be used within NavigationLoadingProvider');
+  }
+  return context;
 };
 
 interface NavigationLoadingProviderProps {
@@ -25,7 +29,7 @@ export function NavigationLoadingProvider({ children }: NavigationLoadingProvide
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const navigateTo = (url: string) => {
+  const navigate = (url: string) => {
     startTransition(() => {
       router.push(url);
     });
@@ -33,8 +37,8 @@ export function NavigationLoadingProvider({ children }: NavigationLoadingProvide
 
   return (
     <NavigationLoadingContext.Provider value={{ 
-      isLoading: isPending, 
-      navigateTo 
+      isPending, 
+      navigate
     }}>
       {children}
     </NavigationLoadingContext.Provider>

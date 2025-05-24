@@ -7,7 +7,7 @@ import { getMonthlyIncomeByDateSku, getProductPeriodMonthlyIncomeSummarybySku, g
 import Image from "next/image";
 import { Products } from "@/app/firebase/interfaces";
 import { ArrowLeft, BarChart2, PieChart, Settings, Circle, Trash, Edit3, MoveRight } from "lucide-react";
-import Link from "next/link";
+import { NavigationLink } from "@/components/providers/navigation-link";
 import {
   BarChart,
   Bar,
@@ -238,10 +238,10 @@ export default function ProductDetails() {
         <div className="bg-white shadow-sm p-4 mb-6 dark:bg-zinc-800">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center text-sm text-blue-600 dark:text-blue-700 mb-2">
-              <Link href="/products" className="flex items-center hover:underline ">
+              <NavigationLink href="/products" className="flex items-center hover:underline ">
                 <ArrowLeft size={16} className="mr-1" />
                 <span>สินค้า</span>
-              </Link>
+              </NavigationLink>
             </div>
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">รายละเอียดสินค้า: {product.name} ({product.sku})</h1>
@@ -257,20 +257,20 @@ export default function ProductDetails() {
           <div className="flex space-x-1 mb-6 bg-white rounded-lg shadow-sm p-1 overflow-x-auto dark:bg-zinc-800">
             {hasPermission('products', 'edit') && (
               <>
-            <Link
+            <NavigationLink
               href={`/products/edit?psku=${product.sku}`}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center whitespace-nowrap text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <Settings size={16} className="mr-2" />
               แก้ไข
-            </Link>
-            <Link
+            </NavigationLink>
+            <NavigationLink
               href={`/products/addtransfer?psku=${product.sku}`}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center whitespace-nowrap text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <MoveRight size={16} className="mr-2" />
               โอนสินค้า
-            </Link>
+            </NavigationLink>
             <button
               onClick={() => setSelectedStock({
                 productName: product.name,

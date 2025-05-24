@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import FlexTable from "@/components/FlexTable";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
-import Link from "next/link";
+import { NavigationLink } from "@/components/providers/navigation-link";
 import * as XLSX from 'xlsx-js-style';
 import { getPurchaseTransactionPaginated, getTotalPurchaseTransactionCount, getPurchaseTransactionbyName, getPurchaseTransactionsByDate, updatePurchaseTransactionStatus } from "@/app/firebase/firestoreBuy";
 import { PurchaseStatusDisplay, PURCHASE_STATUS_TRANSITIONS, PurchaseStatus } from "../firebase/enum";
@@ -585,9 +585,9 @@ export default function PurchasePage() {
                         className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
                       >
                         <div className="py-1">
-                          <Link href={`/purchases/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                          <NavigationLink href={`/purchases/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                             สร้างรายการซ้ำ
-                          </Link>
+                          </NavigationLink>
                         </div>
                       </div>
                     </div>

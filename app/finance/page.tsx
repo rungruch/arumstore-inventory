@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { getFinanceTransactions, getWallets } from "@/app/firebase/firestoreFinance";
 import { WalletCollection } from "@/app/finance/interface";
 import { payment_status, finance_transaction_type } from "@/app/finance/enum";
-import Link from "next/link";
+import { NavigationLink } from "@/components/providers/navigation-link";
 import { Timestamp } from "firebase/firestore";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -83,25 +83,25 @@ export default function FinancePage() {
         <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-zinc-700 p-6">
           <h2 className="text-xl font-semibold mb-2">ยอดรวมกระเป๋าเงิน</h2>
           <p className="text-3xl font-bold">฿{totalWalletBalance.toLocaleString()}</p>
-          <Link href="/finance/wallet" className="text-blue-600 hover:text-blue-800 text-sm mt-4 inline-block">
+          <NavigationLink href="/finance/wallet" className="text-blue-600 hover:text-blue-800 text-sm mt-4 inline-block">
             จัดการกระเป๋าเงิน →
-          </Link>
+          </NavigationLink>
         </div>
 
         <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-zinc-700 p-6">
           <h2 className="text-xl font-semibold mb-2">รายรับ</h2>
           <p className="text-3xl font-bold text-green-600">฿{totalIncome.toLocaleString()}</p>
-          <Link href="/finance/other-income" className="text-blue-600 hover:text-blue-800 text-sm mt-4 inline-block">
+          <NavigationLink href="/finance/other-income" className="text-blue-600 hover:text-blue-800 text-sm mt-4 inline-block">
             จัดการรายรับ →
-          </Link>
+          </NavigationLink>
         </div>
 
         <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-zinc-700 p-6">
           <h2 className="text-xl font-semibold mb-2">รายจ่าย</h2>
           <p className="text-3xl font-bold text-red-600">฿{totalExpense.toLocaleString()}</p>
-          <Link href="/finance/other-outcome" className="text-blue-600 hover:text-blue-800 text-sm mt-4 inline-block">
+          <NavigationLink href="/finance/other-outcome" className="text-blue-600 hover:text-blue-800 text-sm mt-4 inline-block">
             จัดการรายจ่าย →
-          </Link>
+          </NavigationLink>
         </div>
       </div>
 
@@ -112,18 +112,18 @@ export default function FinancePage() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/finance/wallet" className="block p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+              <NavigationLink href="/finance/wallet" className="block p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
                 <h3 className="font-medium">จัดการกระเป๋าเงิน</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">จัดการกระเป๋าเงินและยอดเงิน</p>
-              </Link>
-              <Link href="/finance/other-income" className="block p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+              </NavigationLink>
+              <NavigationLink href="/finance/other-income" className="block p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
                 <h3 className="font-medium">สร้างรายรับใหม่</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">บันทึกรายรับจากแหล่งอื่นๆ</p>
-              </Link>
-              <Link href="/finance/other-outcome" className="block p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+              </NavigationLink>
+              <NavigationLink href="/finance/other-outcome" className="block p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
                 <h3 className="font-medium">สร้างรายจ่ายใหม่</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">บันทึกรายจ่ายประเภทต่างๆ</p>
-              </Link>
+              </NavigationLink>
             </div>
           </div>
         </div>

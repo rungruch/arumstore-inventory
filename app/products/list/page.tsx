@@ -12,7 +12,7 @@ import { ModalTitle } from '@/components/enum';
 import Modal from "@/components/modal";
 import StockDetailsPopup from "@/components/StockDetailsPopup";
 import Image from "next/image";
-import Link from "next/link";
+import { NavigationLink } from "@/components/providers/navigation-link";
 import { useSearchParams } from 'next/navigation';
 
 interface ModalState {
@@ -302,9 +302,9 @@ export default function ProductListPage() {
                 )}
               </div>
               <div>
-                <Link href="/products" className="text-blue-500 hover:underline cursor-pointer">
+                <NavigationLink href="/products" className="text-blue-500 hover:underline cursor-pointer">
                   กลับไปหน้าสินค้า
-                </Link>
+                </NavigationLink>
               </div>
             </div>
           </div>
@@ -375,14 +375,14 @@ export default function ProductListPage() {
                         />
                       )}
                       <div>
-                        <Link
+                        <NavigationLink
                           href={`/products/details?psku=${product.sku}`}
                           passHref
                         >
                           <span className="text-blue-500 hover:underline cursor-pointer">
                             {product.name}
                           </span>
-                        </Link>
+                        </NavigationLink>
                         <div className="text-sm text-gray-500">{product.description}</div>
                         {product.category && (
                           <div className="text-sm text-gray-500">{'หมวดหมู่: ' + product.category}</div>
@@ -513,9 +513,9 @@ export default function ProductListPage() {
                           className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800"
                         >
                           <div className="py-1">
-                            <Link href={`/products/details?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                            <NavigationLink href={`/products/details?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                               ดูภาพรวม
-                            </Link>
+                            </NavigationLink>
                             <div className="border-t border-gray-200 my-1" />
                             <button
                               disabled={!hasPermission('products', 'edit')}
@@ -531,12 +531,12 @@ export default function ProductListPage() {
                             </button>
                             {hasPermission('products', 'edit') ? (
                               <>
-                                <Link href={`/products/addtransfer?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                                <NavigationLink href={`/products/addtransfer?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                                   โอนสินค้า
-                                </Link>
-                                <Link href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                                </NavigationLink>
+                                <NavigationLink href={`/products/edit?psku=${product.sku}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                                   แก้ไข
-                                </Link>
+                                </NavigationLink>
                               </>
                             ) : (
                               null

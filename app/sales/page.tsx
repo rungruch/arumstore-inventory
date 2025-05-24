@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddOrderPopup from "@/components/AddOrder";
 import Image from "next/image";
 import Link from "next/link";
+import { NavigationLink } from "@/components/providers/navigation-link";
 import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS, OrderStatusFilter } from "@/app/firebase/enum"
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
@@ -737,9 +738,9 @@ export default function ProductPage() {
                     </div>
                   </td>
                   <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
-                    <Link href={`/contacts/${data.client_id}`} className=" hover:underline">
+                    <NavigationLink href={`/contacts/${data.client_id}`} className=" hover:underline">
                       {data.client_name}
-                    </Link>
+                    </NavigationLink>
                   </td>
                   <td className="p-2 w-[10%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{data.client_chat_name}</td>
                   <td className="p-2 flex-1">{data.total_amount}</td>
