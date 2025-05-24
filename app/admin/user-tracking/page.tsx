@@ -41,8 +41,8 @@ export default function UserTrackingPage() {
   const [userSummaries, setUserSummaries] = useState<UserSummary[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('');
 const [dateRange, setDateRange] = useState({
-    start: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Last 1 day
-    end: new Date().toISOString().split('T')[0]
+  start: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 7 * 60 * 60 * 1000).toISOString().split('T')[0], // Last 1 day in BKK time
+  end: new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().split('T')[0] // Current date in BKK time
 });
   const [activityType, setActivityType] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);

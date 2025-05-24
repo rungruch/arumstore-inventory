@@ -39,7 +39,7 @@ interface Props {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-2 border shadow-sm rounded">
-          <p className="text-sm font-medium text-gray-800 dark:text-black">{`${label} : ${(payload[0].value)} กิจจกรรม`}</p>
+          <p className="text-sm font-medium text-gray-800 dark:text-black">{`${label} : ${(payload[0].value)}`}</p>
         </div>
       );
     }
@@ -325,7 +325,7 @@ export default function UserAnalyticsDashboard({ dateRange, refreshTrigger }: Pr
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />}/>
             <Line type="monotone" dataKey="users" stroke="#8884d8" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>

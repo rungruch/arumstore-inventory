@@ -16,12 +16,11 @@ export default function FinancePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Track user activity on finance page
+  // Track employee activity on finance page
   useUserActivity({
-    trackOnMount: true,
-    trackOnVisibilityChange: true,
+    profile: 'standard', // Employee-optimized intervals (1min clicks, 30s keyboard)
     trackOnClick: true,
-    throttleMs: 60000 // Track every minute
+    trackOnKeyboard: true, // Track financial data entry
   });
 
   useEffect(() => {

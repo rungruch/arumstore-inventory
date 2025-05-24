@@ -34,13 +34,11 @@ import {
 } from "lucide-react";
 
 const DashboardPage = () => {
-  // Initialize user activity tracking
+  // Initialize employee activity tracking with optimized intervals
   useUserActivity({
-    trackOnMount: true,
-    trackOnVisibilityChange: true,
-    trackOnClick: false, // Avoid too frequent updates on dashboard
-    trackOnKeyboard: false,
-    throttleMs: 60000 // Update every minute for dashboard
+    profile: 'standard', // Employee-optimized intervals (1min clicks, 30s keyboard)
+    trackOnClick: true, // Track employee interactions
+    trackOnKeyboard: false // Privacy-first approach
   });
 
   // State for summary cards

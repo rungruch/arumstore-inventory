@@ -46,12 +46,11 @@ export default function ProductPage() {
   const [trigger, setTrigger] = useState(false);
   const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
 
-  // Track user activity on sales page  
+  // Track employee activity on sales page
   useUserActivity({
-    trackOnMount: true,
-    trackOnVisibilityChange: true,
+    profile: 'standard', // Employee-optimized intervals (1min clicks, 30s keyboard)
     trackOnClick: true,
-    throttleMs: 60000 // Track every minute
+    trackOnKeyboard: true, // Track sales data entry
   });
 
   const [modalState, setModalState] = useState<ModalState>({

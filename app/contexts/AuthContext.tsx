@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, ReactNode, useMemo } from 'react';
 import { 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
@@ -26,14 +26,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userCache, setUserCache] = useState<Map<string, User>>(new Map());
   const router = useRouter();
 
-  // Function to fetch user data from Firestore with retry logic
+  // Function to fetch user data from Firestore with retry logic and caching
   const fetchUserData = async (uid: string, retryCount = 0): Promise<User | null> => {
+    // Check cache first
+    if (userCache.has(uid)) {
+      console.log('Using cached user data for:', uid);
+      return userCache.get(uid)!;
+    }
+
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
-        return userDoc.data() as User;
+        const userData = userDoc.data() as User;
+        // Cache the user data
+        setUserCache(prev => new Map(prev).set(uid, userData));
+        return userData;
       } else {
         console.warn(`User document not found for uid: ${uid}`);
         return null;
@@ -156,14 +166,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return currentUser.permissions[module][action];
   };
 
-  const value = {
+  const value = useMemo(() => ({
     currentUser,
     loading,
     signIn,
     signOut,
     refreshUser,
     hasPermission
-  };
+  }), [currentUser, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -174,4 +184,20 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+// Optimized hook for just checking if user is authenticated (boolean)
+export function useIsAuthenticated() {
+  const { currentUser } = useAuth();
+  return useMemo(() => !!currentUser, [currentUser]);
+}
+
+// Optimized hook for permission checks
+export function usePermissions() {
+  const { currentUser, hasPermission } = useAuth();
+  return useMemo(() => ({
+    hasPermission,
+    isAdmin: currentUser?.role === 'admin',
+    permissions: currentUser?.permissions
+  }), [currentUser, hasPermission]);
 }

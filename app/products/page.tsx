@@ -49,12 +49,11 @@ export default function ProductPage() {
     });
 
 
-  // Track user activity on products page
+  // Track employee activity on products page
   useUserActivity({
-    trackOnMount: true,
-    trackOnVisibilityChange: true,
+    profile: 'standard', // Employee-optimized intervals (1min clicks, 30s keyboard)
     trackOnClick: true,
-    throttleMs: 60000 // Track every minute
+    trackOnKeyboard: true, // Track product data entry
   });
 
   // Fetch initial data on component mount

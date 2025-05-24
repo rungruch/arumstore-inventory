@@ -31,7 +31,10 @@ export default function UsersPage() {
       setLoading(true);
       const userCollection = collection(db, 'users');
       const userSnapshot = await getDocs(userCollection);
-      const userList = userSnapshot.docs.map(doc => doc.data() as User);
+      const userList = userSnapshot.docs.map(doc => ({
+        ...doc.data(),
+        uid: doc.id
+      } as User));
       setUsers(userList);
     } catch (error) {
       console.error("Error fetching users:", error);

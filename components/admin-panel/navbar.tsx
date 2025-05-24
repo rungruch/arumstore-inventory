@@ -5,12 +5,18 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { UserNav } from "@/components/admin-panel/user-nav";
 import { SheetMenu } from "@/components/admin-panel/sheet-menu";
 import { getMenuList } from "@/lib/menu-list";
+import { useIsAuthenticated } from "@/app/contexts/AuthContext";
 
 interface NavbarProps {}
 
 export function Navbar({}: NavbarProps) {
   const pathname = usePathname(); // Get the current pathname
   const menuList = getMenuList(pathname); // Get the menu list dynamically based on the current route
+  const isAuthenticated = useIsAuthenticated();
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-10 w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">

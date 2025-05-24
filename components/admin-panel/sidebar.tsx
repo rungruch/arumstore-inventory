@@ -4,12 +4,17 @@ import { SidebarToggle } from "@/components/admin-panel/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
+import { useIsAuthenticated } from "@/app/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { PanelsTopLeft } from "lucide-react";
 import { NavigationLink } from "@/components/providers/navigation-link";
 
 export function Sidebar() {
+  const isAuthenticated = useIsAuthenticated();
   const sidebar = useStore(useSidebar, (x) => x);
+  
+  // Hide sidebar if user is not logged in
+  if (!isAuthenticated) return null;
   if (!sidebar) return null;
   const { isOpen, toggleOpen, getOpenState, setIsHover, settings } = sidebar;
   return (
