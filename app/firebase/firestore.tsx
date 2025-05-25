@@ -2450,3 +2450,33 @@ export async function updateSellTransaction(transactionId: string, transactionDa
       throw error;
     }
   }
+
+// Update payment image only (for public tracking page)
+export const updatePaymentImage = async (
+  transactionId: string,
+  imageUrl: string
+) => {
+  return await runTransaction(db, async (transaction) => {
+    const transactionRef = doc(db, "transactions", transactionId);
+    const transactionSnap = await transaction.get(transactionRef);
+
+    if (!transactionSnap.exists()) {
+      throw new Error(`Transaction with ID "${transactionId}" not found`);
+    }
+
+    const transactionData = transactionSnap.data();
+    const currentPaymentDetails = transactionData.payment_details || {};
+
+    // Update only the image in payment details, preserving other fields
+    const updatedPaymentDetails = {
+      ...currentPaymentDetails,
+      image: imageUrl
+    };
+
+    // Update the transaction with new payment image
+    transaction.update(transactionRef, {
+      payment_details: updatedPaymentDetails,
+      updated_date: Timestamp.now()
+    });
+  });
+};

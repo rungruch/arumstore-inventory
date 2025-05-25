@@ -1,6 +1,6 @@
 "use client";
 import { ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { User } from '@/app/firebase/interfaces';
 
@@ -10,6 +10,7 @@ interface ProtectedRouteProps {
   action?: keyof User['permissions'][keyof User['permissions']];
   actions?: (keyof User['permissions'][keyof User['permissions']])[];
   requireAll?: boolean; // If true, requires ALL actions. If false, requires ANY action. Default: true
+  publicPage?: boolean; // If true, skip authentication check entirely
 }
 
 export default function ProtectedRoute({ 
@@ -17,10 +18,15 @@ export default function ProtectedRoute({
   module, 
   action = 'view',
   actions,
-  requireAll = true
+  requireAll = true,
+  publicPage = false
 }: ProtectedRouteProps) {
-  const { currentUser, loading, hasPermission } = useAuth();
+  const { currentUser, loading, hasPermission, isPublicPage } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Check if current page is public
+  const isCurrentPagePublic = publicPage || isPublicPage(pathname);
 
   // Helper function to check multiple permissions
   const hasRequiredPermissions = (module: keyof User['permissions'], actionList: (keyof User['permissions'][keyof User['permissions']])[], requireAll: boolean): boolean => {
@@ -34,6 +40,11 @@ export default function ProtectedRoute({
   };
 
   useEffect(() => {
+    // Skip authentication checks for public pages
+    if (isCurrentPagePublic) {
+      return;
+    }
+
     // If authentication is done loading and user is not logged in
     if (!loading && !currentUser) {
       router.push('/login');
@@ -56,15 +67,20 @@ export default function ProtectedRoute({
         router.push('/unauthorized');
       }
     }
-  }, [currentUser, loading, router, module, action, actions, requireAll, hasPermission]);
+  }, [currentUser, loading, router, module, action, actions, requireAll, hasPermission, isCurrentPagePublic]);
 
-  // Show loading state while checking authentication
-  if (loading) {
+  // Show loading state while checking authentication (but skip for public pages)
+  if (loading && !isCurrentPagePublic) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-solid"></div>
       </div>
     );
+  }
+
+  // For public pages, always render children
+  if (isCurrentPagePublic) {
+    return <>{children}</>;
   }
 
   // If no module specified or user has permission(s), render children

@@ -98,7 +98,6 @@ export default function SalesDetailsPage() {
       try {
         setLoading(true);
         const data = await getSellTransactionByTransactionId(transactionId);
-        console.log("Fetched transaction data:", data);
         
         if (!data) {
           setModalState({

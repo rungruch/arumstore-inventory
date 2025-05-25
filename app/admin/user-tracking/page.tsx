@@ -75,7 +75,6 @@ const [dateRange, setDateRange] = useState({
       // Add user filter if selected
       if (selectedUser) {
         constraints.push(where('userId', '==', selectedUser));
-        console.log('Filtering by user:', selectedUser);
       }
       
       // Add activity type filter if selected
@@ -106,7 +105,6 @@ const [dateRange, setDateRange] = useState({
         log.timestamp >= startDate && log.timestamp <= endDate
       );
 
-      console.log('Fetched activity logs:', filteredLogs.length, 'logs');
       setActivityLogs(filteredLogs);
 
       // Generate user summaries

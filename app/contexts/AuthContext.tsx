@@ -9,7 +9,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/app/firebase/clientApp';
 import { User } from '@/app/firebase/interfaces';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { trackUserActivity, updateLastLogin } from '@/lib/auth-utils';
 
 interface AuthContextType {
@@ -19,7 +19,15 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   hasPermission: (module: keyof User['permissions'], action: keyof User['permissions'][keyof User['permissions']]) => boolean;
+  isPublicPage: (path: string) => boolean;
 }
+
+// Define public pages that don't require authentication
+const PUBLIC_PAGES = [
+  '/tracking',
+  '/login',
+  '/forgot-password'
+];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -28,12 +36,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [userCache, setUserCache] = useState<Map<string, User>>(new Map());
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Function to check if a page is public
+  const isPublicPage = (path: string): boolean => {
+    return PUBLIC_PAGES.includes(path);
+  };
 
   // Function to fetch user data from Firestore with retry logic and caching
   const fetchUserData = async (uid: string, retryCount = 0): Promise<User | null> => {
     // Check cache first
     if (userCache.has(uid)) {
-      console.log('Using cached user data for:', uid);
       return userCache.get(uid)!;
     }
 
@@ -98,10 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setCurrentUser(null);
           
-          // Redirect to login if not on login page
-          if (typeof window !== 'undefined' && 
-              window.location.pathname !== '/login' && 
-              window.location.pathname !== '/forgot-password') {
+          // Only redirect to login if not on a public page
+          if (typeof window !== 'undefined' && !isPublicPage(window.location.pathname)) {
             router.push('/login');
           }
         }
@@ -172,7 +183,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     refreshUser,
-    hasPermission
+    hasPermission,
+    isPublicPage
   }), [currentUser, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -17,6 +17,7 @@ import { newTransaction, ExcelExportRow } from '@/components/interface';
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useUserActivity } from "@/hooks/useUserActivity";
+import { generateEncryptedTrackingUrl } from "@/lib/encryption-utils";
 
 
 interface ModalState {
@@ -357,6 +358,34 @@ export default function salesPage() {
     setShippingStatusFilter(newStatus || ShippingStatusFilter.ALL);
     setCurrentPage(1);
     setLastDoc(null);
+  };
+
+  // Function to copy encrypted tracking link to clipboard
+  const copyEncryptedTrackingLink = async (transactionId: string) => {
+    try {
+      const encryptedUrl = generateEncryptedTrackingUrl(transactionId);
+      await navigator.clipboard.writeText(encryptedUrl);
+      
+      // // Show success message
+      // setModalState({
+      //   isOpen: true,
+      //   title: ModalTitle.SUCCESS,
+      //   message: "คัดลอกลิงก์ติดตามปลอดภัยแล้ว"
+      // });
+
+      // Close the dropdown
+      const dropdown = document.getElementById(`more-dropdown-${transactionId}`);
+      if (dropdown) {
+        dropdown.classList.add('hidden');
+      }
+    } catch (error) {
+      console.error('Error copying encrypted tracking link:', error);
+      setModalState({
+        isOpen: true,
+        title: ModalTitle.ERROR,
+        message: "เกิดข้อผิดพลาดในการคัดลอกลิงก์ติดตาม"
+      });
+    }
   };
 
   const statusButtons: Array<{ value: OrderStatusFilter; label: string }> = [
@@ -1183,7 +1212,7 @@ export default function salesPage() {
                   }}
                   onMouseLeave={() => setHoveredPayment(null)}
                   >
-                    {data.payment_details ? (
+                    {data.payment_status === PaymentStatus.COMPLETED ? (
                       <div
                         onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
                      >
@@ -1243,12 +1272,19 @@ export default function salesPage() {
                       hasPermission('sales', 'edit') && (
                         <button
                           onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
-                          className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex items-center gap-1 transition-colors duration-200"
+                          className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex flex-col items-start gap-1 transition-colors duration-200"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                          </svg>
-                          รอชำระ
+                          <div className="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            รอชำระ
+                          </div>
+                          {data.payment_details && data.payment_details.image && (
+                            <span className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-1 rounded">
+                              รอยืนยันหลักฐาน
+                            </span>
+                          )}
                         </button>
                       )
                     )}
@@ -1383,6 +1419,19 @@ export default function salesPage() {
                             <Link href={`/sales/details/${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                               ดูรายละเอียด
                             </Link>
+                          )}
+                          {hasPermission('sales', 'view') && (
+                            <button
+                              onClick={() => copyEncryptedTrackingLink(data.transaction_id)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 flex items-center gap-2"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                              </svg>
+                              คัดลอกลิงก์ติดตามสถานะ
+                            </button>
                           )}
                           {hasPermission('sales', 'create') && (
                             <>
