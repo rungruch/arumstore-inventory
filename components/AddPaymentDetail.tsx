@@ -513,7 +513,7 @@ export default function PaymentDetailsForm({
                                     className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
                                         isLoading || imageUploading
                                             ? 'bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed'
-                                            : 'text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                                            : 'text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
                                     }`}
                                     disabled={isLoading || imageUploading}
                                 >

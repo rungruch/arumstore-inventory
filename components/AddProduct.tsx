@@ -380,7 +380,7 @@ import { ProductStatus } from "@/app/firebase/enum";
                     </div>
                     {validationError && <p className="text-red-500 text-sm mb-4">{validationError}</p>}
                     <div className="flex justify-end space-x-2">
-                        <button type="submit" className={`py-2 px-4 rounded-md text-white ${isSubmitting ? "bg-gray-500 cursor-not-allowed" : "bg-black hover:bg-gray-800"} transition`} disabled={isSubmitting}>
+                        <button type="submit" className={`px-6 py-2.5 rounded-lg rounded-md text-white ${isSubmitting ? "bg-gray-500 cursor-not-allowed" : "bg-black hover:bg-gray-800"} transition`} disabled={isSubmitting}>
                             {isSubmitting ? "กำลังโหลด..." : "ตกลง"}
                         </button>
                     </div>

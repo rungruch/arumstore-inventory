@@ -287,27 +287,27 @@ export default function ShippingDetailsForm({
                   <p className="mt-4 text-green-600 font-medium">อัปโหลดสำเร็จ!</p>
                 )}
               </div>
-
-              <div className="flex justify-end space-x-2 mt-4 bottom-0 py-4">
+                <div className="flex justify-end space-x-2 mt-6 pt-4 border-t border-gray-200 dark:border-zinc-600">
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="px-4 py-2 bg-gray-300 hover:bg-gray-200 rounded dark:bg-zinc-700 dark:hover:bg-zinc-600 transition-all"
+                  className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-200 font-medium"
                   disabled={isLoading || imageUploading}
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className={`px-4 py-2 rounded ${isLoading || imageUploading
-                      ? 'bg-grey-400 cursor-not-allowed'
-                      : 'text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition'
-                    }`}
+                  className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                    isLoading || imageUploading
+                      ? 'bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed'
+                      : 'text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                  }`}
                   disabled={isLoading || imageUploading}
                 >
-                  {isLoading ? 'กำลังบันทึก...' : 'บันทึก'}
+                  {isLoading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
                 </button>
-              </div>
+                </div>
             </>
           )}
         </form>
