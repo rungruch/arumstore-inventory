@@ -2324,3 +2324,129 @@ export async function updateCompanyDetails(companyDetails: StoreInfoFirestore) {
     throw error;
   }
 }
+
+export async function updateSellTransaction(transactionId: string, transactionData: any) {
+    try {
+      // Run a transaction to ensure atomic updates
+      return await runTransaction(db, async (transaction) => {
+        const transactionsCollection = collection(db, "transactions");
+        const productsCollection = collection(db, "products");
+  
+        // Get the existing transaction
+        const transactionDocRef = doc(transactionsCollection, transactionId);
+        const existingTransactionDoc = await transaction.get(transactionDocRef);
+
+        if (!existingTransactionDoc.exists()) {
+          throw new Error(`Transaction ID "${transactionId}" not found`);
+        }
+
+        const existingTransactionData = existingTransactionDoc.data();
+        
+        // STEP 1: Collect all product documents we'll need (READS FIRST)
+        const productDocs = new Map();
+        
+        // Add original items' products to the collection
+        if (existingTransactionData.items) {
+          for (const item of existingTransactionData.items) {
+            const productDocRef = doc(productsCollection, item.sku);
+            if (!productDocs.has(item.sku)) {
+              const productSnapshot = await transaction.get(productDocRef);
+              if (!productSnapshot.exists()) {
+                console.warn(`Original product with SKU ${item.sku} not found, skipping stock update`);
+                continue;
+              }
+              productDocs.set(item.sku, {
+                ref: productDocRef,
+                data: productSnapshot.data()
+              });
+            }
+          }
+        }
+        
+        // Add new items' products to the collection
+        for (const item of transactionData.items) {
+          if (!productDocs.has(item.sku)) {
+            const productDocRef = doc(productsCollection, item.sku);
+            const productSnapshot = await transaction.get(productDocRef);
+            if (!productSnapshot.exists()) {
+              throw new Error(`Product with SKU ${item.sku} not found`);
+            }
+            productDocs.set(item.sku, {
+              ref: productDocRef,
+              data: productSnapshot.data()
+            });
+          }
+        }
+        
+        // STEP 2: Make all updates to products (WRITES AFTER)
+        
+        // First, reverse the pending stock changes from the original transaction
+        if (existingTransactionData.items) {
+          for (const item of existingTransactionData.items) {
+            if (!productDocs.has(item.sku)) continue;
+            
+            const productDoc = productDocs.get(item.sku);
+            const updatedPendingStocks = { ...productDoc.data.pending_stock };
+            
+            // Subtract the original quantity
+            updatedPendingStocks[item.warehouse_id] = 
+              (updatedPendingStocks[item.warehouse_id] || 0) - item.quantity;
+            
+            // Ensure pending stock doesn't go negative
+            if (updatedPendingStocks[item.warehouse_id] < 0) {
+              updatedPendingStocks[item.warehouse_id] = 0;
+            }
+            
+            // Update the pending stock in our map (we'll write all changes at once later)
+            productDoc.pendingStockUpdates = updatedPendingStocks;
+          }
+        }
+        
+        // Now process the new items and add their pending stock
+        for (const item of transactionData.items) {
+          const productDoc = productDocs.get(item.sku);
+          
+          // Start with either the previously modified pending stocks or the original ones
+          const updatedPendingStocks = productDoc.pendingStockUpdates || { ...productDoc.data.pending_stock };
+          
+          // Add the new quantity
+          updatedPendingStocks[item.warehouse_id] = 
+            (updatedPendingStocks[item.warehouse_id] || 0) + item.quantity;
+            
+          // Store the updated pending stocks
+          productDoc.pendingStockUpdates = updatedPendingStocks;
+        }
+        
+        // Now apply all product updates
+        for (const [sku, productDoc] of productDocs.entries()) {
+          if (productDoc.pendingStockUpdates) {
+            transaction.update(productDoc.ref, {
+              pending_stock: productDoc.pendingStockUpdates
+            });
+          }
+        }
+  
+        // Update the transaction with preserved fields
+        const updatedTransactionData = {
+          ...transactionData,
+          transaction_type: TransactionType.SELL,
+          // Preserve original creation data
+          created_date: existingTransactionData.created_date || new Date(),
+          created_by: existingTransactionData.created_by || transactionData.created_by,
+          // Update modification data
+          updated_date: new Date(),
+          // Preserve or update status history
+          status_history: existingTransactionData.status_history || []
+          // Note: We're using the edit_history provided by the EditOrder component
+          // which already includes the detailed changes
+        };
+
+        transaction.update(transactionDocRef, updatedTransactionData);
+  
+        return { id: transactionDocRef.id, ...updatedTransactionData };
+      });
+    } catch (error) {
+      console.error("Error updating sell transaction:", error);
+      throw error;
+    }
+  }

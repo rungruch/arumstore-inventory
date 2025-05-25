@@ -1155,7 +1155,7 @@ export default function salesPage() {
                         hasPermission('sales', 'edit') ? (
                         <button
                           onClick={() => openShippingDetailsModal(data.transaction_id,data.shipping_method)}
-                          className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
+                          className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex items-center gap-1 transition-colors duration-200"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -1243,8 +1243,11 @@ export default function salesPage() {
                       hasPermission('sales', 'edit') && (
                         <button
                           onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
-                          className="text-blue-900 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
+                          className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex items-center gap-1 transition-colors duration-200"
                         >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                          </svg>
                           รอชำระ
                         </button>
                       )
@@ -1380,6 +1383,13 @@ export default function salesPage() {
                             <>
                           <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">
                             สร้างรายการซ้ำ
+                          </Link>
+                          </>
+                          )}
+                          {hasPermission('sales', 'edit') && data.status === OrderStatus.PENDING && (
+                            <>
+                          <Link href={`/sales/edit/${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                            แก้ไขรายการขาย
                           </Link>
                           </>
                           )}
