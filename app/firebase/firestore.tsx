@@ -2480,3 +2480,41 @@ export const updatePaymentImage = async (
     });
   });
 };
+
+// Get customer transaction summary (optimized for dashboard)
+export async function getCustomerTransactionSummary(clientId: string) {
+  try {
+    const q = query(
+      collection(db, "transactions"),
+      where("transaction_type", "==", TransactionType.SELL),
+      where("client_id", "==", clientId),
+      where("status", "!=", OrderStatus.CANCELLED), // Only completed transactions
+      orderBy("status"),
+      orderBy("created_date", "desc")
+    );
+
+    const querySnapshot = await getDocs(q);
+    
+    let totalValue = 0;
+    let transactionCount = 0;
+    
+    querySnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.total_amount) {
+        totalValue += data.total_amount;
+        transactionCount++;
+      }
+    });
+    
+    return {
+      totalValue,
+      transactionCount
+    };
+  } catch (error) {
+    console.error("Error fetching customer transaction summary:", error);
+    return {
+      totalValue: 0,
+      transactionCount: 0
+    };
+  }
+}

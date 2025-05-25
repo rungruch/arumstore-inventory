@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { 
-  getSellTransactionsByClientId, 
-  getTotalContactsCount, 
-  getContactsPaginated
+  getTotalContactsCount
 } from "@/app/firebase/firestore";
 import { 
   getCachedCustomerGroupDistribution,
   getCachedCurrentMonthActiveCustomers,
-  getCachedCustomerProvinceDistribution
+  getCachedCustomerProvinceDistribution,
+  getCachedTopCustomers
 } from "@/app/firebase/firestoreCustomerStats";
 import { 
   LineChart, 
@@ -40,6 +39,7 @@ const CustomerDashboardPage = () => {
   const [customerGroupChart, setCustomerGroupChart] = useState<any[]>([]);
   const [customerProvinceChart, setCustomerProvinceChart] = useState<any[]>([]);
   const [topCustomers, setTopCustomers] = useState<any[]>([]);
+  const [topCustomersUpdatedAt, setTopCustomersUpdatedAt] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   const COLORS = ['#0088FE', '#FF8042', '#FFBB28', '#00C49F', '#AF19FF', '#19A7FF', '#FF198E', '#23BD48', '#F76B15', '#A149FA'];
@@ -48,73 +48,29 @@ const CustomerDashboardPage = () => {
     async function fetchData() {
       setLoading(true);
       try {
-        // Get total customer count
-        const totalCustomers = await getTotalContactsCount();
+        // Get all basic data in parallel (fast operations)
+        const [totalCustomers, groupChartData, provinceChartData, activeCustomers, {customers: TopCustomersData, updated_at: topCustomersUpdated_at }] = await Promise.all([
+          getTotalContactsCount(),
+          getCachedCustomerGroupDistribution(),
+          getCachedCustomerProvinceDistribution(),
+          getCachedCurrentMonthActiveCustomers(),
+          getCachedTopCustomers(10) // Get top 10 customers for current month
+        ]);
         
-        // Get all customers with pagination (first page)
-        const { contacts } = await getContactsPaginated(null, 100);
-        
-        // Use cached customer group distribution data
-        const groupChartData = await getCachedCustomerGroupDistribution();
-        setCustomerGroupChart(groupChartData);
-        
-        // Use cached customer province distribution data
-        const provinceChartData = await getCachedCustomerProvinceDistribution();
-        setCustomerProvinceChart(provinceChartData);
-        
-        // Get current month active customers using cached function
-        const activeCustomers = await getCachedCurrentMonthActiveCustomers();
-        
-        // Process customer data to find top customers by transaction value
-        const customerTransactions: { [key: string]: { name: string, value: number, transactions: number } } = {};
-        
-        // Process each customer
-        for (const customer of contacts.slice(0, 30) as any[]) { // Process first 30 customers for performance
-          try {
-            // Check if client_id exists on the customer object or use id as fallback
-            const clientId = 'client_id' in customer ? customer.client_id : customer.id;
-            const transactions = await getSellTransactionsByClientId(clientId);
-            
-            if (transactions.length > 0) {
-              let customerTotal = 0;
-              
-              transactions.forEach((transaction: any) => {
-                if (transaction.total_amount) {
-                  customerTotal += transaction.total_amount;
-                }
-              });
-              
-              customerTransactions[customer.client_id] = {
-                name: customer.name,
-                value: customerTotal,
-                transactions: transactions.length
-              };
-            }
-          } catch (error) {
-            console.error(`Error fetching transactions for customer ${customer.client_id}:`, error);
-          }
-        }
-        
-        // Sort customers by transaction value
-        const sortedCustomers = Object.entries(customerTransactions)
-          .map(([id, data]) => ({
-            id,
-            name: data.name,
-            value: data.value,
-            transactions: data.transactions
-          }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 10); // Get top 10 customers
-        
-        setTopCustomers(sortedCustomers);
-        
+        // Set all data immediately
         setSummary({
           totalCustomers,
           activeCustomers
         });
+        
+        setCustomerGroupChart(groupChartData);
+        setCustomerProvinceChart(provinceChartData);
+        setTopCustomers(TopCustomersData);
+        setTopCustomersUpdatedAt(topCustomersUpdated_at ? topCustomersUpdated_at.toDate().toLocaleString('th-TH') : '-');
+        setLoading(false);
+        
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
-      } finally {
         setLoading(false);
       }
     }
@@ -265,7 +221,10 @@ const CustomerDashboardPage = () => {
       {/* Top Customers Chart */}
       <div className="bg-white dark:bg-zinc-800 rounded-xl p-5 shadow-md border border-gray-100 dark:border-gray-700 mb-6">
         <div className="flex justify-between items-center mb-5">
-          <span className="font-semibold text-gray-800 dark:text-white">ลูกค้าที่มียอดซื้อสูงสุด</span>
+          <span className="font-semibold text-gray-800 dark:text-white">ลูกค้าที่มียอดซื้อสูงสุดในเดือนนี้</span>
+            <div className="text-xs text-gray-400 dark:text-gray-500">
+            📊 แคช 1 ชม. | อัปเดตล่าสุด: {topCustomers.length > 0 ? topCustomersUpdatedAt : '-'}
+            </div>
         </div>
           
           {/* Customer Data Table */}
@@ -282,11 +241,11 @@ const CustomerDashboardPage = () => {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-6 text-gray-400 dark:text-gray-500">กำลังโหลดข้อมูล...</td>
+                    <td colSpan={4} className="text-center py-6 text-gray-400 dark:text-gray-500">กำลังโหลดข้อมูลลูกค้า...</td>
                   </tr>
                 ) : topCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-6 text-gray-400 dark:text-gray-500">ไม่พบข้อมูล</td>
+                    <td colSpan={4} className="text-center py-6 text-gray-400 dark:text-gray-500">ไม่พบข้อมูลลูกค้าในเดือนนี้</td>
                   </tr>
                 ) : (
                   topCustomers.map((customer, idx) => (
