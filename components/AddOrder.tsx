@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { getProductByID, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionWithStockDeductionv2, getContactsByName, getContactsPaginated, getSalesMethods, getShippingMethods } from "@/app/firebase/firestore";
+import { getProductByID, getSellTransactionByTransactionId, generateRandomSellTransactionId, getProductWarehouse, createSellTransactionv2, getContactsByName, getContactsPaginated, getSalesMethods, getShippingMethods } from "@/app/firebase/firestore";
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import { Timestamp } from "firebase/firestore";
@@ -10,7 +10,7 @@ import ProductSection from "./ProductSection";
 import {VatType, TransactionType} from "@/app/firebase/enum";
 import { OrderHistoryEntry, StatusChangeEntry } from "@/app/firebase/interfaces";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { OrderStatus } from "@/app/firebase/enum";
+import { OrderStatus, ShippingStatus, PaymentStatus } from "@/app/firebase/enum";
 
 // Define types for the component
 interface Warehouse {
@@ -75,6 +75,7 @@ interface FormattedOrderData extends OrderState {
   total_amount_no_vat: number;
   payment_method: string;
   payment_status: string;
+  shipping_status: string;
   created_by: string;
   updated_by: string;
   created_date: any;
@@ -429,7 +430,8 @@ export default function AddSellOrderForm({
       total_vat: totalVatAmount,
       total_amount: totalOrderAmount,
       payment_method: "",
-      payment_status: "",
+      payment_status: PaymentStatus.PENDING,
+      shipping_status: ShippingStatus.PENDING,
       created_by: userEmail,
       updated_by: userEmail,
       created_date: Timestamp.now(),
@@ -438,6 +440,7 @@ export default function AddSellOrderForm({
         {
           timestamp: Timestamp.now(),
           created_by: userEmail,
+          status_type: 'order',
           old_status: OrderStatus.PENDING,
           new_status: OrderStatus.PENDING
         }
@@ -445,7 +448,7 @@ export default function AddSellOrderForm({
       edit_history: []
     };
 
-      await createSellTransactionWithStockDeductionv2(formattedTransactionData);
+      await createSellTransactionv2(formattedTransactionData);
 
       // Reset form
       setOrderState({

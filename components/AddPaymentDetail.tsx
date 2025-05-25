@@ -59,7 +59,7 @@ export default function PaymentDetailsForm({
         title: "",
         message: "",
     });
-    const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
+    const { hasPermission, currentUser } = useAuth(); // Get hasPermission and currentUser from AuthContext
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -94,7 +94,8 @@ export default function PaymentDetailsForm({
                     payment_date: new Date(paymentDate),
                     payment_amount: paymentAmount,
                     image: uploaded || "",
-                });
+                },
+                currentUser?.email || 'Unknown User');
 
             onSubmitSuccess();
         } catch (err) {

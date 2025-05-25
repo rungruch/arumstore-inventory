@@ -23,8 +23,8 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/app/firebase/clientApp";
-import { Warehouse, Contact, TransferTransaction, ProductCategoryCount, StoreInfoFirestore } from "@/app/firebase/interfaces";
-import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus, TransferStatus } from "@/app/firebase/enum";
+import { Warehouse, Contact, TransferTransaction, ProductCategoryCount, StoreInfoFirestore, StatusChangeEntry } from "@/app/firebase/interfaces";
+import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus, TransferStatus, ShippingStatus, PaymentStatus } from "@/app/firebase/enum";
 
 
 export async function getProducts() {
@@ -873,7 +873,9 @@ export async function getProductWarehouse() {
         transaction.set(docRef, {
           ...transactionData,
           transaction_type: TransactionType.SELL,
-          created_date: new Date()
+          created_date: new Date(),
+          status_history: [], // Initialize empty status history for all status types
+          shipping_status: ShippingStatus.PENDING
         });
   
         return { id: docRef.id, ...transactionData };
@@ -884,7 +886,7 @@ export async function getProductWarehouse() {
     }
   }
 
-  export async function createSellTransactionWithStockDeductionv2(transactionData: any) {
+  export async function createSellTransactionv2(transactionData: any) {
     try {
       // Run a transaction to ensure atomic updates
       return await runTransaction(db, async (transaction) => {
@@ -932,7 +934,7 @@ export async function getProductWarehouse() {
         transaction.set(docRef, {
           ...transactionData,
           transaction_type: TransactionType.SELL,
-          created_date: new Date()
+          created_date: new Date(),
         });
   
         return { id: docRef.id, ...transactionData };
@@ -949,12 +951,8 @@ export async function getSellTransactionPaginated(lastDoc: any = null, pageSize:
     let baseQuery = collection(db, "transactions");
     let conditions = [where("transaction_type", "==", TransactionType.SELL)];
     
-    if (statusFilter) {
-      if (statusFilter === OrderStatusFilter.COMPLETED)
-        {
-        conditions.push(where("status", "in", [OrderStatus.PICKED_UP, OrderStatus.SHIPPED]));
-        }      
-        else if (statusFilter === OrderStatusFilter.ALL)
+    if (statusFilter) {     
+        if (statusFilter === OrderStatusFilter.ALL)
       {}
       else {conditions.push(where("status", "==", statusFilter));}
     }
@@ -993,7 +991,8 @@ export async function getSellTransactionPaginated(lastDoc: any = null, pageSize:
 export async function updateOrderTransactionStatus(
   transaction_id: string, 
   current_status: OrderStatus,
-  next_status: OrderStatus
+  next_status: OrderStatus,
+  created_by: string
 ) {
   try {
     return await runTransaction(db, async (transaction) => {
@@ -1020,24 +1019,38 @@ export async function updateOrderTransactionStatus(
         throw new Error(`การปรับสถานะจาก ${current_status} ไปยัง ${next_status} ไม่ถูกต้อง`);
       }
 
+      // Create status change entry
+      const statusChangeEntry: StatusChangeEntry = {
+        timestamp: Timestamp.now(),
+        created_by: created_by,
+        status_type: 'order',
+        old_status: current_status,
+        new_status: next_status
+      };
+
+      // Get existing status history or initialize empty array
+      const existingStatusHistory = transactionData.status_history || [];
+      const updatedStatusHistory = [...existingStatusHistory, statusChangeEntry];
+
       // Prepare update object
       const updateObject: any = {
         status: next_status,
-        updated_date: Timestamp.now() // Use Firestore Timestamp
+        updated_date: Timestamp.now(),
+        status_history: updatedStatusHistory
       };
 
       // Special handling for specific status transitions
-      if (next_status === OrderStatus.SHIPPING) {
-        // Clear pending stock when order is in shipping
+      if (next_status === OrderStatus.APPROVED || next_status === OrderStatus.SHIPPING) {
+        // Deduct stock for both APPROVED (pre-paid) and SHIPPING (COD) orders
         await handleShippingOrderStockUpdate(transaction, transactionData.items);
       } else if (next_status === OrderStatus.CANCELLED) {
         if(current_status === OrderStatus.SHIPPING) {
-        // Restore stock when order is cancelled
+        // Restore stock when COD order is cancelled
         await handleCancelledOrderStockUpdateShipping(transaction, transactionData.items);
         }
 
         if(current_status === OrderStatus.PENDING) {
-          // Restore stock when order is cancelled
+          // Remove from pending stock when pending order is cancelled
           await handleCancelledOrderStockUpdatePending(transaction, transactionData.items);
         }
       }
@@ -1388,17 +1401,41 @@ export const updateShippingDetails = async (
     recipient_name: string,
     tracking_number?: string,
     image: string
-  }
+  },
+  created_by: string
 ) => {
-  const transactionRef = doc(db, "transactions", transactionId);
-  const transactionSnap = await getDoc(transactionRef);
+  return await runTransaction(db, async (transaction) => {
+    const transactionRef = doc(db, "transactions", transactionId);
+    const transactionSnap = await transaction.get(transactionRef);
 
-  if (!transactionSnap.exists()) {
-    throw new Error(`Transaction with ID "${transactionId}" not found`);
-  }
+    if (!transactionSnap.exists()) {
+      throw new Error(`Transaction with ID "${transactionId}" not found`);
+    }
 
-  await updateDoc(transactionRef, {
-    shipping_details: shippingDetails
+    const transactionData = transactionSnap.data();
+    const currentShippingStatus = transactionData.shipping_status || ShippingStatus.PENDING;
+    const newShippingStatus = ShippingStatus.SHIPPED;
+
+    // Create shipping status change entry if status is changing
+    const statusChangeEntry: StatusChangeEntry = {
+      timestamp: Timestamp.now(),
+      created_by: created_by,
+      status_type: 'shipping',
+      old_status: currentShippingStatus,
+      new_status: newShippingStatus
+    };
+
+    // Get existing status history or initialize empty array
+    const existingStatusHistory = transactionData.status_history || [];
+    const updatedStatusHistory = [...existingStatusHistory, statusChangeEntry];
+
+    // Update the transaction with shipping details and status history
+    transaction.update(transactionRef, {
+      shipping_details: shippingDetails,
+      shipping_status: newShippingStatus,
+      status_history: updatedStatusHistory,
+      updated_date: Timestamp.now()
+    });
   });
 };
 
@@ -1410,19 +1447,41 @@ export const updatePaymentDetails = async (
     payment_date: Date,
     payment_amount: number,
     image: string
-  }
+  },
+  created_by: string
 ) => {
-  const transactionRef = doc(db, "transactions", transactionId);
-  const transactionSnap = await getDoc(transactionRef);
+  return await runTransaction(db, async (transaction) => {
+    const transactionRef = doc(db, "transactions", transactionId);
+    const transactionSnap = await transaction.get(transactionRef);
 
-  if (!transactionSnap.exists()) {
-    throw new Error(`Transaction with ID "${transactionId}" not found`);
-  }
+    if (!transactionSnap.exists()) {
+      throw new Error(`Transaction with ID "${transactionId}" not found`);
+    }
 
-  await updateDoc(transactionRef, {
-    payment_status: payment_status,
-    payment_method: payment_method,
-    payment_details: PaymentDetails
+    const transactionData = transactionSnap.data();
+    const currentPaymentStatus = transactionData.payment_status || PaymentStatus.PENDING;
+
+    // Create payment status change entry
+    const statusChangeEntry: StatusChangeEntry = {
+      timestamp: Timestamp.now(),
+      created_by: created_by,
+      status_type: 'payment',
+      old_status: currentPaymentStatus,
+      new_status: payment_status
+    };
+
+    // Get existing status history or initialize empty array
+    const existingStatusHistory = transactionData.status_history || [];
+    const updatedStatusHistory = [...existingStatusHistory, statusChangeEntry];
+
+    // Update the transaction with payment details and status history
+    transaction.update(transactionRef, {
+      payment_status: payment_status,
+      payment_method: payment_method,
+      payment_details: PaymentDetails,
+      status_history: updatedStatusHistory,
+      updated_date: Timestamp.now()
+    });
   });
 };
 

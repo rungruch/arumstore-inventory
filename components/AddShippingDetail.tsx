@@ -60,7 +60,7 @@ export default function ShippingDetailsForm({
   });
 
   const [shippingMethods, setShippingMethods] = useState<Array<{ value: string, label: string }>>([]);
-  const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
+  const { hasPermission, currentUser } = useAuth(); // Get hasPermission and currentUser from AuthContext
 
   useEffect(() => {
     // Fetch shipping methods from Firestore
@@ -102,7 +102,7 @@ export default function ShippingDetailsForm({
         recipient_name: recipientName,
         tracking_number: trackingNumber || "",
         image: uploaded || "",
-      });
+      }, currentUser?.email || 'Unknown User');
 
       // Call success callback
       onSubmitSuccess();

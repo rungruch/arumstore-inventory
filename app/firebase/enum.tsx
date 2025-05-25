@@ -1,11 +1,30 @@
 export enum OrderStatus {
     PENDING = "PENDING",
+    APPROVED = "APPROVED",
     SHIPPING = "SHIPPING",
-    SHIPPED = "SHIPPED",
-    PICKED_UP = "PICKED_UP",
-    CANCELLED = "CANCELLED",
-    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
   }
+
+  export enum PaymentStatus {
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED"
+  }
+
+  export enum PaymentStatusDisplay {
+    PENDING = "รอดำเนินการ",
+    COMPLETED = "เสร็จสมบูรณ์"
+  }
+
+  export enum ShippingStatus {
+    PENDING = "PENDING",
+    SHIPPED = "SHIPPED"
+  }
+
+  export enum ShippingStatusDisplay {
+    PENDING = "รอดำเนินการ",
+    SHIPPED = "จัดส่งแล้ว"
+  }
+  
 
   export enum TransferStatus {
     PENDING = "PENDING",
@@ -44,20 +63,16 @@ export enum OrderStatus {
   export enum OrderStatusFilter {
     ALL = "ALL",
     PENDING = "PENDING",
+    APPROVED = "APPROVED",
     SHIPPING = "SHIPPING",
-    COMPLETED = "COMPLETED",
-    CANCELLED = "CANCELLED",
-    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
   }
 
   export enum OrderStatusDisplay {
     PENDING = "รออนุมัติ",
-    SHIPPING = "อนุมัติ",
-    SHIPPED = "จัดส่งแล้ว",
-    PICKED_UP = "รับสินค้าแล้ว",
-    CANCELLED = "ยกเลิก",
-    FAILED = "ล้มเหลว",
-    COMPLETED = "เสร็จสมบูรณ์"
+    APPROVED = "อนุมัติแล้ว",
+    SHIPPING = "เก็บปลายทาง",
+    CANCELLED = "ยกเลิก"
   }
 
   export enum TransactionType {
@@ -81,22 +96,15 @@ export enum OrderStatus {
   
   export const STATUS_TRANSITIONS: { [key in OrderStatus]: OrderStatus[] } = {
     [OrderStatus.PENDING]: [
+      OrderStatus.APPROVED,
       OrderStatus.SHIPPING, 
       OrderStatus.CANCELLED
     ],
+    [OrderStatus.APPROVED]: [], // Terminal success state
     [OrderStatus.SHIPPING]: [
-      OrderStatus.SHIPPED, 
-      OrderStatus.PICKED_UP,
       OrderStatus.CANCELLED
     ],
-    [OrderStatus.SHIPPED]: [
-      OrderStatus.FAILED
-    ],
-    [OrderStatus.PICKED_UP]: [
-      OrderStatus.FAILED
-    ],
-    [OrderStatus.CANCELLED]: [],
-    [OrderStatus.FAILED]: []
+    [OrderStatus.CANCELLED]: []
   };
   
   export const PURCHASE_STATUS_TRANSITIONS: { [key in PurchaseStatus]: PurchaseStatus[] } = {

@@ -1,6 +1,5 @@
 // interfaces/warehouse.ts
 import { Timestamp } from "firebase/firestore";
-import { OrderStatus } from "@/app/firebase/enum";
 
 export interface Warehouse {
   id: string;
@@ -53,11 +52,13 @@ export interface SellTransaction {
   total_amount: number;
   payment_method: string;
   payment_status: string;
+  shipping_status?: string;
   warehouse_id: string;
   notes: string;
   created_by: string;
   created_date: Timestamp;
   updated_date: Timestamp;
+  status_history: StatusChangeEntry[];
 }
 
 export interface PurchaseTransaction {
@@ -250,10 +251,11 @@ export interface ProductCategoryCount {
   new_value: any;
 }
 
-// Define a specific history entry for status changes
+// Define a generic status change entry that can handle different types of status changes
 export interface StatusChangeEntry {
   timestamp: Timestamp;
   created_by: string;
-  old_status: OrderStatus;
-  new_status: OrderStatus;
+  status_type: 'order' | 'shipping' | 'payment'; // Type of status being changed
+  old_status: string; // Generic string to handle OrderStatus, ShippingStatus, PaymentStatus
+  new_status: string; // Generic string to handle OrderStatus, ShippingStatus, PaymentStatus
 }

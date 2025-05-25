@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import FlexTable from "@/components/FlexTable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddOrderPopup from "@/components/AddOrder";
-import Image from "next/image";
 import Link from "next/link";
 import { NavigationLink } from "@/components/providers/navigation-link";
 import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS, OrderStatusFilter } from "@/app/firebase/enum"
@@ -44,7 +43,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(false); // Loading state
   const [pageSize, setPageSize] = useState(10); // Default page size is 10
   const [trigger, setTrigger] = useState(false);
-  const { hasPermission } = useAuth(); // Get hasPermission from AuthContext
+  const { hasPermission, currentUser } = useAuth(); // Get hasPermission and currentUser from AuthContext
 
   // Track employee activity on sales page
   useUserActivity({
@@ -216,7 +215,8 @@ export default function ProductPage() {
   ) => {
     try {
       setLoading(true);
-      await updateOrderTransactionStatus(transactionId, currentStatus, newStatus);
+
+      await updateOrderTransactionStatus(transactionId, currentStatus, newStatus, currentUser?.email || 'UNKNOWN');
 
       setModalState({
         isOpen: true,
@@ -345,9 +345,9 @@ export default function ProductPage() {
   const statusButtons: Array<{ value: OrderStatusFilter; label: string }> = [
     { value: OrderStatusFilter.ALL, label: 'ทั้งหมด' },
     { value: OrderStatusFilter.PENDING, label: OrderStatusDisplay.PENDING  },
+    { value: OrderStatusFilter.APPROVED, label: OrderStatusDisplay.APPROVED },
     { value: OrderStatusFilter.SHIPPING, label: OrderStatusDisplay.SHIPPING },
-    { value: OrderStatusFilter.COMPLETED, label: 'เสร็จสิ้น' },
-    { value: OrderStatusFilter.CANCELLED, label: OrderStatusDisplay.CANCELLED },
+    { value: OrderStatusFilter.CANCELLED, label: OrderStatusDisplay.CANCELLED }
   ];
 
   const handleExportToExcel = async () => {
@@ -769,20 +769,17 @@ export default function ProductPage() {
                             e.target.value as OrderStatus
                           )}
                           disabled={!hasPermission('sales', 'edit')}
-                          className={`w-full px-3 py-2 text-sm appearance-none rounded-md bg-white dark:bg-gray-800 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors ${data.status === OrderStatus.SHIPPING ? 'text-yellow-600 dark:text-yellow-500' : ''} ${data.status === OrderStatus.SHIPPED || data.status === OrderStatus.PICKED_UP ? 'text-green-600' : ''} ${data.status === OrderStatus.CANCELLED ? 'text-red-500 dark:text-red-600' : ''} ${!hasPermission('sales', 'edit') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`w-full px-3 py-2 text-sm appearance-none rounded-md bg-white dark:bg-gray-800 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors ${data.status === OrderStatus.SHIPPING ? 'text-yellow-600 dark:text-yellow-500' : ''} ${data.status === OrderStatus.APPROVED ? 'text-green-600' : ''} ${data.status === OrderStatus.CANCELLED ? 'text-red-500 dark:text-red-600' : ''} ${!hasPermission('sales', 'edit') ? 'opacity-50 cursor-not-allowed' : ''}`}
                           style={{ paddingRight: "2.5rem" }}
                         >
                         <option value={OrderStatus.PENDING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PENDING)}>
                           {OrderStatusDisplay.PENDING}
                         </option>
+                        <option value={OrderStatus.APPROVED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.APPROVED)}>
+                          {OrderStatusDisplay.APPROVED}
+                        </option>
                         <option value={OrderStatus.SHIPPING} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.SHIPPING)}>
                           {OrderStatusDisplay.SHIPPING}
-                        </option>
-                        <option value={OrderStatus.SHIPPED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.SHIPPED)}>
-                          {OrderStatusDisplay.SHIPPED}
-                        </option>
-                        <option value={OrderStatus.PICKED_UP} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.PICKED_UP)}>
-                          {OrderStatusDisplay.PICKED_UP}
                         </option>
                         <option value={OrderStatus.CANCELLED} disabled={!STATUS_TRANSITIONS[data.status as keyof typeof STATUS_TRANSITIONS]?.includes(OrderStatus.CANCELLED)}>
                           {OrderStatusDisplay.CANCELLED}
