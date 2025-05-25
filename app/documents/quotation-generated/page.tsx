@@ -1,12 +1,9 @@
 "use client";
-// app/document/download/page.tsx (for App Router) 
-// OR 
-// pages/document/download.tsx (for Pages Router)
 
 import React, { JSX, useEffect, useState, useRef } from 'react';
 import { useSearchParams } from "next/navigation";
 import { getSellTransactionByTransactionId, getCompanyDetails } from "@/app/firebase/firestore";
-import ReceiptDocument from "@/components/template/TaxInvoiceDocument";
+import ReceiptDocument from "@/components/template/QuotationDocument";
 import { pdf } from '@react-pdf/renderer';
 import { bahttext } from "bahttext";
 import {Item, DocumentData, TransactionItem, TransactionData} from '@/components/interface';
@@ -43,12 +40,18 @@ export default function DocumentAutoDownload(): JSX.Element {
         // Set flag to prevent duplicate downloads
         downloadInitiatedRef.current = true;
         
-        // Fetch transaction data and company details in parallel
-        const [transactionData, companyDetails] = await Promise.all([
-          getSellTransactionByTransactionId(transaction_id) as Promise<TransactionData>,
-          getCompanyDetails()
-        ]);
-        // Fetch transaction data
+        // Fetch with timeout
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 30000)
+        );
+        
+        const [transactionData, companyDetails] = await Promise.race([
+          Promise.all([
+            getSellTransactionByTransactionId(transaction_id) as Promise<TransactionData>,
+            getCompanyDetails()
+          ]),
+          timeoutPromise
+        ]) as [TransactionData, any];
         
         if (!transactionData) {
           setError("Transaction not found");
@@ -62,24 +65,24 @@ export default function DocumentAutoDownload(): JSX.Element {
           return;
         }
 
-        // Format products from transaction data
-        const products: Item[] = transactionData?.items ? transactionData.items.map((item: TransactionItem) => ({
-          id: item.sku || '',
-          name: item.name || '',
-          quantity: item.quantity || 0,
-          unitType: item.unit_type || 'ชิ้น',
-          unitPrice: item.price || 0,
-          total: (item.subtotal || 0),
-          discount: (item.discount ?? 0),
-        })) : [];
+        // Format products from transaction data - no API calls needed
+        const products: Item[] = transactionData?.items ? transactionData.items.map((item: TransactionItem) => {
+          return {
+            id: item.sku || '',
+            name: item.name || '',
+            quantity: item.quantity || 0,
+            unitType: item.unit_type || 'ชิ้น',
+            unitPrice: item.price || 0,
+            total: (item.subtotal || 0),
+            discount: (item.discount ?? 0),
+            imageUrl: item.sku_image || undefined,
+          };
+        }) : [];
 
         // Calculate total amount
         const rawtotalAmount: number = transactionData.items?.reduce((acc: number, product: TransactionItem) => 
           acc + (product.subtotal || 0), 0) || 0;
-        
-        // const rawtotalDiscount: number = transactionData.items?.reduce((acc: number, product: TransactionItem) => 
-        //   acc + (product.quantity || 0) * (product.discount || 0), 0) || 0;
-      
+
         // Format date from Firestore timestamp
         const formattedDate: string = new Date().toLocaleString('th-TH', {
           year: 'numeric',
@@ -97,7 +100,7 @@ export default function DocumentAutoDownload(): JSX.Element {
 
         // Check if company details exist, if not, use fallback values
         if (!companyDetails || Object.keys(companyDetails).length === 0) {
-          console.warn("Company details not found, using fallback values");
+          // Use fallback values silently
         }
 
 
@@ -137,8 +140,8 @@ export default function DocumentAutoDownload(): JSX.Element {
             buyerSignatureEnabled: true,
             sellerSignatureEnabled: true,
             showQuotationSection: true,
-            quotationCondition: companyDetails.quotation_condition || "ชำระ 100% ก่อนส่งมอบสินค้า",
-            quotationShippingCondition: companyDetails.quotation_shipping_condition || "จัดส่งฟรีภายใน 1-2 วันหลังจากได้รับการชำระเงิน",
+            quotationCondition: companyDetails?.quotation_condition || "ชำระ 100% ก่อนส่งมอบสินค้า",
+            quotationShippingCondition: companyDetails?.quotation_shipping_condition || "จัดส่งฟรีภายใน 1-2 วันหลังจากได้รับการชำระเงิน",
             quotationCredit: "7",
             quotationExpiredate: quotationExpireformattedDate
           },
@@ -163,9 +166,7 @@ export default function DocumentAutoDownload(): JSX.Element {
         };
 
         // Generate the PDF blob
-        const blob = await pdf(
-          <ReceiptDocument data={documentData} />
-        ).toBlob();
+        const blob = await pdf(<ReceiptDocument data={documentData} />).toBlob();
 
         // Create a URL for the Blob
         const url = URL.createObjectURL(blob);
@@ -187,21 +188,20 @@ export default function DocumentAutoDownload(): JSX.Element {
         }
         
         setIsLoading(false);
-        
+
         // Redirect after short delay to allow download to start
         setTimeout(() => {
           window.close();
         }, 1000);
         
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error generating PDF:", error);
-        setError("Failed to generate PDF");
+        setError(error.message || "Failed to generate PDF");
         setIsLoading(false);
         
-        // Redirect on error
         setTimeout(() => {
-          window.location.href = `/documents?transaction_id=${transaction_id}&error=${encodeURIComponent("Failed to generate PDF")}`;
-        }, 500);
+          window.location.href = `/documents?transaction_id=${transaction_id}&error=${encodeURIComponent(error.message || "Failed to generate PDF")}`;
+        }, 2000);
       }
     };
 
@@ -211,7 +211,7 @@ export default function DocumentAutoDownload(): JSX.Element {
   // Minimalist UI that's essentially invisible
   return (
     <div style={{ position: 'fixed', top: '-9999px', left: '-9999px', height: '1px', width: '1px', overflow: 'hidden' }}>
-      {isLoading ? "กำลังดาวน์โหลด..." : error ? `เกิดข้อผิดพลาด: ${error}` : "ดาวน์โหลดสำเร็จ กำลังเปลี่ยนหน้า..."}
+      {isLoading ? "กำลังดาวน์โหลด..." : error ? `เกิดข้อผิดพลาด: ${error}` : "ดาวน์โหลดสำเร็จ"}
     </div>
   );
 }

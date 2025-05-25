@@ -17,6 +17,7 @@ interface Product {
   total: number;
   stock?: number;
   unit_type: string;
+  sku_image?: string;
 }
 
 interface ProductData {
@@ -118,7 +119,7 @@ interface PaginatedResponse {
     const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
     
     // Ensure type safety for each field
-    if (field === 'id' || field === 'product_code' || field === 'product_name') {
+    if (field === 'id' || field === 'product_code' || field === 'product_name' || field === 'sku_image') {
       (updatedProducts[index][field] as string) = value as string;
     } else {
       (updatedProducts[index][field] as number) = Number(value);
@@ -231,7 +232,8 @@ if (numericValue < 0) {
         discount: 0,
         total: product.price.sell_price,
         stock: stockAmount,
-        unit_type: product.unit_type || 'ชิ้น'
+        unit_type: product.unit_type || 'ชิ้น',
+        sku_image: product.sku_image
       };
       
       setProducts(updatedProducts);

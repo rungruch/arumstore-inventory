@@ -49,6 +49,8 @@ export interface StoreInfo {
     unitType: string;
     unitPrice: number;
     total: number;
+    imageUrl?: string;
+    discount?: number;
   }
   
   export interface Totals {
@@ -87,6 +89,7 @@ export interface StoreInfo {
     price?: number;
     subtotal?: number;
     discount?: number;
+    sku_image?: string;
   }
   
   export interface TransactionData {

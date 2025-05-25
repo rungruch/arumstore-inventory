@@ -31,6 +31,7 @@ interface formOrderItem {
     subtotal: number;
     warehouse_id: string;  
     unit_type: string;
+    sku_image?: string;
 }
 
 interface OrderState {
@@ -106,6 +107,7 @@ interface Product {
   total: number;
   stock?: number;
   unit_type: string;
+  sku_image?: string;
 }
 
 export default function AddSellOrderForm({
@@ -161,7 +163,7 @@ export default function AddSellOrderForm({
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([
-      { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }
+      { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }  
     ]);
     
 
@@ -360,7 +362,8 @@ export default function AddSellOrderForm({
         discount: item.discount ?? 0,
         total: item.subtotal ?? 0,
         stock: leatest_product.stocks[orderState.warehouse] ?? 0,
-        unit_type: leatest_product.unit_type
+        unit_type: leatest_product.unit_type,
+        sku_image: item.sku_image || leatest_product.sku_image
       };
     }));
   }
@@ -423,7 +426,8 @@ export default function AddSellOrderForm({
         price: item.price,
         discount: item.discount,
         subtotal: item.total,
-        warehouse_id: orderState.warehouse
+        warehouse_id: orderState.warehouse,
+        sku_image: item.sku_image
       })),
       total_discount: totalDiscountAmount,
       total_amount_no_vat: totalOrderAmountNoVat,
