@@ -154,7 +154,12 @@ const PurchaseDashboardPage = () => {
   return (
     <div className="p-6">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">รายการซื้อ</h1>
+        <div>
+          <h1 className="text-2xl font-bold">รายการซื้อ</h1>
+          <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 block">
+            📊 ข้อมูลแคช | รีเฟรชทุก 1 ชั่วโมง
+          </span>
+        </div>
         
         {/* Date Range Picker */}
         <div className="relative">

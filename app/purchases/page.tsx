@@ -336,6 +336,11 @@ export default function PurchasePage() {
             <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
               จำนวน {totalAllData} รายการ
             </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                📊 ข้อมูลแคช | รีเฟรชทุก 1 ชั่วโมง
+              </span>
+            </div>
           </div>
           {hasPermission('purchases', 'create') && (
             <button

@@ -206,7 +206,12 @@ const SalesDashboardPage = () => {
   return (
     <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-900 dark:to-zinc-800 min-900 dark:to-gray-800 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">ยอดขาย</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">ยอดขาย</h1>
+          <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 block">
+            📊 ข้อมูลแคช | รีเฟรชทุก 1 ชั่วโมง
+          </span>
+        </div>
         
         <div className="flex items-center mt-4 md:mt-0">
           <div className="relative">

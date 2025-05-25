@@ -131,10 +131,11 @@ The activity tracking system is designed for minimal performance impact:
 
 ### Optimizations Implemented
 
-1. **Throttled Writes** 
-   - Default: Maximum one write per 30 seconds per user
-   - Smart throttling preserves the most recent activity type
-   - Reduces database writes by approximately 95% during active sessions
+1. **Profile-Based Activity Intervals** 
+   - Default: Standard profile with 5-minute general intervals
+   - Activity-specific throttling (clicks: 5min, visibility: 2min, etc.)
+   - Reduces database writes by approximately 98% compared to frequent tracking
+   - Client-side throttling prevents unnecessary API calls
 
 2. **Conditional Execution**
    - Activity tracking only runs for authenticated users
@@ -152,17 +153,17 @@ The activity tracking system is designed for minimal performance impact:
 |--------|--------|-------|
 | **CPU Usage** | <1% | Negligible impact on client devices |
 | **Memory** | ~5KB | Small memory footprint for tracking logic |
-| **Network** | ~2KB per log | One request per throttle period (30s default) |
-| **Firestore Writes** | ~2 per minute | Per active user during typical usage |
+| **Network** | ~2KB per log | One request per throttle period (5 min default with 'standard' profile) |
+| **Firestore Writes** | ~2 per minute | Per active user during typical usage with 'standard' profile |
 
 ### Customization Options
 
 Adjust performance impact by configuring the hook:
 
 ```javascript
-// Reduced tracking for performance-critical pages
+// Recommended: Use profile-based configuration
 useUserActivity({
-  throttleMs: 60000,         // Increase to 60 seconds
+  profile: 'standard',       // 5-minute intervals (default)
   trackOnKeyboard: false,    // Disable keyboard tracking
   trackOnClick: true,        // Keep click tracking
   trackOnVisibilityChange: true, // Keep tab focus tracking

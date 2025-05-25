@@ -182,7 +182,14 @@ const DashboardPage = () => {
 
   return (
     <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-900 dark:to-zinc-800 min-900 dark:to-gray-800 min-h-screen">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">ภาพรวมสินค้า</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">ภาพรวมสินค้า</h1>
+        <div className="mt-2 sm:mt-0">
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            📊 ข้อมูลแคช | รีเฟรชทุก 1 ชั่วโมง
+          </span>
+        </div>
+      </div>
       
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">

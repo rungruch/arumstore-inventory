@@ -109,7 +109,10 @@ export default function SalesByMarketplace({ startDate, endDate }: SalesMethodPr
 
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-zinc-700">
-      <h2 className="text-xl font-semibold mb-4">ยอดขายตามช่องทาง</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">ยอดขายตามช่องทาง</h2>
+        <span className="text-xs text-gray-400 dark:text-gray-500">📊 แคช 1 ชม.</span>
+      </div>
       
       {loading ? (
         <div className="flex justify-center items-center h-64">
