@@ -248,28 +248,28 @@ const [dateRange, setDateRange] = useState({
     <ProtectedRoute module="users" action="view">
       <div className="p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold">การติดตามผู้ใช้งาน</h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <h1 className="text-xl sm:text-2xl font-bold">การติดตามผู้ใช้งาน</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               ติดตามกิจกรรมและการใช้งานของผู้ใช้ในระบบ
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setCurrentView('analytics')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
             currentView === 'analytics' 
               ? 'bg-gray-900 dark:bg-gray-800 text-white' 
               : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
               }`}
             >
-              <BarChart3 className="w-4 h-4 inline mr-2" />
+              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1 sm:mr-2" />
               วิเคราะห์
             </button>
             <button
               onClick={() => setCurrentView('summary')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
             currentView === 'summary' 
               ? 'bg-gray-900 dark:bg-gray-800 text-white' 
               : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
@@ -279,7 +279,7 @@ const [dateRange, setDateRange] = useState({
             </button>
             <button
               onClick={() => setCurrentView('detailed')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
             currentView === 'detailed' 
               ? 'bg-gray-900 dark:bg-gray-800 text-white' 
               : 'bg-gray-200 text-gray-800 hover:bg-gray-300'

@@ -88,23 +88,35 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute module='settings' actions={["view", "edit", "delete", "create"]} requireAll={true}>
-      <div className="space-y-4 p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">ตั้งค่า</h1>
+      <div className="space-y-6 p-6">
+        {/* Header */}
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">ตั้งค่าระบบ</h1>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">จัดการข้อมูลบริษัท ช่องทางการขาย และการตั้งค่าต่างๆ</p>
+            </div>
+            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+          </div>
         </div>
         
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar */}
-          <aside className="w-full md:w-64 bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex-shrink-0 h-fit">
+          <aside className="w-full md:w-64 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700 p-4 flex-shrink-0 h-fit">
             <nav>
               <ul className="space-y-1">
                 {menu.map((item) => (
                   <li key={item.key}>
                     <button
-                      className={`w-full text-left px-3 py-2 rounded font-medium transition-colors ${
+                      className={`w-full text-left px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
                         selected === item.key
-                          ? "bg-gradient-to-r from-gray-800 to-gray-900 text-white"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-800 hover:text-white"
+                          ? "bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-md"
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-800 hover:text-white hover:shadow-sm"
                       }`}
                       onClick={() => setSelected(item.key)}
                     >
@@ -117,7 +129,7 @@ export default function SettingsPage() {
           </aside>
           
           {/* Main Content */}
-          <main className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <main className="flex-1 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700 p-6">
             {selected === "company" && (
               <div>
                 <Modal 
@@ -134,7 +146,7 @@ export default function SettingsPage() {
                 ) : (
                 <div className="flex flex-col md:flex-row gap-8">
                   {/* Left: Form */}
-                  <form className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4" onSubmit={async (e) => {
+                  <form className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6" onSubmit={async (e) => {
                     e.preventDefault();
                     try {
                       setIsSaving(true);
@@ -216,103 +228,103 @@ export default function SettingsPage() {
                       setIsSaving(false);
                     }
                   }}>
-                    <div className="col-span-2 text-lg font-semibold mb-2">ข้อมูลบริษัท/ร้านค้า</div>
+                    <div className="col-span-2 text-lg font-semibold mb-4 pb-2 border-b border-gray-200 dark:border-zinc-600 text-gray-800 dark:text-gray-200">ข้อมูลบริษัท/ร้านค้า</div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">บริษัท/ร้านค้า</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">บริษัท/ร้านค้า</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="text" 
                         value={companyDetails.name || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, name: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">เลขผู้เสียภาษี</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">เลขผู้เสียภาษี</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="text" 
                         value={companyDetails.tax_id || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, tax_id: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">ชื่อสาขา/รหัส</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">ชื่อสาขา/รหัส</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="text" 
                         value={companyDetails.branch_name || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, branch_name: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">ที่อยู่สำหรับใบเสร็จ</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">ที่อยู่สำหรับใบเสร็จ</label>
                       <textarea 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
-                        rows={2} 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none" 
+                        rows={3} 
                         value={companyDetails.address || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, address: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">ที่อยู่</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">ที่อยู่</label>
                       <textarea 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
-                        rows={2} 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none" 
+                        rows={3} 
                         value={companyDetails.current_address || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, current_address: e.target.value})}
                       />
                     </div>
-                    <div className="col-span-2 text-base font-semibold mt-4 mb-2">(English)</div>
+                    <div className="col-span-2 text-base font-semibold mt-6 mb-4 pb-2 border-b border-gray-200 dark:border-zinc-600 text-gray-800 dark:text-gray-200">(English)</div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">บริษัท/ร้านค้า (English)</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">บริษัท/ร้านค้า (English)</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="text" 
                         value={companyDetails.eng_name || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, eng_name: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">ชื่อสาขา/รหัส (English)</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">ชื่อสาขา/รหัส (English)</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="text" 
                         value={companyDetails.eng_branch_name || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, eng_branch_name: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">ที่อยู่ (English)</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">ที่อยู่ (English)</label>
                       <textarea 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
-                        rows={2} 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none" 
+                        rows={3} 
                         value={companyDetails.eng_address || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, eng_address: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">ที่อยู่สำหรับใบเสร็จ (English)</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">ที่อยู่สำหรับใบเสร็จ (English)</label>
                       <textarea 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
-                        rows={2} 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none" 
+                        rows={3} 
                         value={companyDetails.eng_current_address || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, eng_current_address: e.target.value})}
                       />
                     </div>
-                    <div className="col-span-2 text-lg font-semibold mt-6 mb-2">ข้อมูลติดต่อ</div>
+                    <div className="col-span-2 text-lg font-semibold mt-8 mb-4 pb-2 border-b border-gray-200 dark:border-zinc-600 text-gray-800 dark:text-gray-200">ข้อมูลติดต่อ</div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">เบอร์โทรศัพท์</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">เบอร์โทรศัพท์</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="text" 
                         value={companyDetails.phone || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, phone: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">อีเมล</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">อีเมล</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="email" 
                         placeholder="email@example.com" 
                         value={companyDetails.email || ""}
@@ -320,86 +332,87 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">โทรสาร (Fax)</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">โทรสาร (Fax)</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="text" 
                         value={companyDetails.fax || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, fax: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Website</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Website</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
                         type="text" 
                         value={companyDetails.website || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, website: e.target.value})}
                       />
                     </div>
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium mb-1">รายละเอียดการชำระเงิน</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">รายละเอียดการชำระเงิน</label>
                       <textarea 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
-                        rows={3} 
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none" 
+                        rows={4} 
                         placeholder="ข้อมูลบัญชีธนาคารหรือช่องทางการชำระเงิน" 
                         value={companyDetails.payment_details || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, payment_details: e.target.value})}
                       />
                     </div>
                     
-                    <div className="col-span-2 text-lg font-semibold mt-6 mb-2">ข้อมูลใบเสนอราคา</div>
+                    <div className="col-span-2 text-lg font-semibold mt-8 mb-4 pb-2 border-b border-gray-200 dark:border-zinc-600 text-gray-800 dark:text-gray-200">ข้อมูลใบเสนอราคา</div>
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium mb-1">เงื่อนไขการชำระเงิน</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">เงื่อนไขการชำระเงิน</label>
                       <input 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600"
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         type="text"
                         value={companyDetails.quotation_condition || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, quotation_condition: e.target.value})}
                       />
                     </div>
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium mb-1">เงื่อนไขการจัดส่ง</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">เงื่อนไขการจัดส่ง</label>
                       <textarea 
-                        className="w-full border rounded px-3 py-2 dark:bg-zinc-700 dark:border-zinc-600" 
-                        rows={2}
+                        className="w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none" 
+                        rows={3}
                         value={companyDetails.quotation_shipping_condition || ""}
                         onChange={(e) => setCompanyDetails({...companyDetails, quotation_shipping_condition: e.target.value})}
                       />
                     </div>
-                    <div className="col-span-2 mt-6">
+                    <div className="col-span-2 mt-8 pt-6 border-t border-gray-200 dark:border-zinc-600">
                       <button 
                         type="submit" 
-                        className={`w-fit h-fit p-2 px-4 text-sm rounded-md text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 rounded text-sm transition-colors ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`px-6 py-3 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
                         disabled={isSaving}
                       >
-                        {isSaving ? "กำลังบันทึก..." : "บันทึก"}
+                        {isSaving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
                       </button>
                     </div>
                   </form>
                   
                   {/* Right: Logo Uploads */}
-                  <div className="flex flex-col items-center justify-start min-w-[180px] space-y-6">
+                  <div className="flex flex-col items-center justify-start min-w-[200px] space-y-8">
                     {/* Main Logo */}
-                    <div className="w-full flex flex-col items-center">
-                      <div className="mb-2 text-sm font-medium">รูปโลโก้บริษัท/ร้านค้า</div>
-                      <div className="w-36 h-36 bg-gray-100 dark:bg-zinc-700 border border-dashed border-gray-300 dark:border-zinc-600 rounded flex items-center justify-center overflow-hidden relative">
+                    <div className="w-full flex flex-col items-center bg-gray-50 dark:bg-zinc-900 rounded-xl p-6 border border-gray-200 dark:border-zinc-600">
+                      <div className="mb-4 text-sm font-semibold text-gray-800 dark:text-gray-200">รูปโลโก้บริษัท/ร้านค้า</div>
+                      <div className="w-40 h-40 bg-white dark:bg-zinc-800 border-2 border-dashed border-gray-300 dark:border-zinc-600 rounded-xl flex items-center justify-center overflow-hidden relative hover:border-gray-400 dark:hover:border-zinc-500 transition-colors duration-200">
                         {logoPreview ? (
                           <Image 
                             src={logoPreview} 
                             alt="Company Logo" 
-                            width={144} 
-                            height={144} 
-                            className="object-contain"
+                            width={160} 
+                            height={160} 
+                            className="object-contain rounded-lg"
                           />
                         ) : (
-                          <span className="text-gray-400 text-5xl">
-                            <svg width="64" height="64" fill="none" viewBox="0 0 24 24">
-                              <circle cx="12" cy="12" r="10" fill="#e5e7eb" className="dark:fill-zinc-600"/>
-                              <path d="M8 16v-5a4 4 0 118 0v5" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <rect x="9" y="16" width="6" height="2" rx="1" fill="#9ca3af"/>
+                          <div className="text-center">
+                            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" className="mx-auto mb-2 text-gray-400 dark:text-zinc-500">
+                              <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1"/>
+                              <path d="M8 16v-5a4 4 0 118 0v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <rect x="9" y="16" width="6" height="2" rx="1" fill="currentColor" opacity="0.6"/>
                             </svg>
-                          </span>
+                            <p className="text-xs text-gray-500 dark:text-zinc-400">ไม่มีโลโก้</p>
+                          </div>
                         )}
                       </div>
                       <input
@@ -423,40 +436,41 @@ export default function SettingsPage() {
                       />
                       <label
                         htmlFor="logo-upload"
-                        className="mt-3 px-4 py-1.5 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 rounded text-sm font-medium transition-colors cursor-pointer"
+                        className="mt-4 px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer shadow-md hover:shadow-lg transform hover:scale-105"
                       >
                         อัปโหลดโลโก้
                       </label>
                     </div>
                     
                     {/* Document Logo */}
-                    <div className="w-full flex flex-col items-center">
-                      <div className="mb-2 text-sm font-medium">โลโก้สำหรับเอกสาร</div>
-                      <div className="w-36 h-36 bg-gray-100 dark:bg-zinc-700 border border-dashed border-gray-300 dark:border-zinc-600 rounded flex items-center justify-center overflow-hidden relative">
+                    <div className="w-full flex flex-col items-center bg-gray-50 dark:bg-zinc-900 rounded-xl p-6 border border-gray-200 dark:border-zinc-600">
+                      <div className="mb-4 text-sm font-semibold text-gray-800 dark:text-gray-200">โลโก้สำหรับเอกสาร</div>
+                      <div className="w-40 h-40 bg-white dark:bg-zinc-800 border-2 border-dashed border-gray-300 dark:border-zinc-600 rounded-xl flex items-center justify-center overflow-hidden relative hover:border-gray-400 dark:hover:border-zinc-500 transition-colors duration-200">
                         {docLogoPreview ? (
                           <Image 
                             src={docLogoPreview} 
                             alt="Document Logo" 
-                            width={144} 
-                            height={144} 
-                            className="object-contain"
+                            width={160} 
+                            height={160} 
+                            className="object-contain rounded-lg"
                           />
                         ) : companyDetails.logo_document_url ? (
                           <Image 
                             src={companyDetails.logo_document_url} 
                             alt="Document Logo" 
-                            width={144} 
-                            height={144} 
-                            className="object-contain"
+                            width={160} 
+                            height={160} 
+                            className="object-contain rounded-lg"
                           />
                         ) : (
-                          <span className="text-gray-400 text-5xl">
-                            <svg width="64" height="64" fill="none" viewBox="0 0 24 24">
-                              <circle cx="12" cy="12" r="10" fill="#e5e7eb" className="dark:fill-zinc-600"/>
-                              <path d="M10 8h4v8h-4z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M7 12h10" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <div className="text-center">
+                            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" className="mx-auto mb-2 text-gray-400 dark:text-zinc-500">
+                              <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1"/>
+                              <path d="M10 8h4v8h-4z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M7 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                          </span>
+                            <p className="text-xs text-gray-500 dark:text-zinc-400">ไม่มีโลโก้เอกสาร</p>
+                          </div>
                         )}
                       </div>
                       <input
@@ -482,7 +496,7 @@ export default function SettingsPage() {
                       />
                       <label
                         htmlFor="doc-logo-upload"
-                        className="mt-3 px-4 py-1.5 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 rounded text-sm font-medium transition-colors cursor-pointer"
+                        className="mt-4 px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer shadow-md hover:shadow-lg transform hover:scale-105"
                       >
                         อัปโหลดโลโก้เอกสาร
                       </label>
@@ -494,27 +508,39 @@ export default function SettingsPage() {
             )}
             
             {selected === "shipping" && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1">ช่องทางการจัดส่ง</h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">จัดการช่องทางการจัดส่ง</p>
-                <AddShippingMethod />
+              <div className="space-y-6">
+                <div className="border-b border-gray-200 dark:border-zinc-600 pb-4">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">ช่องทางการจัดส่ง</h2>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">จัดการช่องทางการจัดส่งสำหรับการขายสินค้า</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-zinc-900 rounded-xl p-6 border border-gray-200 dark:border-zinc-600">
+                  <AddShippingMethod />
+                </div>
               </div>
             )}
             
             {selected === "sales" && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1">ช่องทางการขาย</h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">จัดการช่องทางการขาย</p>
-                <AddSalesMethod />
+              <div className="space-y-6">
+                <div className="border-b border-gray-200 dark:border-zinc-600 pb-4">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">ช่องทางการขาย</h2>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">จัดการช่องทางการขายและแพลตฟอร์มต่างๆ</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-zinc-900 rounded-xl p-6 border border-gray-200 dark:border-zinc-600">
+                  <AddSalesMethod />
+                </div>
               </div>
             )}
             
             {selected === "contact-group" && (
-                <div>
-                  <h2 className="text-xl font-semibold mb-1">กลุ่มผู้ติดต่อ</h2>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">จัดการกลุ่มผู้ติดต่อ</p>
+              <div className="space-y-6">
+                <div className="border-b border-gray-200 dark:border-zinc-600 pb-4">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">กลุ่มผู้ติดต่อ</h2>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">จัดการกลุ่มผู้ติดต่อสำหรับการจัดหมวดหมู่ลูกค้าและซัพพลายเออร์</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-zinc-900 rounded-xl p-6 border border-gray-200 dark:border-zinc-600">
                   <AddContactGroup />
                 </div>
+              </div>
             )}
           </main>
         </div>
