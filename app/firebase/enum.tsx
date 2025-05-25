@@ -6,13 +6,13 @@ export enum OrderStatus {
   }
 
   export enum PaymentStatus {
-    PENDING = "PENDING",
-    COMPLETED = "COMPLETED"
+    PENDING = "NONE",
+    COMPLETED = "PAID"
   }
 
   export enum PaymentStatusDisplay {
-    PENDING = "รอดำเนินการ",
-    COMPLETED = "เสร็จสมบูรณ์"
+    NONE = "รอชำระ",
+    PAID = "ชำระแล้ว"
   }
 
   export enum ShippingStatus {
@@ -66,6 +66,18 @@ export enum OrderStatus {
     APPROVED = "APPROVED",
     SHIPPING = "SHIPPING",
     CANCELLED = "CANCELLED"
+  }
+
+  export enum PaymentStatusFilter {
+    ALL = "ALL",
+    PENDING = "NONE",
+    COMPLETED = "PAID"
+  }
+
+  export enum ShippingStatusFilter {
+    ALL = "ALL",
+    PENDING = "PENDING",
+    SHIPPED = "SHIPPED"
   }
 
   export enum OrderStatusDisplay {

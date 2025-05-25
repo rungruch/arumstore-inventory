@@ -3,6 +3,7 @@ import { updatePaymentDetails } from "@/app/firebase/firestore";
 import { getFile, uploadFile } from "@/app/firebase/storage";
 import { Timestamp } from 'firebase/firestore';
 import { ModalTitle } from '@/components/enum'
+import { PaymentStatus } from '@/app/firebase/enum';
 import { useAuth } from '@/app/contexts/AuthContext';
 
 interface ShippingDetailsFormProps {
@@ -88,7 +89,7 @@ export default function PaymentDetailsForm({
             }
 
             await updatePaymentDetails(transactionId,
-                currentPaymentStatus !== 'PAID' ? 'PAID' : currentPaymentStatus,
+                currentPaymentStatus !== PaymentStatus.COMPLETED ? PaymentStatus.COMPLETED : currentPaymentStatus,
                 paymentMethod,
                 {
                     payment_date: new Date(paymentDate),
@@ -159,8 +160,8 @@ export default function PaymentDetailsForm({
                             className="w-full p-2 border rounded bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-zinc-600"
                             disabled
                         >
-                            <option value="PAID">ชำระแล้ว</option>
-                            <option value="NONE">รอชำระ</option>
+                            <option value={PaymentStatus.COMPLETED}>ชำระแล้ว</option>
+                            <option value={PaymentStatus.PENDING}>รอชำระ</option>
                         </select>
                     </div>
 

@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import AddOrderPopup from "@/components/AddOrder";
 import Link from "next/link";
 import { NavigationLink } from "@/components/providers/navigation-link";
-import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS, OrderStatusFilter } from "@/app/firebase/enum"
+import { OrderStatus, OrderStatusDisplay, STATUS_TRANSITIONS, OrderStatusFilter, PaymentStatus, PaymentStatusDisplay, PaymentStatusFilter, ShippingStatus, ShippingStatusDisplay, ShippingStatusFilter } from "@/app/firebase/enum"
 import Modal from "@/components/modal";
 import { ModalTitle } from '@/components/enum';
 import ShippingDetailsForm from "@/components/AddShippingDetail";
@@ -76,6 +76,8 @@ export default function ProductPage() {
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>(OrderStatusFilter.ALL);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<PaymentStatusFilter>(PaymentStatusFilter.ALL);
+  const [shippingStatusFilter, setShippingStatusFilter] = useState<ShippingStatusFilter>(ShippingStatusFilter.ALL);
   const [hoveredShipping, setHoveredShipping] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState({
     startDate: new Date(),
@@ -103,9 +105,9 @@ export default function ProductPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const totalAllCount = await getTotalSellTransactionCount();
+        const totalAllCount = await getTotalSellTransactionCount(statusFilter, paymentStatusFilter, shippingStatusFilter);
         setTotalAllData(totalAllCount);
-        const { data, lastDoc, count } = await getSellTransactionPaginated(null, pageSize, statusFilter);
+        const { data, lastDoc, count } = await getSellTransactionPaginated(null, pageSize, statusFilter, paymentStatusFilter, shippingStatusFilter);
         setDatas(data);
         setLastDoc(lastDoc);
         setTotalData(count);
@@ -118,7 +120,7 @@ export default function ProductPage() {
     };
 
     fetchData();
-  }, [pageSize, trigger, statusFilter]);
+  }, [pageSize, trigger, statusFilter, paymentStatusFilter, shippingStatusFilter]);
 
   // Handle page size change
   const handlePageSizeChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -129,9 +131,9 @@ export default function ProductPage() {
 
     try {
       setLoading(true);
-      const totalCount = await getTotalSellTransactionCount();
+      const totalCount = await getTotalSellTransactionCount(statusFilter, paymentStatusFilter, shippingStatusFilter);
       setTotalData(totalCount);
-      const { data, lastDoc } = await getSellTransactionPaginated(null, newSize);
+      const { data, lastDoc } = await getSellTransactionPaginated(null, newSize, statusFilter, paymentStatusFilter, shippingStatusFilter);
       setDatas(data);
       setLastDoc(lastDoc);
     } catch (error) {
@@ -150,9 +152,9 @@ export default function ProductPage() {
         setStatusFilter(OrderStatusFilter.ALL)
         setCurrentPage(1);
         setLastDoc(null);
-        const totalCount = await getTotalSellTransactionCount(); // Recalculate total categories
+        const totalCount = await getTotalSellTransactionCount(statusFilter, paymentStatusFilter, shippingStatusFilter); // Recalculate total categories
         setTotalData(totalCount);
-        const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize);
+        const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize, statusFilter, paymentStatusFilter, shippingStatusFilter);
         setDatas(data);
         setLastDoc(lastDoc);
       } else {
@@ -179,7 +181,9 @@ export default function ProductPage() {
       const { data: nextData, lastDoc: newLastDoc } = await getSellTransactionPaginated(
         lastDoc,
         pageSize,
-        statusFilter
+        statusFilter,
+        paymentStatusFilter,
+        shippingStatusFilter
       );
 
       setDatas(nextData); // Update categories to the next page
@@ -198,7 +202,7 @@ export default function ProductPage() {
     try {
       setLoading(true);
       setCurrentPage(currentPage - 1); // Decrement page
-      const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize, statusFilter); // Re-fetch for the page
+      const { data, lastDoc } = await getSellTransactionPaginated(null, pageSize, statusFilter, paymentStatusFilter, shippingStatusFilter); // Re-fetch for the page
       setDatas(data);
       setLastDoc(lastDoc);
     } catch (error) {
@@ -342,12 +346,36 @@ export default function ProductPage() {
     // The useEffect will handle fetching new data with the filter
   };
 
+  const handlePaymentStatusFilterChange = (newStatus: PaymentStatusFilter | undefined) => {
+    setPaymentStatusFilter(newStatus || PaymentStatusFilter.ALL);
+    setCurrentPage(1);
+    setLastDoc(null);
+  };
+
+  const handleShippingStatusFilterChange = (newStatus: ShippingStatusFilter | undefined) => {
+    setShippingStatusFilter(newStatus || ShippingStatusFilter.ALL);
+    setCurrentPage(1);
+    setLastDoc(null);
+  };
+
   const statusButtons: Array<{ value: OrderStatusFilter; label: string }> = [
     { value: OrderStatusFilter.ALL, label: 'ทั้งหมด' },
     { value: OrderStatusFilter.PENDING, label: OrderStatusDisplay.PENDING  },
     { value: OrderStatusFilter.APPROVED, label: OrderStatusDisplay.APPROVED },
     { value: OrderStatusFilter.SHIPPING, label: OrderStatusDisplay.SHIPPING },
     { value: OrderStatusFilter.CANCELLED, label: OrderStatusDisplay.CANCELLED }
+  ];
+
+  const paymentStatusButtons: Array<{ value: PaymentStatusFilter; label: string }> = [
+    { value: PaymentStatusFilter.ALL, label: 'ทั้งหมด' },
+    { value: PaymentStatusFilter.PENDING, label: PaymentStatusDisplay.NONE },
+    { value: PaymentStatusFilter.COMPLETED, label: PaymentStatusDisplay.PAID }
+  ];
+
+  const shippingStatusButtons: Array<{ value: ShippingStatusFilter; label: string }> = [
+    { value: ShippingStatusFilter.ALL, label: 'ทั้งหมด' },
+    { value: ShippingStatusFilter.PENDING, label: ShippingStatusDisplay.PENDING },
+    { value: ShippingStatusFilter.SHIPPED, label: ShippingStatusDisplay.SHIPPED }
   ];
 
   const handleExportToExcel = async () => {
@@ -491,7 +519,7 @@ export default function ProductPage() {
         <PaymentDetailsForm
           transactionId={paymentDetailsModal.transactionId}
           shouldPayAmount={paymentDetailsModal.shouldPayAmount || 0}
-          currentPaymentStatus={paymentDetailsModal.currentPaymentStatus || "NONE"} 
+          currentPaymentStatus={paymentDetailsModal.currentPaymentStatus || PaymentStatus.PENDING} 
           currentPaymentMethod={paymentDetailsModal.currentPaymentMethod || ""}  
           currentPaymentDetails={paymentDetailsModal.currentPaymentDetails}
           onSubmitSuccess={() => {
@@ -531,20 +559,64 @@ export default function ProductPage() {
         </div>
 
         {/* Status Filter Buttons */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {statusButtons.map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => handleStatusFilterChange(value)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${statusFilter === value
-                  ? "bg-gray-900 dark:bg-gray-800 text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-            >
-              {label}
-              {statusFilter === value ? ` (${totalData})` : ""}
-            </button>
-          ))}
+        <div className="flex flex-col gap-4 mb-4">
+          {/* Order Status Filter */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">สถานะคำสั่งซื้อ</h3>
+            <div className="flex flex-wrap gap-2">
+              {statusButtons.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => handleStatusFilterChange(value)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${statusFilter === value
+                      ? "bg-gray-900 dark:bg-gray-800 text-white"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    }`}
+                >
+                  {label}
+                  {statusFilter === value ? ` (${totalData})` : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Payment Status Filter */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">สถานะการชำระเงิน</h3>
+            <div className="flex flex-wrap gap-2">
+              {paymentStatusButtons.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => handlePaymentStatusFilterChange(value)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${paymentStatusFilter === value
+                      ? "bg-blue-600 text-white"
+                      : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                    }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Shipping Status Filter */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">สถานะการจัดส่ง</h3>
+            <div className="flex flex-wrap gap-2">
+              {shippingStatusButtons.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => handleShippingStatusFilterChange(value)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${shippingStatusFilter === value
+                      ? "bg-green-600 text-white"
+                      : "bg-green-100 text-green-800 hover:bg-green-200"
+                    }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Search, Date Range, Export */}
@@ -924,7 +996,7 @@ export default function ProductPage() {
                             >
                               <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white">รายละเอียดการชำระเงิน</h3>
                               <div className="text-sm space-y-1">
-                                <p><span className="font-semibold">สถานะ:</span> {data.payment_status === 'PAID' ? 'ชำระแล้ว' : 'รอชำระ'}</p>
+                                <p><span className="font-semibold">สถานะ:</span> {data.payment_status === PaymentStatus.COMPLETED ? 'ชำระแล้ว' : 'รอชำระ'}</p>
                                 <p><span className="font-semibold">ยอดรวม:</span> {data.payment_details.payment_amount} บาท</p>
                                 <p><span className="font-semibold">วิธีการชำระเงิน:</span> {data.payment_method}</p>
                                 <p><span className="font-semibold">วันที่ชำระ:</span> {

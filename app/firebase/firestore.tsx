@@ -24,7 +24,7 @@ import {
 
 import { db } from "@/app/firebase/clientApp";
 import { Warehouse, Contact, TransferTransaction, ProductCategoryCount, StoreInfoFirestore, StatusChangeEntry } from "@/app/firebase/interfaces";
-import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus, TransferStatus, ShippingStatus, PaymentStatus } from "@/app/firebase/enum";
+import { OrderStatus,OrderStatusFilter, TransactionType, STATUS_TRANSITIONS, ProductStatus, TransferStatus, ShippingStatus, PaymentStatus, PaymentStatusFilter, ShippingStatusFilter } from "@/app/firebase/enum";
 
 
 export async function getProducts() {
@@ -475,9 +475,30 @@ export const getTotalProductCount = async () => {
 }
 
 // Get the total count of products 
-export const getTotalSellTransactionCount = async () => {
+export const getTotalSellTransactionCount = async (
+  statusFilter?: OrderStatusFilter,
+  paymentStatusFilter?: PaymentStatusFilter,
+  shippingStatusFilter?: ShippingStatusFilter
+) => {
   const sellTranRef = collection(db, "transactions");
-  const q = query(sellTranRef, where("transaction_type", "==", TransactionType.SELL));
+  let conditions = [where("transaction_type", "==", TransactionType.SELL)];
+  
+  // Add order status filter
+  if (statusFilter && statusFilter !== OrderStatusFilter.ALL) {
+    conditions.push(where("status", "==", statusFilter));
+  }
+
+  // Add payment status filter
+  if (paymentStatusFilter && paymentStatusFilter !== PaymentStatusFilter.ALL) {
+    conditions.push(where("payment_status", "==", paymentStatusFilter));
+  }
+
+  // Add shipping status filter
+  if (shippingStatusFilter && shippingStatusFilter !== ShippingStatusFilter.ALL) {
+    conditions.push(where("shipping_status", "==", shippingStatusFilter));
+  }
+
+  const q = query(sellTranRef, ...conditions);
   const snapshot = await getCountFromServer(q);
   return snapshot.data().count;
 }
@@ -946,15 +967,30 @@ export async function getProductWarehouse() {
   }
 
   // New warehouse functions
-export async function getSellTransactionPaginated(lastDoc: any = null, pageSize: number = 10, statusFilter?: OrderStatusFilter) {
+export async function getSellTransactionPaginated(
+  lastDoc: any = null, 
+  pageSize: number = 10, 
+  statusFilter?: OrderStatusFilter,
+  paymentStatusFilter?: PaymentStatusFilter,
+  shippingStatusFilter?: ShippingStatusFilter
+) {
   try {
     let baseQuery = collection(db, "transactions");
     let conditions = [where("transaction_type", "==", TransactionType.SELL)];
     
-    if (statusFilter) {     
-        if (statusFilter === OrderStatusFilter.ALL)
-      {}
-      else {conditions.push(where("status", "==", statusFilter));}
+    // Add order status filter
+    if (statusFilter && statusFilter !== OrderStatusFilter.ALL) {
+      conditions.push(where("status", "==", statusFilter));
+    }
+
+    // Add payment status filter
+    if (paymentStatusFilter && paymentStatusFilter !== PaymentStatusFilter.ALL) {
+      conditions.push(where("payment_status", "==", paymentStatusFilter));
+    }
+
+    // Add shipping status filter
+    if (shippingStatusFilter && shippingStatusFilter !== ShippingStatusFilter.ALL) {
+      conditions.push(where("shipping_status", "==", shippingStatusFilter));
     }
 
     let q = query(
