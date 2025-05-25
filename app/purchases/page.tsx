@@ -328,75 +328,126 @@ export default function PurchasePage() {
         message={modalState.message}
       />
 
-      <div className="container mx-auto p-5">
+      <div className="container mx-auto p-3 sm:p-5 min-h-screen bg-gray-50 dark:bg-zinc-900">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
           <div>
-            <h1 className="text-2xl font-bold">รายการซื้อ</h1>
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">รายการซื้อ</h1>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
               จำนวน {totalAllData} รายการ
             </h2>
           </div>
           {hasPermission('purchases', 'create') && (
             <button
               onClick={togglePopup}
-              className="mt-2 sm:mt-0 text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition w-full sm:w-auto"
+              className="text-white py-3 px-4 sm:px-6 rounded-lg bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold tracking-wide text-sm sm:text-base whitespace-nowrap"
             >
               เพิ่มรายการซื้อ
             </button>
           )}
         </div>
 
-        {/* Search, Date Range, Export */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
-          <input
-            type="text"
-            placeholder="ค้นหาโดยชื่อผู้จำหน่าย"
-            className="border p-2 rounded-md w-full md:w-1/3"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSearch();
-              }
-            }}
-          />
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-            <div className="flex flex-col xs:flex-row items-center gap-2 w-full">
-              <div className="flex items-center gap-2 w-full">
-                <input
-                  type="date"
-                  value={dateRange.startDate.toISOString().split("T")[0]}
-                  onChange={(e) =>
-                    setDateRange((prev) => ({
-                      ...prev,
-                      startDate: new Date(e.target.value),
-                    }))
-                  }
-                  className="border rounded-md p-2 w-full"
-                />
-                <span className="hidden xs:inline">ถึง</span>
-                <span className="xs:hidden">-</span>
-                <input
-                  type="date"
-                  value={dateRange.endDate.toISOString().split("T")[0]}
-                  onChange={(e) =>
-                    setDateRange((prev) => ({
-                      ...prev,
-                      endDate: new Date(e.target.value),
-                    }))
-                  }
-                  className="border rounded-md p-2 w-full"
-                />
+        {/* Enhanced Search and Filter Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6 backdrop-blur-sm">
+          {/* Search Section */}
+          <div className="pb-6">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+              {/* Search Input */}
+              <div className="flex-1 max-w-lg">
+                <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  <div className="p-1.5 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg mr-2">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                  </div>
+                  ค้นหาข้อมูล
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="ค้นหาโดยชื่อผู้จำหน่าย..."
+                    className="block w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSearch();
+                      }
+                    }}
+                  />
+                </div>
               </div>
-              <button
-                onClick={handleExportToExcel}
-                disabled={loading}
-                className="text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition disabled:bg-gray-400 w-full xs:w-auto"
-              >
-                {loading ? "กำลังส่งออก..." : "ส่งออกรายการ"}
-              </button>
+
+              {/* Date Range and Export Section */}
+              <div className="flex flex-col sm:flex-row gap-6 lg:ml-8">
+                {/* Date Range */}
+                <div className="flex flex-col">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                    <div className="p-1.5 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg mr-2">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                    </div>
+                    ช่วงวันที่ส่งออก
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="date"
+                      value={dateRange.startDate.toISOString().split("T")[0]}
+                      onChange={(e) =>
+                        setDateRange((prev) => ({
+                          ...prev,
+                          startDate: new Date(e.target.value),
+                        }))
+                      }
+                      className="border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg"
+                    />
+                    <div className="flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full">
+                      <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                      </svg>
+                    </div>
+                    <input
+                      type="date"
+                      value={dateRange.endDate.toISOString().split("T")[0]}
+                      onChange={(e) =>
+                        setDateRange((prev) => ({
+                          ...prev,
+                          endDate: new Date(e.target.value),
+                        }))
+                      }
+                      className="border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* Export Button */}
+                <div className="flex flex-col justify-end">
+                  <button
+                    onClick={handleExportToExcel}
+                    disabled={loading}
+                    className={`inline-flex items-center px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm ${
+                      loading
+                        ? 'bg-gray-400/70 cursor-not-allowed transform-none backdrop-blur-sm'
+                        : 'bg-gradient-to-r from-emerald-500/80 to-teal-600/80 hover:from-emerald-600/90 hover:to-teal-700/90 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:ring-offset-2 border border-white/20 backdrop-blur-md'
+                    }`}
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    {loading ? "กำลังส่งออก..." : "ส่งออก Excel"}
+                    {loading && (
+                      <div className="ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -404,32 +455,33 @@ export default function PurchasePage() {
         {/* Data Table with Loading State */}
         {loading ? (
           <div className="flex justify-center items-center py-20 opacity-100 transition-opacity duration-500 animate-pulse">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-solid"></div>
-            <span className="ml-4 text-gray-500">Loading...</span>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-slate-600 dark:border-slate-400 border-solid"></div>
+            <span className="ml-4 text-slate-600 dark:text-slate-400">กำลังโหลด...</span>
           </div>
         ) : (
           <div className={`transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}>
-            {showPopup && <div className="mb-4"><AddPurchase trigger={trigger} setTrigger={setTrigger} /></div>}
+            {showPopup && <div className="mb-6"><AddPurchase trigger={trigger} setTrigger={setTrigger} /></div>}
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg overflow-hidden">
             <FlexTable
               datas={data}
               customHeader={
-                <tr className="text-left h-[9vh]">
-                  <th className="p-2 w-[5%] text-center">#</th>
-                  <th className="p-2 w-[15%]">วันที่</th>
-                  <th className="p-2 w-[20%]">รายการ</th>
-                  <th className="p-2 w-[25%]">ผู้จำหน่าย</th>
-                  <th className="p-2 flex-1">มูลค่า</th>
-                  <th className="p-2 flex-1">สถานะ</th>
-                  <th className="p-2 w-[5%]"> </th>
+                <tr className="text-left h-[9vh] bg-gray-50 dark:bg-zinc-700">
+                  <th className="p-3 w-[5%] text-center font-semibold text-gray-900 dark:text-gray-100">#</th>
+                  <th className="p-3 w-[15%] font-semibold text-gray-900 dark:text-gray-100">วันที่</th>
+                  <th className="p-3 w-[20%] font-semibold text-gray-900 dark:text-gray-100">รายการ</th>
+                  <th className="p-3 w-[25%] font-semibold text-gray-900 dark:text-gray-100">ผู้จำหน่าย</th>
+                  <th className="p-3 flex-1 font-semibold text-gray-900 dark:text-gray-100">มูลค่า</th>
+                  <th className="p-3 flex-1 font-semibold text-gray-900 dark:text-gray-100">สถานะ</th>
+                  <th className="p-3 w-[5%] font-semibold text-gray-900 dark:text-gray-100"> </th>
                 </tr>
               }
               customRow={(data, index) => (
                 <tr
                   key={data.id}
-                  className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="border-b border-gray-200 dark:border-zinc-700 transition-all duration-300 ease-in-out hover:bg-gray-50 dark:hover:bg-zinc-700"
                 >
-                  <td className="p-2 w-[5%] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
-                  <td className="p-2 w-[15%] whitespace-nowrap overflow-hidden text-ellipsis">
+                  <td className="p-3 w-[5%] text-center text-gray-700 dark:text-gray-300">{index + 1 + (currentPage - 1) * pageSize}</td>
+                  <td className="p-3 w-[15%] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 dark:text-gray-300">
                     {data.created_date ?
                       new Date(data.created_date.toDate()).toLocaleString('th-TH', {
                         year: 'numeric',
@@ -438,7 +490,7 @@ export default function PurchasePage() {
                       })
                       : "-"}
                   </td>
-                  <td className="p-2 w-[20%] whitespace-nowrap"
+                  <td className="p-3 w-[20%] whitespace-nowrap text-gray-700 dark:text-gray-300"
                     onMouseEnter={(e) => {
                       setHoveredRow(data.transaction_id);
                       setTooltipPosition({
@@ -503,12 +555,12 @@ export default function PurchasePage() {
                       )}
                     </div>
                   </td>
-                  <td className="p-2 w-[25%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
+                  <td className="p-3 w-[25%] text-gray-700 dark:text-gray-300 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
                   title={data.supplier_name}
-                  >{data.supplier_name}</td>
-                  <td className="p-2 flex-1">{data.total_amount}</td>
+                  ><span className="font-medium">{data.supplier_name}</span></td>
+                  <td className="p-3 flex-1 font-mono text-gray-900 dark:text-gray-100">฿{data.total_amount?.toLocaleString() || '0'}</td>
                   {/* <td className="p-2">{PurchaseStatusDisplay[data.status]}</td> */}
-                  <td className="p-2">
+                  <td className="p-3">
                     <div className="relative" style={{ width: "130px" }}>
                       <select
                         value={data.status}
@@ -542,7 +594,7 @@ export default function PurchasePage() {
                       </div>
                     </div>
                   </td>
-                  <td className="p-2 w-[5%] relative">
+                  <td className="p-3 w-[5%] relative">
                     <div className="relative inline-block">
                       <button
                         onClick={(e) => {
@@ -650,17 +702,18 @@ export default function PurchasePage() {
                 </tr>
               )}
             />
+            </div>
           </div>
         )}
 
         {/* Pagination */}
-        <div className="flex justify-between items-center mt-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-gray-700 dark:text-white">แถว/หน้า:</span>
+        <div className="flex flex-col sm:flex-row justify-between items-center mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 gap-4">
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">แถว/หน้า:</span>
             <select
               value={pageSize}
               onChange={handlePageSizeChange}
-              className="border rounded-md p-2"
+              className="border border-gray-200 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-slate-500 dark:focus:ring-slate-400 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
             >
               <option value="5">5</option>
               <option value="10">10</option>
@@ -669,28 +722,29 @@ export default function PurchasePage() {
             </select>
           </div>
 
-          {/* Pagination controls */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 1 || search.trim() !== ""}
-              className={`px-3 py-2 rounded-md transition ${currentPage === 1 || search.trim() !== ""
-                ? "bg-gray-300 dark:bg-zinc-700 cursor-not-allowed"
-                : "bg-gray-800 text-white hover:bg-gray-700"
+              className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center min-w-[40px] ${currentPage === 1 || search.trim() !== ""
+                ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                : "bg-slate-700 dark:bg-slate-600 text-white hover:bg-slate-800 dark:hover:bg-slate-700 shadow-md hover:shadow-lg transform hover:scale-105"
                 }`}
             >
-              <ChevronLeft size={16} className="inline-block" />
+              <ChevronLeft size={16} />
             </button>
-            <span className="py-2 text-gray-700 dark:text-white">{currentPage} / {totalPages}</span>
+            <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{currentPage} / {totalPages}</span>
+            </div>
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages || !lastDoc || search.trim() !== ""}
-              className={`px-3 py-2 rounded-md transition ${currentPage === totalPages || !lastDoc || search.trim() !== ""
-                ? "bg-gray-300 dark:bg-zinc-700 cursor-not-allowed"
-                : "bg-gray-800 text-white hover:bg-gray-700"
+              className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center min-w-[40px] ${currentPage === totalPages || !lastDoc || search.trim() !== ""
+                ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                : "bg-slate-700 dark:bg-slate-600 text-white hover:bg-slate-800 dark:hover:bg-slate-700 shadow-md hover:shadow-lg transform hover:scale-105"
                 }`}
             >
-              <ChevronRight size={16} className="inline-block" />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>

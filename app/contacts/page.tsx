@@ -241,90 +241,132 @@ export default function ContactsPage() {
       message={modalState.message || `คุณต้องการลบผู้ติดต่อ ${modalState.contactName} ใช่หรือไม่?`}
       onConfirm={() => handleDeleteContact(modalState.contactId)}
     />
-    <div className="container mx-auto p-5">
-      <div className="flex flex-col items-start mb-4">
-        <h1 className="text-2xl font-bold">ผู้ติดต่อ</h1>
-        <h2 className="text-1xl font-semibold text-gray-700 dark:text-gray-200">จำนวน {totalContacts} รายการ</h2>
-      </div>
-
-      {/* Contact Group Filter Buttons */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {contactGroups.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => handleGroupFilterChange(value)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              statusFilter === value
-                ? "bg-gray-900 text-white"
-                : "bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-            }`}
-          >
-            {label}
-            {statusFilter === value && totalData > 0 ? ` (${totalData})` : ""}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex justify-between items-center mb-4">
-        <input
-          type="text"
-          placeholder="ค้นหา"
-          className="border p-2 rounded-md w-1/3"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleSearch();
-            }
-          }}
-        />
+    <div className="container mx-auto p-3 sm:p-5 min-h-screen bg-gray-50 dark:bg-zinc-900">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">ผู้ติดต่อ</h1>
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+            จำนวน {totalContacts} รายการ
+          </h2>
+        </div>
         {hasPermission('customers', 'create') && (
-        <button
-          onClick={togglePopup}
-          className="relative text-white py-2 px-4 rounded-md bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 transition"
-        >
-          เพิ่มผู้ติดต่อ
-        </button>
+          <button
+            onClick={togglePopup}
+            className="text-white py-3 px-4 sm:px-6 rounded-lg bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold tracking-wide text-sm sm:text-base whitespace-nowrap"
+          >
+            เพิ่มผู้ติดต่อ
+          </button>
         )}
+      </div>
+
+      {/* Enhanced Search and Filter Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6 backdrop-blur-sm">
+        {/* Filter Section */}
+        <div className="mb-6">
+          <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+            <div className="p-1.5 bg-gradient-to-r from-slate-600 to-slate-700 rounded-lg mr-2">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
+              </svg>
+            </div>
+            กรองตามกลุ่ม
+          </label>
+          <div className="flex flex-wrap gap-3">
+            {contactGroups.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => handleGroupFilterChange(value)}
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 ${
+                  statusFilter === value
+                    ? "bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-lg"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105"
+                }`}
+              >
+                {label}
+                {statusFilter === value && totalData > 0 ? ` (${totalData})` : ""}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Search Section */}
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+            <div className="p-1.5 bg-gradient-to-r from-slate-600 to-slate-700 rounded-lg mr-2">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            ค้นหาข้อมูล
+          </label>
+          <div className="flex gap-3">
+            <div className="relative group flex-1 max-w-lg">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400 group-focus-within:text-slate-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="ค้นหาผู้ติดต่อ..."
+                className="block w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSearch();
+                  }
+                }}
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              className="px-6 py-3 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 whitespace-nowrap"
+            >
+              ค้นหา
+            </button>
+          </div>
+        </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center items-center py-20 opacity-100 transition-opacity duration-500 animate-pulse">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-solid"></div>
-          <span className="ml-4 text-gray-500">Loading...</span>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-slate-600 dark:border-slate-400 border-solid"></div>
+          <span className="ml-4 text-slate-600 dark:text-slate-400">กำลังโหลด...</span>
         </div>
       ) : (
         <div className={`transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}>
-          <FlexTable
-            datas={contacts}
-            customHeader={
-              <tr className="text-left h-[9vh]">
-                <th className="p-2 w-[50px] text-center">#</th>
-                <th className="p-2 w-[150px] whitespace-nowrap">รหัส</th>
-                <th className="p-2 w-[150px] whitespace-nowrap">ชื่อผู้ติดต่อ</th>
-                <th className="p-2 w-[150px] whitespace-nowrap">เบอร์โทรศัพท์</th>
-                <th className="p-2 w-[120px] whitespace-nowrap">อีเมล</th>
-                <th className="p-2 w-[180px] whitespace-nowrap">อัพเดทล่าสุด</th>
-                <th className="p-2 w-[100px] text-center"> </th>
-              </tr>
-            }
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg overflow-hidden">
+            <FlexTable
+              datas={contacts}
+              customHeader={
+                <tr className="text-left h-[9vh] bg-gray-50 dark:bg-zinc-700">
+                  <th className="p-4 w-[50px] text-center font-semibold text-gray-700 dark:text-gray-300">#</th>
+                  <th className="p-4 w-[150px] whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">รหัส</th>
+                  <th className="p-4 w-[150px] whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">ชื่อผู้ติดต่อ</th>
+                  <th className="p-4 w-[150px] whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">เบอร์โทรศัพท์</th>
+                  <th className="p-4 w-[120px] whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">อีเมล</th>
+                  <th className="p-4 w-[180px] whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">อัพเดทล่าสุด</th>
+                  <th className="p-4 w-[100px] text-center font-semibold text-gray-700 dark:text-gray-300"> </th>
+                </tr>
+              }
             customRow={(contact, index) => (
-              <tr key={contact.id} className="border-b transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
-                <td className="p-2 w-[50px] text-center">{index + 1 + (currentPage - 1) * pageSize}</td>
-                <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{contact.client_id}</td>
-                <td className="text-blue-500 p-2 w-[150px] whitespace-nowrap overflow-hidden  text-ellipsis max-w-[150px] hover:underline cursor-pointer"
-                title={contact.name}>
+              <tr key={contact.id} className="border-b border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm group">
+                <td className="p-4 w-[50px] text-center text-gray-700 dark:text-gray-300 font-medium">{index + 1 + (currentPage - 1) * pageSize}</td>
+                <td className="p-4 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-800 dark:text-gray-200 font-mono text-sm">{contact.client_id}</td>
+                <td className="p-4 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title={contact.name}>
                   <Link
                   href={`/contacts/${contact.client_id}`}
-                  className="text-blue-500 hover:underline"
+                  className="text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-300 hover:underline font-medium transition-colors duration-200"
                   >
                   {contact.name}
                   </Link>
                 </td>
-                <td className="p-2 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{contact.contact_info?.phone || "-"}</td>
-                <td className="p-2 w-[120px] whitespace-nowrap overflow-hidden text-ellipsis">{contact.contact_info?.email || "-"}</td>
-                <td className="p-2 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
+                <td className="p-4 w-[150px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 dark:text-gray-300">{contact.contact_info?.phone || "-"}</td>
+                <td className="p-4 w-[120px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 dark:text-gray-300">{contact.contact_info?.email || "-"}</td>
+                <td className="p-4 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-600 dark:text-gray-400 text-sm">
                   {contact.updated_date ? 
                     new Date(contact.updated_date.toDate()).toLocaleString('th-TH', {
                       year: 'numeric',
@@ -336,17 +378,17 @@ export default function ContactsPage() {
                     }) 
                     : "-"}
                 </td>
-                <td className="p-2 w-[5%]">
+                <td className="p-4 w-[5%]">
                   <div className="relative inline-block text-left">
                     <button
-                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenDropdownId(openDropdownId === contact.id ? null : contact.id);
                       }}
                     >
-                      <svg width="20" height="20" fill="currentColor" className="text-gray-600 dark:text-gray-300" viewBox="0 0 20 20">
+                      <svg width="20" height="20" fill="currentColor" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200" viewBox="0 0 20 20">
                         <circle cx="4" cy="10" r="2" />
                         <circle cx="10" cy="10" r="2" />
                         <circle cx="16" cy="10" r="2" />
@@ -355,7 +397,7 @@ export default function ContactsPage() {
                     {openDropdownId === contact.id && (
                       <div
                         id={`dropdown-${contact.id}`}
-                        className="fixed z-50 mt-2 w-32 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg"
+                        className="fixed z-50 mt-2 w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl backdrop-blur-sm ring-1 ring-black ring-opacity-5"
                         style={{
                           top: 'auto',
                           left: 'auto',
@@ -363,33 +405,41 @@ export default function ContactsPage() {
                         }}
                         onClick={e => e.stopPropagation()}
                       >
-                        <button
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                          disabled={!hasPermission('customers', 'edit')}
-                          onClick={() => {
-                            setEditContact(contact);
-                            setEditModalOpen(true);
-                            setOpenDropdownId(null);
-                          }}
-                        >
-                          แก้ไข
-                        </button>
-                        <button
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                          disabled={!hasPermission('customers', 'delete')}
-                          onClick={() => {
-                            setModalState({
-                              isOpen: true,
-                              title: ModalTitle.DELETE,
-                              message: '',
-                              contactId: contact.id,
-                              contactName: contact.name,
-                            });
-                            setOpenDropdownId(null);
-                          }}
-                        >
-                          ลบ
-                        </button>
+                        <div className="py-1">
+                          <button
+                            className="flex items-center w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!hasPermission('customers', 'edit')}
+                            onClick={() => {
+                              setEditContact(contact);
+                              setEditModalOpen(true);
+                              setOpenDropdownId(null);
+                            }}
+                          >
+                            <svg className="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            แก้ไข
+                          </button>
+                          <button
+                            className="flex items-center w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!hasPermission('customers', 'delete')}
+                            onClick={() => {
+                              setModalState({
+                                isOpen: true,
+                                title: ModalTitle.DELETE,
+                                message: '',
+                                contactId: contact.id,
+                                contactName: contact.name,
+                              });
+                              setOpenDropdownId(null);
+                            }}
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            ลบ
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -397,16 +447,18 @@ export default function ContactsPage() {
               </tr>
             )}
           />
+          </div>
         </div>
       )}
 
-      <div className="flex justify-between items-center mt-4">
-        <div className="flex items-center space-x-2">
-          <span className="text-gray-700 dark:text-white">แถว/หน้า:</span>
+      {/* Pagination */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 gap-4">
+        <div className="flex items-center space-x-3">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">แถว/หน้า:</span>
           <select
             value={pageSize}
             onChange={handlePageSizeChange}
-            className="border rounded-md p-2"
+            className="border border-gray-200 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-slate-500 dark:focus:ring-slate-400 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
           >
             <option value="5">5</option>
             <option value="10">10</option>
@@ -415,27 +467,31 @@ export default function ContactsPage() {
           </select>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <button
             onClick={handlePrevPage}
             disabled={currentPage === 1 || search.trim() !== ""}
-            className={`px-3 py-2 rounded-md transition ${currentPage === 1 || search.trim() !== ""
-              ? "bg-gray-300 cursor-not-allowed dark:bg-zinc-700"
-              : "bg-gray-800 text-white hover:bg-gray-700"
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${currentPage === 1 || search.trim() !== ""
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500"
+              : "bg-slate-700 text-white hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-700 shadow-sm hover:shadow-md"
               }`}
           >
-            <ChevronLeft size={16} className="inline-block" />
+            <ChevronLeft size={16} className="inline-block mr-1" />
+            ก่อนหน้า
           </button>
-          <span className="py-2 text-gray-700 dark:text-white">{currentPage} / {totalPages}</span>
+          <span className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            {currentPage} / {totalPages}
+          </span>
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages || !lastDoc || search.trim() !== ""}
-            className={`px-3 py-2 rounded-md transition ${currentPage === totalPages || !lastDoc || search.trim() !== ""
-              ? "bg-gray-300 cursor-not-allowed dark:bg-zinc-700"
-              : "bg-gray-800 text-white hover:bg-gray-700"
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${currentPage === totalPages || !lastDoc || search.trim() !== ""
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500"
+              : "bg-slate-700 text-white hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-700 shadow-sm hover:shadow-md"
               }`}
           >
-            <ChevronRight size={16} className="inline-block" />
+            ถัดไป
+            <ChevronRight size={16} className="inline-block ml-1" />
           </button>
         </div>
       </div>
