@@ -941,9 +941,9 @@ export default function salesPage() {
                     onMouseLeave={() => setHoveredRow(null)}
                   >
                     <div className="cursor-pointer hover:underline ">
-                      <span className="font-mono">
+                      <NavigationLink href={`/sales/details/${data.transaction_id}`} className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:underline cursor-pointer font-mono">
                         {data.transaction_id}
-                      </span>
+                      </NavigationLink>
                       
                       {hoveredRow === data.transaction_id && (
                         <div
@@ -1379,6 +1379,11 @@ export default function salesPage() {
                         className="fixed hidden z-50 w-56 bg-white shadow-lg rounded-md border border-gray-200 dark:bg-zinc-800 max-h-[80vh] overflow-y-auto"
                         >
                         <div className="py-1">
+                          {hasPermission('sales', 'view') && (
+                            <Link href={`/sales/details/${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                              ดูรายละเอียด
+                            </Link>
+                          )}
                           {hasPermission('sales', 'create') && (
                             <>
                           <Link href={`/sales/create?ref=${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" target="_blank" rel="noopener noreferrer">

@@ -59,6 +59,7 @@ export interface SellTransaction {
   created_date: Timestamp;
   updated_date: Timestamp;
   status_history: StatusChangeEntry[];
+  edit_history: OrderHistoryEntry[];
 }
 
 export interface PurchaseTransaction {
