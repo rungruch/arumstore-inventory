@@ -3,7 +3,7 @@ import { updatePaymentDetails } from "@/app/firebase/firestore";
 import { getFile, uploadFile } from "@/app/firebase/storage";
 import { Timestamp } from 'firebase/firestore';
 import { ModalTitle } from '@/components/enum'
-import { PaymentStatus } from '@/app/firebase/enum';
+import { PaymentStatus, PaymentStatusDisplay } from '@/app/firebase/enum';
 import { useAuth } from '@/app/contexts/AuthContext';
 
 interface ShippingDetailsFormProps {
@@ -43,8 +43,9 @@ export default function PaymentDetailsForm({
         currentPaymentDetails ? formatDateForInput(currentPaymentDetails.payment_date) : ''
     );
     const [paymentAmount, setPaymentAmount] = useState(
-        currentPaymentDetails ? currentPaymentDetails.payment_amount : shouldPayAmount
+        currentPaymentDetails?.payment_amount ?? shouldPayAmount
     );
+    const [newPaymentStatus, setNewPaymentStatus] = useState(currentPaymentStatus);
 
 
     const [isLoading, setIsLoading] = useState(false);
@@ -111,8 +112,23 @@ export default function PaymentDetailsForm({
                 return;
             }
 
+            // Validate refund amount doesn't exceed original payment
+            if ((newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED) && 
+                paymentAmount > shouldPayAmount) {
+                setError('จำนวนเงินที่คืนไม่สามารถเกินจำนวนเงินที่ชำระได้');
+                setIsLoading(false);
+                return;
+            }
+
+            // Auto-set PENDING payments to COMPLETED and PENDING_REFUND to REFUNDED when updating payment details
+            const finalPaymentStatus = currentPaymentStatus === PaymentStatus.PENDING 
+                ? PaymentStatus.COMPLETED 
+                : currentPaymentStatus === PaymentStatus.PENDING_REFUND
+                ? PaymentStatus.REFUNDED
+                : newPaymentStatus as PaymentStatus;
+
             await updatePaymentDetails(transactionId,
-                currentPaymentStatus !== PaymentStatus.COMPLETED ? PaymentStatus.COMPLETED : currentPaymentStatus,
+                finalPaymentStatus,
                 paymentMethod,
                 {
                     payment_date: new Date(paymentDate),
@@ -204,7 +220,31 @@ export default function PaymentDetailsForm({
     return (
         <div className="fixed inset-0 flex justify-center items-center z-50 bg-[#00000066] dark:bg-[#00000099]">
             <div ref={modalRef} className="bg-white p-6 rounded-lg w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto dark:bg-zinc-800">
-                <h2 className="text-xl font-bold mb-4 top-0">แก้ไขข้อมูลการชำระเงิน</h2>
+                <h2 className="text-xl font-bold mb-4 top-0 flex items-center gap-2">
+                    {newPaymentStatus === PaymentStatus.PENDING_REFUND && (
+                        <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                    )}
+                    {newPaymentStatus === PaymentStatus.REFUNDED && (
+                        <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+                        </svg>
+                    )}
+                    {newPaymentStatus === PaymentStatus.COMPLETED && (
+                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    )}
+                    {newPaymentStatus === PaymentStatus.PENDING && (
+                        <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    )}
+                    {newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED 
+                        ? 'จัดการการคืนเงิน' 
+                        : 'แก้ไขข้อมูลการชำระเงิน'}
+                </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (
@@ -226,20 +266,64 @@ export default function PaymentDetailsForm({
 
 
                     <div>
-                        <label htmlFor="current_payment_status" className="block mb-2">สถานะ</label>
+                        <label htmlFor="current_payment_status" className="block mb-2">สถานะการชำระเงิน</label>
                         <select
                             id="current_payment_status"
-                            value={currentPaymentStatus}
-                            className="w-full p-2 border rounded bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-zinc-600"
+                            value={newPaymentStatus}
+                            className="w-full p-2 border rounded bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-zinc-600 dark:text-gray-400"
                             disabled
                         >
-                            <option value={PaymentStatus.COMPLETED}>ชำระแล้ว</option>
-                            <option value={PaymentStatus.PENDING}>รอชำระ</option>
+                            <option value={newPaymentStatus}>
+                                {PaymentStatusDisplay[newPaymentStatus as keyof typeof PaymentStatusDisplay] || newPaymentStatus}
+                            </option>
                         </select>
+                        <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            {currentPaymentStatus === PaymentStatus.PENDING ? (
+                                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                    <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                                            การชำระเงินจะถูกตั้งค่าเป็น "ชำระเงินแล้ว" อัตโนมัติ
+                                        </p>
+                                        <p className="text-xs text-green-700 dark:text-green-300">
+                                            เนื่องจากเป็นการอัปเดตข้อมูลการชำระเงินสำหรับคำสั่งซื้อที่รอการชำระเงิน
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : currentPaymentStatus === PaymentStatus.PENDING_REFUND ? (
+                                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                                            การคืนเงินจะถูกตั้งค่าเป็น "คืนเงินแล้ว" อัตโนมัติ
+                                        </p>
+                                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                                            เนื่องจากเป็นการอัปเดตข้อมูลการคืนเงินสำหรับคำสั่งซื้อที่รอการคืนเงิน
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    สถานะการชำระเงินจะอัปเดตอัตโนมัติตามสถานะคำสั่งซื้อ
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div>
-                        <label htmlFor="payment_method" className="block mb-2">ชำระด้วย<span className="text-red-500">*</span></label>
+                        <label htmlFor="payment_method" className="block mb-2">
+                            {newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED 
+                                ? 'วิธีการคืนเงิน' 
+                                : 'ชำระด้วย'}
+                            <span className="text-red-500">*</span>
+                        </label>
                         <select
                             id="payment_method"
                             value={paymentMethod}
@@ -257,7 +341,12 @@ export default function PaymentDetailsForm({
 
 
                     <div>
-                        <label htmlFor="payment_date" className="block mb-2">วันที่และเวลาชำระเงิน<span className="text-red-500">*</span></label>
+                        <label htmlFor="payment_date" className="block mb-2">
+                            {newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED 
+                                ? 'วันที่และเวลาคืนเงิน' 
+                                : 'วันที่และเวลาชำระเงิน'}
+                            <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="datetime-local"
                             id="payment_date"
@@ -269,22 +358,38 @@ export default function PaymentDetailsForm({
                     </div>
 
                     <div>
-                        <label htmlFor="payment_amount" className="block mb-2">จำนวนเงิน<span className="text-red-500">*</span></label>
+                        <label htmlFor="payment_amount" className="block mb-2">
+                            {newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED 
+                                ? 'จำนวนเงินที่คืน' 
+                                : 'จำนวนเงิน'}
+                            <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="number"
                             id="payment_amount"
                             value={paymentAmount}
                             onChange={(e) => setPaymentAmount(Number(e.target.value))}
                             required
-                            className="w-full p-2 border rounded dark:border-gray-300"
+                            className={`w-full p-2 border rounded dark:border-gray-300 ${
+                                newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED 
+                                    ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' 
+                                    : ''
+                            }`}
                         />
+                        {(newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED) && (
+                            <div className="mt-1 text-sm text-orange-600 dark:text-orange-400">
+                                จำนวนเงินที่จะดำเนินการคืนให้ลูกค้า
+                            </div>
+                        )}
                     </div>
 
                     {hasPermission('sales', 'create') && hasPermission('sales', 'edit') && (
                         <>
                             <div className="mt-8">
                                 <label className="block mb-3 font-semibold text-gray-800 dark:text-gray-200">
-                                    หลักฐานการชำระเงิน
+                                    {newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED 
+                                        ? 'หลักฐานการคืนเงิน' 
+                                        : 'หลักฐานการชำระเงิน'}
                                 </label>
 
                                 {/* Image Preview Section */}
@@ -430,8 +535,12 @@ export default function PaymentDetailsForm({
                                                 {isDragging 
                                                     ? 'วางไฟล์ที่นี่' 
                                                     : selectedFile || uploaded 
-                                                        ? 'เปลี่ยนรูปภาพ' 
-                                                        : 'อัปโหลดหลักฐานการชำระเงิน'
+                                                        ? (newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED 
+                                                            ? 'เปลี่ยนหลักฐานการคืนเงิน' 
+                                                            : 'เปลี่ยนรูปภาพ')
+                                                        : (newPaymentStatus === PaymentStatus.PENDING_REFUND || newPaymentStatus === PaymentStatus.REFUNDED 
+                                                            ? 'อัปโหลดหลักฐานการคืนเงิน' 
+                                                            : 'อัปโหลดหลักฐานการชำระเงิน')
                                                 }
                                             </p>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -517,7 +626,11 @@ export default function PaymentDetailsForm({
                                     }`}
                                     disabled={isLoading || imageUploading}
                                 >
-                                    {isLoading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                                    {isLoading ? 'กำลังบันทึก...' : 
+                                        newPaymentStatus === PaymentStatus.PENDING_REFUND ? 'ส่งคำขอคืนเงิน' :
+                                        newPaymentStatus === PaymentStatus.REFUNDED ? 'ยืนยันการคืนเงิน' :
+                                        newPaymentStatus === PaymentStatus.COMPLETED ? 'ยืนยันการชำระเงิน' :
+                                        'บันทึกข้อมูล'}
                                 </button>
                             </div>
                         </>

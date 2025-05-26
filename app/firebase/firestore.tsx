@@ -1089,6 +1089,26 @@ export async function updateOrderTransactionStatus(
           // Remove from pending stock when pending order is cancelled
           await handleCancelledOrderStockUpdatePending(transaction, transactionData.items);
         }
+
+        if(current_status === OrderStatus.APPROVED) {
+          // Restore stock when approved (pre-paid) order is cancelled
+          await handleCancelledOrderStockUpdateShipping(transaction, transactionData.items);
+          
+          // Auto-update payment status to PENDING_REFUND when cancelling approved orders
+          if (transactionData.payment_status === PaymentStatus.COMPLETED) {
+            updateObject.payment_status = PaymentStatus.PENDING_REFUND;
+            
+            // Add payment status change to history
+            const paymentStatusChangeEntry: StatusChangeEntry = {
+              timestamp: Timestamp.now(),
+              created_by: created_by,
+              status_type: 'payment',
+              old_status: PaymentStatus.COMPLETED,
+              new_status: PaymentStatus.PENDING_REFUND
+            };
+            updateObject.status_history = [...updatedStatusHistory, paymentStatusChangeEntry];
+          }
+        }
       }
 
       // Update transaction status

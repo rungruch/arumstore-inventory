@@ -15,7 +15,7 @@
 
 **กฎการเปลี่ยนสถานะ:**
 - `PENDING` → `APPROVED`, `SHIPPING`, `CANCELLED`
-- `APPROVED` → ไม่สามารถเปลี่ยนได้ (สถานะสุดท้าย)
+- `APPROVED` → `CANCELLED` (สามารถยกเลิกได้ในกรณีจำเป็น)
 - `SHIPPING` → `CANCELLED`
 - `CANCELLED` → ไม่สามารถเปลี่ยนได้ (สถานะสุดท้าย)
 

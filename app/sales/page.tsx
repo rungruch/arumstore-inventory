@@ -313,7 +313,7 @@ export default function salesPage() {
     });
   };
 
-  const openPaymentDetailsModal = (transactionId: string, shouldPayAmount: number, currentPaymentStatus: string, currentPaymentMethod: string,currentPaymentDetails: any) => {
+  const openPaymentDetailsModal = (transactionId: string, shouldPayAmount: number, currentPaymentStatus: string, currentPaymentMethod: string, currentPaymentDetails: any) => {
     setPaymentDetailsModal({
       isOpen: true,
       transactionId: transactionId,
@@ -399,7 +399,9 @@ export default function salesPage() {
   const paymentStatusButtons: Array<{ value: PaymentStatusFilter; label: string }> = [
     { value: PaymentStatusFilter.ALL, label: 'ทั้งหมด' },
     { value: PaymentStatusFilter.PENDING, label: PaymentStatusDisplay.NONE },
-    { value: PaymentStatusFilter.COMPLETED, label: PaymentStatusDisplay.PAID }
+    { value: PaymentStatusFilter.COMPLETED, label: PaymentStatusDisplay.PAID },
+    { value: PaymentStatusFilter.PENDING_REFUND, label: PaymentStatusDisplay.PENDING_REFUND },
+    { value: PaymentStatusFilter.REFUNDED, label: PaymentStatusDisplay.REFUNDED }
   ];
 
   const shippingStatusButtons: Array<{ value: ShippingStatusFilter; label: string }> = [
@@ -933,11 +935,11 @@ export default function salesPage() {
                   <th className="p-2 w-[10%] font-semibold text-gray-900 dark:text-gray-100">วันที่</th>
                   <th className="p-2 w-[10%] font-semibold text-gray-900 dark:text-gray-100">รายการ</th>
                   <th className="p-2 w-[25%] font-semibold text-gray-900 dark:text-gray-100">ลูกค้า</th>
-                  <th className="p-2 w-[10%] font-semibold text-gray-900 dark:text-gray-100">ชื่อแชท</th>
                   <th className="p-2 flex-1 font-semibold text-gray-900 dark:text-gray-100">มูลค่า</th>
                   <th className="p-2 flex-1 font-semibold text-gray-900 dark:text-gray-100">สถานะ</th>
                   <th className="p-2 flex-1 font-semibold text-gray-900 dark:text-gray-100">วันส่งสินค้า</th>
                   <th className="p-2 flex-1 font-semibold text-gray-900 dark:text-gray-100">ชำระเงิน</th>
+                  <th className="p-2 flex-1 font-semibold text-gray-900 dark:text-gray-100">สร้างโดย</th>
                   <th className="p-2 w-[5%] font-semibold text-gray-900 dark:text-gray-100"> </th>
                 </tr>
               }
@@ -1068,12 +1070,6 @@ export default function salesPage() {
                     <NavigationLink href={`/contacts/${data.client_id}`} className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:underline truncate cursor-pointer max-w-[200px] block overflow-hidden text-ellipsis whitespace-nowrap font-medium">
                       {data.client_name}
                     </NavigationLink>
-                  </td>
-                  <td 
-                    className="p-2 w-[10%] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] relative"
-                    title={data.client_chat_name}
-                  >
-                    {data.client_chat_name}
                   </td>
                   <td className="p-2 flex-1 font-mono">{data.total_amount.toLocaleString()}</td>
                     <td className="p-2">
@@ -1213,13 +1209,12 @@ export default function salesPage() {
                   }}
                   onMouseLeave={() => setHoveredPayment(null)}
                   >
-                    {data.payment_status === PaymentStatus.COMPLETED ? (
+                    {/* Render different UI based on payment status */}
+                    {data.payment_status === PaymentStatus.COMPLETED && (
                       <div
                         onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
                      >
-                        <div
-                          className="cursor-pointer hover:underline"
-                        >
+                        <div className="cursor-pointer hover:underline">
                           {new Date(data.payment_details.payment_date.toDate()).toLocaleString('th-TH', {
                             year: 'numeric',
                             month: 'short',
@@ -1241,7 +1236,7 @@ export default function salesPage() {
                             >
                               <h3 className="font-bold text-gray-800 border-b pb-1 mb-2 dark:text-white">รายละเอียดการชำระเงิน</h3>
                               <div className="text-sm space-y-1">
-                                <p><span className="font-semibold">สถานะ:</span> {data.payment_status === PaymentStatus.COMPLETED ? 'ชำระแล้ว' : 'รอชำระ'}</p>
+                                <p><span className="font-semibold">สถานะ:</span> {PaymentStatusDisplay[data.payment_status as keyof typeof PaymentStatusDisplay] || 'ไม่ระบุ'}</p>
                                 <p><span className="font-semibold">ยอดรวม:</span> {data.payment_details.payment_amount} บาท</p>
                                 <p><span className="font-semibold">วิธีการชำระเงิน:</span> {data.payment_method}</p>
                                 <p><span className="font-semibold">วันที่ชำระ:</span> {
@@ -1251,7 +1246,6 @@ export default function salesPage() {
                                     day: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit'
-
                                   })
                                 }</p>
                                 {data.payment_details.image && (
@@ -1265,30 +1259,80 @@ export default function salesPage() {
                             </div>
                           )}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-zinc-300">
+                        <div className="text-sm text-green-600 dark:text-green-400 font-medium">
                           {data.payment_method}
                         </div>
                       </div>
-                    ) : (
-                      hasPermission('sales', 'edit') && (
-                        <button
-                          onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
-                          className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex flex-col items-start gap-1 transition-colors duration-200"
-                        >
-                          <div className="flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                            รอชำระ
-                          </div>
-                          {data.payment_details && data.payment_details.image && (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-1 rounded">
-                              รอยืนยันหลักฐาน
-                            </span>
-                          )}
-                        </button>
-                      )
                     )}
+
+                    {data.payment_status === PaymentStatus.PENDING_REFUND && (
+                      <div
+                        onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                          </svg>
+                          <span className="text-orange-600 dark:text-orange-400 font-medium">รอคืนเงิน</span>
+                        </div>
+                        <div className="text-xs text-orange-500 dark:text-orange-400 mt-1">
+                          {data.payment_details?.payment_amount ? `฿${data.payment_details.payment_amount.toLocaleString()}` : ''}
+                        </div>
+                      </div>
+                    )}
+
+                    {data.payment_status === PaymentStatus.REFUNDED && (
+                      <div
+                        onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+                          </svg>
+                          <span className="text-blue-600 dark:text-blue-400 font-medium">คืนเงินแล้ว</span>
+                        </div>
+                        <div className="text-xs text-blue-500 dark:text-blue-400 mt-1">
+                          {data.payment_details ? new Date(data.payment_details.payment_date.toDate()).toLocaleDateString('th-TH') : ''}
+                        </div>
+                      </div>
+                    )}
+
+                    {data.payment_status === PaymentStatus.PENDING && hasPermission('sales', 'edit') && (
+                      <button
+                        onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, data.payment_status, data.payment_method, data.payment_details)}
+                        className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex flex-col items-start gap-1 transition-colors duration-200"
+                      >
+                        <div className="flex items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                          </svg>
+                          <span className="text-yellow-600 dark:text-yellow-400 font-medium">รอชำระ</span>
+                        </div>
+                        {data.payment_details && data.payment_details.image && (
+                          <span className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-1 rounded">
+                            รอยืนยันหลักฐาน
+                          </span>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Fallback for unknown payment status */}
+                    {!data.payment_status && hasPermission('sales', 'edit') && (
+                      <button
+                        onClick={() => openPaymentDetailsModal(data.transaction_id, data.total_amount, PaymentStatus.PENDING, data.payment_method, data.payment_details)}
+                        className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex items-center gap-1 transition-colors duration-200"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        <span className="text-gray-500 dark:text-gray-400">เพิ่มข้อมูลชำระ</span>
+                      </button>
+                    )}
+                  </td>
+                  <td className="p-2 whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 dark:text-gray-300">
+                    {data.created_by}
                   </td>
                   <td className="p-2 w-[5%] relative">
                     <div className="relative inline-block">

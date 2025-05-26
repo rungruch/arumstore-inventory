@@ -7,12 +7,16 @@ export enum OrderStatus {
 
   export enum PaymentStatus {
     PENDING = "NONE",
-    COMPLETED = "PAID"
+    COMPLETED = "PAID",
+    PENDING_REFUND = "PENDING_REFUND",
+    REFUNDED = "REFUNDED"
   }
 
   export enum PaymentStatusDisplay {
     NONE = "รอชำระ",
-    PAID = "ชำระแล้ว"
+    PAID = "ชำระแล้ว",
+    PENDING_REFUND = "รอคืนเงิน",
+    REFUNDED = "คืนเงินแล้ว"
   }
 
   export enum ShippingStatus {
@@ -71,7 +75,9 @@ export enum OrderStatus {
   export enum PaymentStatusFilter {
     ALL = "ALL",
     PENDING = "NONE",
-    COMPLETED = "PAID"
+    COMPLETED = "PAID",
+    PENDING_REFUND = "PENDING_REFUND",
+    REFUNDED = "REFUNDED"
   }
 
   export enum ShippingStatusFilter {
@@ -112,7 +118,7 @@ export enum OrderStatus {
       OrderStatus.SHIPPING, 
       OrderStatus.CANCELLED
     ],
-    [OrderStatus.APPROVED]: [], // Terminal success state
+    [OrderStatus.APPROVED]: [OrderStatus.CANCELLED], // Allow cancellation of approved orders
     [OrderStatus.SHIPPING]: [
       OrderStatus.CANCELLED
     ],
@@ -128,4 +134,19 @@ export enum OrderStatus {
     ],
     [PurchaseStatus.CANCELLED]: [],
     [PurchaseStatus.FAILED]: []
+  };
+
+  export const PAYMENT_STATUS_TRANSITIONS: { [key in PaymentStatus]: PaymentStatus[] } = {
+    [PaymentStatus.PENDING]: [
+      PaymentStatus.COMPLETED,
+      PaymentStatus.PENDING_REFUND
+    ],
+    [PaymentStatus.COMPLETED]: [
+      PaymentStatus.PENDING_REFUND
+    ],
+    [PaymentStatus.PENDING_REFUND]: [
+      PaymentStatus.REFUNDED,
+      PaymentStatus.COMPLETED // Allow returning to completed if refund is cancelled
+    ],
+    [PaymentStatus.REFUNDED]: [] // Terminal state
   };
