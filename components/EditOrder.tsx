@@ -176,12 +176,12 @@ export default function EditSellOrderForm({
       if (actualTransactionId) { // Use actualTransactionId instead of ref_transaction_id
         let transactionData:any = await getSellTransactionByTransactionId(actualTransactionId);
         
-        // Check if the transaction is in PENDING status
-        if (transactionData.status !== OrderStatus.PENDING) {
+        // Check if the transaction can be edited (allow PENDING, APPROVED, and SHIPPING)
+        if (transactionData.status === OrderStatus.CANCELLED) {
           setModalState({
             isOpen: true,
             title: ModalTitle.ERROR,
-            message: "สามารถแก้ไขได้เฉพาะรายการที่อยู่ในสถานะ 'รอดำเนินการ' เท่านั้น",
+            message: "ไม่สามารถแก้ไขรายการที่ถูกยกเลิกแล้ว",
           });
           router.push("/sales"); // Redirect back to sales page
           return;

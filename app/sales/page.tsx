@@ -1484,7 +1484,7 @@ export default function salesPage() {
                           </Link>
                           </>
                           )}
-                          {hasPermission('sales', 'edit') && data.status === OrderStatus.PENDING && (
+                          {hasPermission('sales', 'edit') && data.status !== OrderStatus.CANCELLED && (
                             <>
                           <Link href={`/sales/edit/${data.transaction_id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
                             แก้ไขรายการขาย

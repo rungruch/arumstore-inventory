@@ -13,7 +13,6 @@ export default function EditSalePage() {
     <ProtectedRoute module="sales" action="edit">
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">แก้ไขรายการขาย</h1>
-      <p className="mb-4 text-gray-600">สามารถแก้ไขได้เฉพาะรายการที่อยู่ในสถานะ "รอดำเนินการ" เท่านั้น</p>
       <Suspense fallback={<div>กำลังโหลด...</div>}>
         <EditOrder transactionId={transactionId} />
       </Suspense>

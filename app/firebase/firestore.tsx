@@ -2398,51 +2398,105 @@ export async function updateSellTransaction(transactionId: string, transactionDa
           }
         }
         
-        // STEP 2: Make all updates to products (WRITES AFTER)
+        // STEP 2: Handle stock adjustments based on current order status
+        const currentStatus = existingTransactionData.status;
         
-        // First, reverse the pending stock changes from the original transaction
-        if (existingTransactionData.items) {
-          for (const item of existingTransactionData.items) {
-            if (!productDocs.has(item.sku)) continue;
-            
-            const productDoc = productDocs.get(item.sku);
-            const updatedPendingStocks = { ...productDoc.data.pending_stock };
-            
-            // Subtract the original quantity
-            updatedPendingStocks[item.warehouse_id] = 
-              (updatedPendingStocks[item.warehouse_id] || 0) - item.quantity;
-            
-            // Ensure pending stock doesn't go negative
-            if (updatedPendingStocks[item.warehouse_id] < 0) {
-              updatedPendingStocks[item.warehouse_id] = 0;
+        if (currentStatus === OrderStatus.PENDING) {
+          // For PENDING orders, only adjust pending_stock
+          
+          // First, reverse the pending stock changes from the original transaction
+          if (existingTransactionData.items) {
+            for (const item of existingTransactionData.items) {
+              if (!productDocs.has(item.sku)) continue;
+              
+              const productDoc = productDocs.get(item.sku);
+              const updatedPendingStocks = { ...productDoc.data.pending_stock };
+              
+              // Subtract the original quantity
+              updatedPendingStocks[item.warehouse_id] = 
+                (updatedPendingStocks[item.warehouse_id] || 0) - item.quantity;
+              
+              // Ensure pending stock doesn't go negative
+              if (updatedPendingStocks[item.warehouse_id] < 0) {
+                updatedPendingStocks[item.warehouse_id] = 0;
+              }
+              
+              // Update the pending stock in our map
+              productDoc.pendingStockUpdates = updatedPendingStocks;
             }
+          }
+          
+          // Now process the new items and add their pending stock
+          for (const item of transactionData.items) {
+            const productDoc = productDocs.get(item.sku);
             
-            // Update the pending stock in our map (we'll write all changes at once later)
+            // Start with either the previously modified pending stocks or the original ones
+            const updatedPendingStocks = productDoc.pendingStockUpdates || { ...productDoc.data.pending_stock };
+            
+            // Add the new quantity
+            updatedPendingStocks[item.warehouse_id] = 
+              (updatedPendingStocks[item.warehouse_id] || 0) + item.quantity;
+              
+            // Store the updated pending stocks
             productDoc.pendingStockUpdates = updatedPendingStocks;
           }
-        }
-        
-        // Now process the new items and add their pending stock
-        for (const item of transactionData.items) {
-          const productDoc = productDocs.get(item.sku);
           
-          // Start with either the previously modified pending stocks or the original ones
-          const updatedPendingStocks = productDoc.pendingStockUpdates || { ...productDoc.data.pending_stock };
+          // Apply pending stock updates for PENDING orders
+          for (const [sku, productDoc] of productDocs.entries()) {
+            if (productDoc.pendingStockUpdates) {
+              transaction.update(productDoc.ref, {
+                pending_stock: productDoc.pendingStockUpdates
+              });
+            }
+          }
           
-          // Add the new quantity
-          updatedPendingStocks[item.warehouse_id] = 
-            (updatedPendingStocks[item.warehouse_id] || 0) + item.quantity;
+        } else if (currentStatus === OrderStatus.APPROVED || currentStatus === OrderStatus.SHIPPING) {
+          // For APPROVED/SHIPPING orders, only adjust actual stocks (no pending_stock changes needed)
+          
+          // First, restore actual stock from the original transaction
+          if (existingTransactionData.items) {
+            for (const item of existingTransactionData.items) {
+              if (!productDocs.has(item.sku)) continue;
+              
+              const productDoc = productDocs.get(item.sku);
+              const updatedStocks = { ...productDoc.data.stocks };
+              
+              // Restore actual stock (reverse the deduction)
+              updatedStocks[item.warehouse_id] = 
+                (updatedStocks[item.warehouse_id] || 0) + item.quantity;
+              
+              // Store the updated stocks in our map
+              productDoc.stockUpdates = updatedStocks;
+            }
+          }
+          
+          // Now process the new items and deduct their stock
+          for (const item of transactionData.items) {
+            const productDoc = productDocs.get(item.sku);
             
-          // Store the updated pending stocks
-          productDoc.pendingStockUpdates = updatedPendingStocks;
-        }
-        
-        // Now apply all product updates
-        for (const [sku, productDoc] of productDocs.entries()) {
-          if (productDoc.pendingStockUpdates) {
-            transaction.update(productDoc.ref, {
-              pending_stock: productDoc.pendingStockUpdates
-            });
+            // Start with either the previously modified stocks or the original ones
+            const updatedStocks = productDoc.stockUpdates || { ...productDoc.data.stocks };
+            
+            // Check if we have enough stock
+            const currentStock = updatedStocks[item.warehouse_id] || 0;
+            if (currentStock < item.quantity) {
+              throw new Error(`สินค้าไม่เพียงพอสำหรับรายการ ${item.sku} (คลัง: ${item.warehouse_id}, ต้องการ: ${item.quantity}, มีอยู่: ${currentStock})`);
+            }
+            
+            // Deduct the new quantity from actual stock
+            updatedStocks[item.warehouse_id] = currentStock - item.quantity;
+              
+            // Store the updated stocks
+            productDoc.stockUpdates = updatedStocks;
+          }
+          
+          // Apply stock updates for APPROVED/SHIPPING orders (only actual stocks)
+          for (const [sku, productDoc] of productDocs.entries()) {
+            if (productDoc.stockUpdates) {
+              transaction.update(productDoc.ref, {
+                stocks: productDoc.stockUpdates
+              });
+            }
           }
         }
   
