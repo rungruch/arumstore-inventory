@@ -135,7 +135,7 @@ export default function PaymentDetailsForm({
                     payment_amount: paymentAmount,
                     image: uploaded || "",
                 },
-                currentUser?.email || 'Unknown User');
+               currentUser?.displayName  || currentUser?.email || 'Unknown User');
 
             onSubmitSuccess();
         } catch (err) {

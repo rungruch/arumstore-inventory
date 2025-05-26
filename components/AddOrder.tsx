@@ -122,7 +122,7 @@ export default function AddSellOrderForm({
   const { currentUser, hasPermission } = useAuth(); // Get the current user from AuthContext
   
   // Use user email for tracking who created and modified records
-  const userEmail = currentUser?.email || "UNKNOW"; // Fallback to "admin" if user is not available
+  const userName = currentUser?.displayName || currentUser?.email || "UNKNOW"; // Fallback to "admin" if user is not available
   const [orderState, setOrderState] = useState<OrderState>({
     transaction_id: "",
     transaction_type: TransactionType.SELL,
@@ -436,14 +436,14 @@ export default function AddSellOrderForm({
       payment_method: "",
       payment_status: PaymentStatus.PENDING,
       shipping_status: ShippingStatus.PENDING,
-      created_by: userEmail,
-      updated_by: userEmail,
+      created_by: userName,
+      updated_by: userName,
       created_date: Timestamp.now(),
       updated_date: Timestamp.now(),
       status_history: [
         {
           timestamp: Timestamp.now(),
-          created_by: userEmail,
+          created_by: userName,
           status_type: 'order',
           old_status: OrderStatus.PENDING,
           new_status: OrderStatus.PENDING

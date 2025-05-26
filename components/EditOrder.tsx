@@ -120,7 +120,7 @@ export default function EditSellOrderForm({
   const [shippingMethods, setShippingMethods] = useState<Array<{value: string, label: string}>>([]);
   const router = useRouter();
   const { currentUser, hasPermission } = useAuth();
-  const userEmail = currentUser?.email || "UNKNOW";
+  const userName = currentUser?.displayName || currentUser?.email || "UNKNOW";
   
   // Get the transaction ID from either prop
   const actualTransactionId = transactionId || ref_transaction_id;
@@ -442,7 +442,7 @@ export default function EditSellOrderForm({
       // Create a new edit history entry to record this change
       const newEditHistoryEntry: OrderHistoryEntry = {
         updated_at: Timestamp.now(),
-        created_by: userEmail,
+        created_by: userName,
         old_value: {
           items: originalTransactionData?.items,
           total_amount: originalTransactionData?.total_amount
@@ -504,11 +504,11 @@ export default function EditSellOrderForm({
         payment_method: originalTransactionData.payment_method || "",
         payment_status: originalTransactionData.payment_status || PaymentStatus.PENDING,
         shipping_status: originalTransactionData.shipping_status || ShippingStatus.PENDING,
-        created_by: originalTransactionData.created_by || userEmail,
+        created_by: originalTransactionData.created_by || userName,
         created_date: originalTransactionData.created_date || Timestamp.now(),
         
         // Fields that should be updated for this edit
-        updated_by: userEmail,
+        updated_by: userName,
         updated_date: Timestamp.now(),
         
         // Add the new edit history entry while preserving existing history

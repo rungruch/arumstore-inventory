@@ -19,7 +19,6 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { generateEncryptedTrackingUrl } from "@/lib/encryption-utils";
 
-
 interface ModalState {
   isOpen: boolean;
   title: string;
@@ -222,7 +221,7 @@ export default function salesPage() {
     try {
       setLoading(true);
 
-      await updateOrderTransactionStatus(transactionId, currentStatus, newStatus, currentUser?.email || 'UNKNOWN');
+      await updateOrderTransactionStatus(transactionId, currentStatus, newStatus, currentUser?.displayName || currentUser?.email || 'UNKNOWN');
 
       setModalState({
         isOpen: true,

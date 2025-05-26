@@ -102,7 +102,7 @@ export default function ShippingDetailsForm({
         recipient_name: recipientName,
         tracking_number: trackingNumber || "",
         image: uploaded || "",
-      }, currentUser?.email || 'Unknown User');
+      }, currentUser?.displayName || currentUser?.email || 'Unknown User');
 
       // Call success callback
       onSubmitSuccess();

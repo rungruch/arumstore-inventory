@@ -80,9 +80,9 @@ export function UserNav() {
             </NavigationLink>
           </DropdownMenuItem>
           <DropdownMenuItem className="hover:cursor-pointer" asChild>
-            <NavigationLink href="/profile" className="flex items-center">
+            <NavigationLink href="/sales" className="flex items-center">
               <User className="w-4 h-4 mr-3 text-muted-foreground" />
-              โปรไฟล์
+              รายการขาย
             </NavigationLink>
           </DropdownMenuItem>
         </DropdownMenuGroup>
