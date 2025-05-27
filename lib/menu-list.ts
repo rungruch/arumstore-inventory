@@ -200,7 +200,6 @@ export function getPermissionModulesAndActions() {
     'ตั้งค่า': 'settings',
     'Dashboard': 'dashboard',
     'การติดตามผู้ใช้': 'users',
-    'Activity Logs': 'activity_logs',
   };
   const groups = getMenuList('');
   const modules: { key: string; label: string; actions: string[] }[] = [];
