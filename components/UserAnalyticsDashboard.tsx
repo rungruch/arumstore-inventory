@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 import { db } from '@/app/firebase/clientApp';
+import { getCachedActivityAnalytics } from '@/app/firebase/firestoreActivityCache';
 import { 
   BarChart, 
   Bar, 
@@ -46,6 +47,122 @@ interface Props {
     return null;
   };
 
+  // Memoized expensive calculations
+  const calculateMetrics = (logs: any[]): ActivityMetrics => {
+    // Calculate metrics
+    const totalActivities = logs.length;
+    const uniqueUsers = new Set(logs.map(log => log.userId)).size;
+
+    // Activity by type
+    const typeMap = new Map();
+    logs.forEach(log => {
+      const type = log.activityType;
+      typeMap.set(type, (typeMap.get(type) || 0) + 1);
+    });
+
+    const colors = [
+      '#8884d8', '#82ca9d', '#ffc658', '#ff7300', 
+      '#00ff88', '#ff0088', '#8800ff', '#ff8800'
+    ];
+
+    const activityByType = Array.from(typeMap.entries()).map(([name, value], index) => ({
+      name: getActivityTypeDisplay(name),
+      value: value as number,
+      color: colors[index % colors.length]
+    }));
+
+    // Activity by hour
+    const hourMap = new Map();
+    for (let i = 0; i < 24; i++) {
+      hourMap.set(i, 0);
+    }
+    
+    logs.forEach(log => {
+      const hour = log.timestamp.getHours();
+      hourMap.set(hour, hourMap.get(hour) + 1);
+    });
+
+    const activityByHour = Array.from(hourMap.entries()).map(([hour, activities]) => ({
+      hour: `${hour.toString().padStart(2, '0')}:00`,
+      activities: activities as number
+    }));
+
+    // Find peak hour
+    const peakHourEntry = Array.from(hourMap.entries()).reduce((max, current) => 
+      current[1] > max[1] ? current : max
+    );
+    const peakHour = `${peakHourEntry[0].toString().padStart(2, '0')}:00`;
+
+    // Calculate average session duration (simplified - time between first and last activity per user per day)
+    const userSessions = new Map();
+    logs.forEach(log => {
+      const dayKey = `${log.userId}-${log.timestamp.toDateString()}`;
+      if (!userSessions.has(dayKey)) {
+        userSessions.set(dayKey, {
+          start: log.timestamp,
+          end: log.timestamp
+        });
+      } else {
+        const session = userSessions.get(dayKey);
+        if (log.timestamp < session.start) session.start = log.timestamp;
+        if (log.timestamp > session.end) session.end = log.timestamp;
+      }
+    });
+
+    let totalDuration = 0;
+    let sessionCount = 0;
+    userSessions.forEach(session => {
+      const duration = session.end.getTime() - session.start.getTime();
+      if (duration > 0) {
+        totalDuration += duration;
+        sessionCount++;
+      }
+    });
+
+    const avgSessionDuration = sessionCount > 0 ? Math.round(totalDuration / sessionCount / 1000 / 60) : 0; // in minutes
+
+    // User growth (simplified - daily unique users)
+    const dayMap = new Map();
+    logs.forEach(log => {
+      const dayKey = log.timestamp.toDateString();
+      if (!dayMap.has(dayKey)) {
+        dayMap.set(dayKey, new Set());
+      }
+      dayMap.get(dayKey).add(log.userId);
+    });
+
+    const userGrowth = Array.from(dayMap.entries())
+      .map(([date, userSet]) => ({
+        date: new Date(date).toLocaleDateString('th-TH', { month: 'short', day: 'numeric' }),
+        users: userSet.size
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(-7); // Last 7 days
+
+    return {
+      totalActivities,
+      uniqueUsers,
+      avgSessionDuration,
+      peakHour,
+      activityByType,
+      activityByHour,
+      userGrowth
+    };
+  };
+
+  const getActivityTypeDisplay = (type: string) => {
+    const types: Record<string, string> = {
+      'login_success': 'เข้าสู่ระบบ',
+      'logout': 'ออกจากระบบ',
+      'page_mount': 'เข้าชมหน้า',
+      'click_interaction': 'คลิกอิลิเมนต์',
+      'keyboard_interaction': 'พิมพ์ข้อมูล',
+      'visibility_change': 'เปลี่ยนสถานะหน้าต่าง',
+      'auth_state_change': 'เปลี่ยนสถานะการเข้าสู่ระบบ'
+    };
+    return types[type] || type;
+  };
+
 export default function UserAnalyticsDashboard({ dateRange, refreshTrigger }: Props) {
   const [metrics, setMetrics] = useState<ActivityMetrics>({
     totalActivities: 0,
@@ -57,142 +174,37 @@ export default function UserAnalyticsDashboard({ dateRange, refreshTrigger }: Pr
     userGrowth: []
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreData, setHasMoreData] = useState(true);
+  const [cacheStatus, setCacheStatus] = useState<boolean | null>(null);
+  const PAGE_SIZE = 5000; // Reduced page size for better performance
 
   useEffect(() => {
-    fetchAnalytics();
+    setCurrentPage(1); // Reset page when date range changes
+    fetchAnalytics(true); // Reset data on date range change
   }, [dateRange, refreshTrigger]);
 
-  const fetchAnalytics = async () => {
-    
+  const fetchAnalytics = async (resetData: boolean = false) => {
     try {
       setIsLoading(true);
       
-      // Fetch all activity logs for the date range
+      // Use cached analytics for better performance
       const startDate = new Date(dateRange.start);
       const endDate = new Date(dateRange.end);
       endDate.setHours(23, 59, 59, 999);
 
-      // Dynamic limit based on date range for performance optimization
-      const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      const dynamicLimit = Math.min(50000, Math.max(5000, daysDiff * 1000)); // 1000 logs per day, min 5k, max 50k
-      
-      const activityQuery = query(
-        collection(db, 'activity_logs'),
-        orderBy('timestamp', 'desc'),
-        limit(dynamicLimit) // Dynamic limit based on date range
-      );
-      
-      const snapshot = await getDocs(activityQuery);
-      const allLogs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate?.() || new Date()
-      })) as any[];
-
-      // Filter by date range
-      const logs = allLogs.filter(log => 
-        log.timestamp >= startDate && log.timestamp <= endDate
+      // Get cached analytics data with 15-minute cache duration
+      const { metrics: cachedMetrics, cacheHit } = await getCachedActivityAnalytics(
+        startDate,
+        endDate
       );
 
-      // Calculate metrics
-      const totalActivities = logs.length;
-      const uniqueUsers = new Set(logs.map(log => log.userId)).size;
-
-      // Activity by type
-      const typeMap = new Map();
-      logs.forEach(log => {
-        const type = log.activityType;
-        typeMap.set(type, (typeMap.get(type) || 0) + 1);
-      });
-
-      const colors = [
-        '#8884d8', '#82ca9d', '#ffc658', '#ff7300', 
-        '#00ff88', '#ff0088', '#8800ff', '#ff8800'
-      ];
-
-      const activityByType = Array.from(typeMap.entries()).map(([name, value], index) => ({
-        name: getActivityTypeDisplay(name),
-        value: value as number,
-        color: colors[index % colors.length]
-      }));
-
-      // Activity by hour
-      const hourMap = new Map();
-      for (let i = 0; i < 24; i++) {
-        hourMap.set(i, 0);
-      }
+      console.log(`📊 Analytics ${cacheHit ? 'cache HIT' : 'cache MISS'} for ${dateRange.start} to ${dateRange.end}`);
       
-      logs.forEach(log => {
-        const hour = log.timestamp.getHours();
-        hourMap.set(hour, hourMap.get(hour) + 1);
-      });
-
-      const activityByHour = Array.from(hourMap.entries()).map(([hour, activities]) => ({
-        hour: `${hour.toString().padStart(2, '0')}:00`,
-        activities: activities as number
-      }));
-
-      // Find peak hour
-      const peakHourEntry = Array.from(hourMap.entries()).reduce((max, current) => 
-        current[1] > max[1] ? current : max
-      );
-      const peakHour = `${peakHourEntry[0].toString().padStart(2, '0')}:00`;
-
-      // Calculate average session duration (simplified - time between first and last activity per user per day)
-      const userSessions = new Map();
-      logs.forEach(log => {
-        const dayKey = `${log.userId}-${log.timestamp.toDateString()}`;
-        if (!userSessions.has(dayKey)) {
-          userSessions.set(dayKey, {
-            start: log.timestamp,
-            end: log.timestamp
-          });
-        } else {
-          const session = userSessions.get(dayKey);
-          if (log.timestamp < session.start) session.start = log.timestamp;
-          if (log.timestamp > session.end) session.end = log.timestamp;
-        }
-      });
-
-      let totalDuration = 0;
-      let sessionCount = 0;
-      userSessions.forEach(session => {
-        const duration = session.end.getTime() - session.start.getTime();
-        if (duration > 0) {
-          totalDuration += duration;
-          sessionCount++;
-        }
-      });
-
-      const avgSessionDuration = sessionCount > 0 ? Math.round(totalDuration / sessionCount / 1000 / 60) : 0; // in minutes
-
-      // User growth (simplified - daily unique users)
-      const dayMap = new Map();
-      logs.forEach(log => {
-        const dayKey = log.timestamp.toDateString();
-        if (!dayMap.has(dayKey)) {
-          dayMap.set(dayKey, new Set());
-        }
-        dayMap.get(dayKey).add(log.userId);
-      });
-
-      const userGrowth = Array.from(dayMap.entries())
-        .map(([date, userSet]) => ({
-          date: new Date(date).toLocaleDateString('th-TH', { month: 'short', day: 'numeric' }),
-          users: userSet.size
-        }))
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .slice(-7); // Last 7 days
-
-      setMetrics({
-        totalActivities,
-        uniqueUsers,
-        avgSessionDuration,
-        peakHour,
-        activityByType,
-        activityByHour,
-        userGrowth
-      });
+      // Set metrics directly from cached analytics
+      setMetrics(cachedMetrics);
+      setCacheStatus(cacheHit);
+      setHasMoreData(false); // Analytics doesn't need pagination
 
     } catch (error) {
       console.error('📊 Analytics Error:', error);
@@ -211,19 +223,6 @@ export default function UserAnalyticsDashboard({ dateRange, refreshTrigger }: Pr
     }
   };
 
-  const getActivityTypeDisplay = (type: string) => {
-    const types: Record<string, string> = {
-      'login_success': 'เข้าสู่ระบบ',
-      'logout': 'ออกจากระบบ',
-      'page_mount': 'เข้าชมหน้า',
-      'click_interaction': 'คลิกอิลิเมนต์',
-      'keyboard_interaction': 'พิมพ์ข้อมูล',
-      'visibility_change': 'เปลี่ยนสถานะหน้าต่าง',
-      'auth_state_change': 'เปลี่ยนสถานะการเข้าสู่ระบบ'
-    };
-    return types[type] || type;
-  };
-
   if (isLoading) {
     return (
       <div className="p-6 flex justify-center">
@@ -235,6 +234,22 @@ export default function UserAnalyticsDashboard({ dateRange, refreshTrigger }: Pr
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Cache Status Indicator */}
+      {cacheStatus !== null && (
+        <div className="lg:col-span-2 mb-4">
+          <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+            cacheStatus 
+              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+              : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+          }`}>
+            <div className={`w-2 h-2 rounded-full mr-2 ${
+              cacheStatus ? 'bg-green-500' : 'bg-blue-500'
+            }`}></div>
+            {cacheStatus ? '📊 ข้อมูลแคช (โหลดเร็ว)' : '📊 ข้อมูลใหม่ (อัปเดตล่าสุด)'}
+          </div>
+        </div>
+      )}
+      
       {/* Summary Cards */}
       <div className="lg:col-span-2">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -330,6 +345,22 @@ export default function UserAnalyticsDashboard({ dateRange, refreshTrigger }: Pr
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Load More Button */}
+      {hasMoreData && (
+        <div className="lg:col-span-2 text-center">
+          <button
+            onClick={() => fetchAnalytics(false)}
+            disabled={isLoading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'กำลังโหลด...' : 'โหลดข้อมูลเพิ่มเติม'}
+          </button>
+          <p className="text-sm text-gray-500 mt-2">
+            แสดงข้อมูล {metrics.totalActivities.toLocaleString()} รายการ
+          </p>
+        </div>
+      )}
     </div>
   );
 }

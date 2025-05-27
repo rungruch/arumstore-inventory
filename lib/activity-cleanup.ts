@@ -19,6 +19,7 @@ import { db } from '@/app/firebase/clientApp';
 
 const CLEANUP_BATCH_SIZE = 500; // Firestore batch limit
 const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000; // 90 days in milliseconds
+const TWO_MONTHS_MS = 60 * 24 * 60 * 60 * 1000; // 60 days in milliseconds
 
 /**
  * Remove activity logs older than 3 months
@@ -136,6 +137,132 @@ export async function cleanupOldActivityLogs(dryRun: boolean = false): Promise<{
   } catch (error) {
     const errorMsg = `Failed to cleanup activity logs: ${error instanceof Error ? error.message : 'Unknown error'}`;
     console.error(errorMsg);
+    stats.errors.push(errorMsg);
+  }
+
+  return stats;
+}
+
+/**
+ * Remove activity logs older than 2 months (for regular maintenance)
+ * @param dryRun - If true, only counts records without deleting them
+ * @returns Promise with cleanup statistics
+ */
+export async function cleanupOldActivityLogs2Months(dryRun: boolean = false): Promise<{
+  totalProcessed: number;
+  totalDeleted: number;
+  batchesProcessed: number;
+  oldestRecordDate: Date | null;
+  newestRecordDate: Date | null;
+  estimatedCostSavings: number;
+  errors: string[];
+}> {
+  const stats = {
+    totalProcessed: 0,
+    totalDeleted: 0,
+    batchesProcessed: 0,
+    oldestRecordDate: null as Date | null,
+    newestRecordDate: null as Date | null,
+    estimatedCostSavings: 0,
+    errors: [] as string[]
+  };
+
+  try {
+    // Calculate cutoff date (2 months ago)
+    const cutoffDate = new Date(Date.now() - TWO_MONTHS_MS);
+    const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
+
+    console.log(`🧹 Starting 2-month activity cleanup. Removing records older than: ${cutoffDate.toISOString()}`);
+
+    let hasMore = true;
+    
+    while (hasMore) {
+      try {
+        // Query old records in batches
+        const oldLogsQuery = query(
+          collection(db, 'activity_logs'),
+          where('timestamp', '<', cutoffTimestamp),
+          orderBy('timestamp', 'asc'),
+          limit(CLEANUP_BATCH_SIZE)
+        );
+
+        const snapshot = await getDocs(oldLogsQuery);
+        const docs = snapshot.docs;
+        
+        if (docs.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        stats.totalProcessed += docs.length;
+
+        // Track date ranges
+        const timestamps = docs
+          .map(doc => doc.data().timestamp?.toDate?.())
+          .filter(date => date instanceof Date) as Date[];
+
+        if (timestamps.length > 0) {
+          const sortedDates = timestamps.sort((a, b) => a.getTime() - b.getTime());
+          if (!stats.oldestRecordDate || sortedDates[0] < stats.oldestRecordDate) {
+            stats.oldestRecordDate = sortedDates[0];
+          }
+          if (!stats.newestRecordDate || sortedDates[sortedDates.length - 1] > stats.newestRecordDate) {
+            stats.newestRecordDate = sortedDates[sortedDates.length - 1];
+          }
+        }
+
+        if (!dryRun) {
+          // Create batch for deletion
+          const batch = writeBatch(db);
+          
+          docs.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+
+          // Execute batch deletion
+          await batch.commit();
+          stats.totalDeleted += docs.length;
+          
+          console.log(`🗑️ Deleted batch of ${docs.length} old activity logs`);
+        } else {
+          console.log(`📊 Found batch of ${docs.length} old activity logs (dry run)`);
+        }
+
+        stats.batchesProcessed++;
+
+        // If we got fewer documents than the batch size, we're done
+        if (docs.length < CLEANUP_BATCH_SIZE) {
+          hasMore = false;
+        }
+
+        // Small delay to avoid overwhelming Firestore
+        if (hasMore) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+      } catch (batchError: any) {
+        const errorMsg = `Batch ${stats.batchesProcessed + 1} error: ${batchError.message}`;
+        console.error('🚨 Cleanup batch error:', batchError);
+        stats.errors.push(errorMsg);
+        
+        // Continue with next batch instead of failing completely
+        continue;
+      }
+    }
+
+    // Estimate cost savings (rough calculation)
+    stats.estimatedCostSavings = stats.totalDeleted * 0.002; // Rough estimate per document
+
+    console.log(`✅ 2-month cleanup completed:`, {
+      processed: stats.totalProcessed,
+      deleted: stats.totalDeleted,
+      batches: stats.batchesProcessed,
+      errors: stats.errors.length
+    });
+
+  } catch (error: any) {
+    const errorMsg = `Cleanup failed: ${error.message}`;
+    console.error('🚨 2-month cleanup error:', error);
     stats.errors.push(errorMsg);
   }
 
@@ -307,5 +434,54 @@ export async function runManualCleanup(options: {
     }
     
     console.log('\n' + '='.repeat(50));
+  }
+}
+
+/**
+ * Quick check to see how many records would be cleaned up (2 months)
+ * @returns Promise with count of old records
+ */
+export async function getOldActivityLogsCount2Months(): Promise<{
+  count: number;
+  oldestDate: Date | null;
+  error?: string;
+}> {
+  try {
+    const cutoffDate = new Date(Date.now() - TWO_MONTHS_MS);
+    const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
+
+    // Count old records (limit to avoid expensive queries)
+    const countQuery = query(
+      collection(db, 'activity_logs'),
+      where('timestamp', '<', cutoffTimestamp),
+      limit(1000) // Sample to get an estimate
+    );
+
+    const snapshot = await getDocs(countQuery);
+    const docs = snapshot.docs;
+
+    let oldestDate: Date | null = null;
+    if (docs.length > 0) {
+      const timestamps = docs
+        .map(doc => doc.data().timestamp?.toDate?.())
+        .filter(date => date instanceof Date) as Date[];
+      
+      if (timestamps.length > 0) {
+        oldestDate = timestamps.sort((a, b) => a.getTime() - b.getTime())[0];
+      }
+    }
+
+    return {
+      count: docs.length,
+      oldestDate,
+    };
+
+  } catch (error: any) {
+    console.error('Error counting old activity logs:', error);
+    return {
+      count: 0,
+      oldestDate: null,
+      error: error.message
+    };
   }
 }

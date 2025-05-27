@@ -25,11 +25,12 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
     permissionModules.forEach(mod => {
       perms[mod.key] = {};
       mod.actions.forEach(action => {
-      if (["view", "create", "edit"].includes(action) && mod.key !== "users" && mod.key !== "settings") {
-        perms[mod.key][action] = true;
-      } else {
-        perms[mod.key][action] = false;
-      }
+        // Default to staff permissions: view/create/edit, excluding users/settings
+        if (["view", "create", "edit"].includes(action) && mod.key !== "users" && mod.key !== "settings") {
+          perms[mod.key][action] = true;
+        } else {
+          perms[mod.key][action] = false;
+        }
       });
     });
     return perms;
@@ -56,23 +57,20 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
       const perms: any = {};
       permissionModules.forEach(mod => {
         perms[mod.key] = {};
-      mod.actions.forEach(action => {
-      if (["view", "create", "edit"].includes(action) && mod.key !== "users" && mod.key !== "settings") {
-        perms[mod.key][action] = true;
-      } else {
-        perms[mod.key][action] = false;
-      }
-      });
+        mod.actions.forEach(action => {
+          // Admin gets all permissions including users and settings
+          perms[mod.key][action] = true;
+        });
       });
       setPermissions(perms);
     }
-    // If role is manager, check all view/create/edit, uncheck delete
+    // If role is manager, check all view/create/edit/delete but exclude users and settings modules
     else if (name === "role" && value === "manager") {
       const perms: any = {};
       permissionModules.forEach(mod => {
         perms[mod.key] = {};
         mod.actions.forEach(action => {
-          if (["view", "create", "edit", "delete"].includes(action)) {
+          if (["view", "create", "edit", "delete"].includes(action) && mod.key !== "users" && mod.key !== "settings") {
             perms[mod.key][action] = true;
           } else {
             perms[mod.key][action] = false;
@@ -81,13 +79,13 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
       });
       setPermissions(perms);
     }
-    // If role is staff, check only view/create, uncheck edit/delete
+    // If role is staff, check view/create/edit, exclude delete and exclude users/settings modules
     else if (name === "role" && value === "staff") {
       const perms: any = {};
       permissionModules.forEach(mod => {
         perms[mod.key] = {};
         mod.actions.forEach(action => {
-          if (["view", "create"].includes(action)) {
+          if (["view", "create", "edit"].includes(action) && mod.key !== "users" && mod.key !== "settings") {
             perms[mod.key][action] = true;
           } else {
             perms[mod.key][action] = false;
@@ -96,8 +94,8 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
       });
       setPermissions(perms);
     }
-    // Optionally, reset permissions for other roles
-    else if (name === "role" && value !== "admin" && value !== "staff") {
+    // Reset permissions for any other/unknown roles
+    else if (name === "role" && value !== "admin" && value !== "manager" && value !== "staff") {
       const perms: any = {};
       permissionModules.forEach(mod => {
         perms[mod.key] = {};
@@ -162,10 +160,10 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
       case 'staff':
       default:
         return {
-          sales: { view: true, create: true, edit: false, delete: false },
-          products: { view: true, create: false, edit: false, delete: false },
-          customers: { view: true, create: true, edit: false, delete: false },
-          purchases: { view: false, create: false, edit: false, delete: false },
+          sales: { view: true, create: true, edit: true, delete: false },
+          products: { view: true, create: true, edit: true, delete: false },
+          customers: { view: true, create: true, edit: true, delete: false },
+          purchases: { view: true, create: true, edit: true, delete: false },
           finance: { view: false, create: false, edit: false, delete: false },
           users: { view: false, create: false, edit: false, delete: false }
         };
@@ -220,7 +218,12 @@ export default function AddUserPopup({ isOpen, onClose }: AddUserPopupProps) {
         permissionModules.forEach(mod => {
           perms[mod.key] = {};
           mod.actions.forEach(action => {
-            perms[mod.key][action] = false;
+            // Reset to default staff permissions: view/create/edit, excluding users/settings
+            if (["view", "create", "edit"].includes(action) && mod.key !== "users" && mod.key !== "settings") {
+              perms[mod.key][action] = true;
+            } else {
+              perms[mod.key][action] = false;
+            }
           });
         });
         return perms;

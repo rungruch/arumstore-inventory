@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
-import { db } from '@/app/firebase/clientApp';
 import { useAuth } from '@/app/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UserAnalyticsDashboard from '@/components/UserAnalyticsDashboard';
 import { getSalesSummaryWithBusinessLogic, RevisedUserSalesSummary } from '@/app/firebase/firestoreStatsRevised';
-import { User, Filter, Calendar, Activity, Clock, Monitor, BarChart3, ShoppingCart, DollarSign, Download } from 'lucide-react';
+import { getCachedActivityLogs } from '@/app/firebase/firestoreActivityCache';
+import { cleanupOldActivityLogs2Months, getOldActivityLogsCount2Months } from '@/lib/activity-cleanup';
+import { User, Filter, Calendar, Activity, Clock, Monitor, BarChart3, ShoppingCart, DollarSign, Download, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface ActivityLog {
@@ -51,12 +51,43 @@ const [dateRange, setDateRange] = useState({
   const [activityType, setActivityType] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreData, setHasMoreData] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 100; // Optimized page size
   const [currentView, setCurrentView] = useState<'analytics' | 'summary' | 'sales'>('sales');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [cacheStatus, setCacheStatus] = useState<boolean | null>(null);
+  const [cacheTimestamp, setCacheTimestamp] = useState<Date | null>(null);
+  const [performanceMetrics, setPerformanceMetrics] = useState<{
+    queryTime: number;
+    cacheHitRate: number;
+    totalQueries: number;
+  }>({ queryTime: 0, cacheHitRate: 0, totalQueries: 0 });
+
+  // Cleanup state variables
+  const [cleanupStatus, setCleanupStatus] = useState<{
+    isRunning: boolean;
+    hasRun: boolean;
+    oldRecordsCount: number;
+    lastCleanupResult: any;
+    error: string | null;
+  }>({
+    isRunning: false,
+    hasRun: false,
+    oldRecordsCount: 0,
+    lastCleanupResult: null,
+    error: null
+  });
 
   useEffect(() => {
-    fetchData();
-    setRefreshTrigger(prev => prev + 1);
+    // Debounce data fetching to avoid excessive API calls
+    const timeoutId = setTimeout(() => {
+      fetchData();
+      setRefreshTrigger(prev => prev + 1);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [currentUser?.uid, selectedUser, dateRange, activityType]);
 
   // Generate user summaries when switching to summary view
@@ -73,53 +104,187 @@ const [dateRange, setDateRange] = useState({
     }
   }, [currentView, selectedUser, dateRange]);
 
+  // Automatic cleanup on page load (runs once)
+  useEffect(() => {
+    if (currentUser?.uid && !cleanupStatus.hasRun) {
+      checkOldRecordsAndCleanup();
+    }
+  }, [currentUser?.uid]);
+
+  // Function to check old records count and perform automatic cleanup
+  const checkOldRecordsAndCleanup = async () => {
+    try {
+      setCleanupStatus(prev => ({ ...prev, isRunning: true, error: null }));
+
+      // First, check how many old records exist
+      const countResult = await getOldActivityLogsCount2Months();
+      
+      if (countResult.error) {
+        setCleanupStatus(prev => ({ 
+          ...prev, 
+          isRunning: false, 
+          error: `Count check failed: ${countResult.error}`,
+          hasRun: true 
+        }));
+        return;
+      }
+
+      setCleanupStatus(prev => ({ ...prev, oldRecordsCount: countResult.count }));
+
+      // If there are old records, clean them up automatically
+      if (countResult.count > 0) {
+        console.log(`🧹 Found ${countResult.count} old activity logs (>2 months). Starting automatic cleanup...`);
+        
+        const cleanupResult = await cleanupOldActivityLogs2Months(false); // false = live deletion
+        
+        setCleanupStatus(prev => ({
+          ...prev,
+          isRunning: false,
+          hasRun: true,
+          lastCleanupResult: cleanupResult,
+          error: cleanupResult.errors.length > 0 ? cleanupResult.errors.join(', ') : null
+        }));
+
+        console.log(`✅ Automatic cleanup completed:`, {
+          deleted: cleanupResult.totalDeleted,
+          errors: cleanupResult.errors.length
+        });
+
+        // Refresh data after cleanup to show updated results
+        if (cleanupResult.totalDeleted > 0) {
+          setRefreshTrigger(prev => prev + 1);
+        }
+      } else {
+        console.log('✅ No old activity logs found (>2 months). No cleanup needed.');
+        setCleanupStatus(prev => ({
+          ...prev,
+          isRunning: false,
+          hasRun: true,
+          lastCleanupResult: null,
+          error: null
+        }));
+      }
+
+    } catch (error: any) {
+      console.error('🚨 Automatic cleanup error:', error);
+      setCleanupStatus(prev => ({
+        ...prev,
+        isRunning: false,
+        hasRun: true,
+        error: `Cleanup failed: ${error.message}`
+      }));
+    }
+  };
+
+  // Manual cleanup function for the cleanup button
+  const runManualCleanup = async () => {
+    try {
+      setCleanupStatus(prev => ({ ...prev, isRunning: true, error: null }));
+
+      // Check count first
+      const countResult = await getOldActivityLogsCount2Months();
+      
+      if (countResult.error) {
+        setCleanupStatus(prev => ({ 
+          ...prev, 
+          isRunning: false, 
+          error: `Count check failed: ${countResult.error}` 
+        }));
+        return;
+      }
+
+      if (countResult.count === 0) {
+        setCleanupStatus(prev => ({
+          ...prev,
+          isRunning: false,
+          oldRecordsCount: 0,
+          error: null
+        }));
+        alert('ไม่พบข้อมูลกิจกรรมเก่าที่ต้องลบ (เก่ากว่า 2 เดือน)');
+        return;
+      }
+
+      // Confirm before cleanup
+      const confirmed = window.confirm(
+        `พบข้อมูลกิจกรรมเก่า ${countResult.count.toLocaleString()} รายการ (เก่ากว่า 2 เดือน)\n\nต้องการลบข้อมูลเหล่านี้เพื่อเพิ่มประสิทธิภาพระบบหรือไม่?`
+      );
+
+      if (!confirmed) {
+        setCleanupStatus(prev => ({ ...prev, isRunning: false }));
+        return;
+      }
+
+      // Perform cleanup
+      const cleanupResult = await cleanupOldActivityLogs2Months(false);
+      
+      setCleanupStatus(prev => ({
+        ...prev,
+        isRunning: false,
+        oldRecordsCount: 0, // Reset after cleanup
+        lastCleanupResult: cleanupResult,
+        error: cleanupResult.errors.length > 0 ? cleanupResult.errors.join(', ') : null
+      }));
+
+      // Show results
+      if (cleanupResult.totalDeleted > 0) {
+        alert(`✅ ลบข้อมูลกิจกรรมเก่าเรียบร้อยแล้ว!\n\nลบไปทั้งหมด: ${cleanupResult.totalDeleted.toLocaleString()} รายการ\nประมาณการประหยัดค่าใช้จ่าย: $${cleanupResult.estimatedCostSavings.toFixed(4)}`);
+        
+        // Refresh data after cleanup
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        alert('ไม่พบข้อมูลที่ต้องลบ');
+      }
+
+    } catch (error: any) {
+      console.error('🚨 Manual cleanup error:', error);
+      setCleanupStatus(prev => ({
+        ...prev,
+        isRunning: false,
+        error: `Cleanup failed: ${error.message}`
+      }));
+      alert(`เกิดข้อผิดพลาดในการลบข้อมูล: ${error.message}`);
+    }
+  };
+
   const fetchData = async () => {
     if (!currentUser?.uid) return;
+    
+    const startTime = Date.now(); // Track query time
     
     try {
       setIsLoading(true);
       setError(null);
 
-      // Build query constraints
-      const constraints: any[] = [];
-      
-      // Note: selectedUser now contains display name, but we need to filter by userId
-      // We'll filter on the client side after getting the data since we don't have userId mapping
-      
-      // Add activity type filter if selected
-      if (activityType) {
-        constraints.push(where('activityType', '==', activityType));
-      }
-
-      // Add ordering and limit
-      constraints.push(orderBy('timestamp', 'desc'));
-      constraints.push(limit(500));
-
-      // Create query for activity logs
-      const activityQuery = query(collection(db, 'activity_logs'), ...constraints);
-      const activitySnapshot = await getDocs(activityQuery);
-      
-      const logs = activitySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate?.() || new Date()
-      })) as ActivityLog[];
-
-      // Filter by date range (client-side for now)
+      // Build query parameters for caching
       const startDate = new Date(dateRange.start);
       const endDate = new Date(dateRange.end);
       endDate.setHours(23, 59, 59, 999); // Include the full end date
-      
-      let filteredLogs = logs.filter(log => 
-        log.timestamp >= startDate && log.timestamp <= endDate
+
+      // Use cached activity logs with server-side filtering
+      const { logs: cachedLogs, cacheHit, cacheTimestamp } = await getCachedActivityLogs(
+        startDate,
+        endDate,
+        PAGE_SIZE,
+        activityType || undefined
       );
 
+      // Convert cached logs to ActivityLog format
+      const logs = cachedLogs.map(log => ({
+        ...log,
+        timestamp: log.timestamp instanceof Date ? log.timestamp : (log.timestamp as any)?.toDate?.() || new Date()
+      })) as ActivityLog[];
+
+      // Check if there's more data
+      setHasMoreData(logs.length === PAGE_SIZE);
+      setTotalCount(logs.length);
+
       // Store all logs for user dropdown (before user filtering)
-      setAllActivityLogs(filteredLogs);
+      setAllActivityLogs(logs);
 
       // Filter by selected user display name if specified
+      let filteredLogs = logs;
       if (selectedUser) {
-        filteredLogs = filteredLogs.filter(log => {
+        filteredLogs = logs.filter(log => {
           // Use the same logic as getUniqueUsers to ensure consistency
           const logDisplayName = log.displayName || log.email || log.userId;
           return logDisplayName === selectedUser;
@@ -127,6 +292,20 @@ const [dateRange, setDateRange] = useState({
       }
 
       setActivityLogs(filteredLogs);
+      setCacheStatus(cacheHit); // Track cache status
+      setCacheTimestamp(cacheTimestamp || new Date()); // Use DB timestamp or current time for fresh data
+
+      console.log(`🔍 Activity logs ${cacheHit ? 'cache HIT' : 'cache MISS'} for ${dateRange.start} to ${dateRange.end}`);
+
+      // Update performance metrics
+      const queryTime = Date.now() - startTime;
+      setPerformanceMetrics(prev => ({
+        queryTime,
+        cacheHitRate: prev.totalQueries > 0 
+          ? ((prev.cacheHitRate * prev.totalQueries + (cacheHit ? 1 : 0)) / (prev.totalQueries + 1)) * 100
+          : cacheHit ? 100 : 0,
+        totalQueries: prev.totalQueries + 1
+      }));
 
       // Generate user summaries
       if (currentView === 'summary') {
@@ -282,6 +461,62 @@ const [dateRange, setDateRange] = useState({
   };
 
   // Excel export function for sales data
+  const handleRefresh = () => {
+    setCacheStatus(null);
+    setCacheTimestamp(null);
+    setCurrentPage(1);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const loadMoreActivityLogs = async () => {
+    if (!currentUser?.uid || isLoading || !hasMoreData) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const startDate = new Date(dateRange.start);
+      const endDate = new Date(dateRange.end);
+      endDate.setHours(23, 59, 59, 999);
+
+      // Load next page
+      const nextPage = currentPage + 1;
+      
+      // Use cached activity logs for next page
+      const { logs: cachedLogs, cacheHit } = await getCachedActivityLogs(
+        startDate,
+        endDate,
+        PAGE_SIZE * nextPage, // Load more records
+        activityType || undefined
+      );
+
+      const logs = cachedLogs.map(log => ({
+        ...log,
+        timestamp: log.timestamp instanceof Date ? log.timestamp : (log.timestamp as any)?.toDate?.() || new Date()
+      })) as ActivityLog[];
+
+      // Filter by selected user if specified
+      let filteredLogs = logs;
+      if (selectedUser) {
+        filteredLogs = logs.filter(log => {
+          const logDisplayName = log.displayName || log.email || log.userId;
+          return logDisplayName === selectedUser;
+        });
+      }
+
+      // Append new logs to existing ones
+      setActivityLogs(prev => [...prev, ...filteredLogs.slice(prev.length)]);
+      setCurrentPage(nextPage);
+      setHasMoreData(logs.length === PAGE_SIZE * nextPage);
+      
+      console.log(`📄 Loaded page ${nextPage} - ${cacheHit ? 'cache HIT' : 'cache MISS'}`);
+      
+    } catch (error) {
+      console.error('Error loading more activity logs:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const exportSalesToExcel = () => {
     if (salesSummaries.length === 0) {
       alert('ไม่มีข้อมูลสำหรับส่งออก');
@@ -447,6 +682,92 @@ const [dateRange, setDateRange] = useState({
             </button>
           </div>
         </div>
+
+        {/* Cache Status and Performance Indicators */}
+        {(currentView !== 'sales' && (cacheStatus !== null || performanceMetrics.totalQueries > 0)) && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {cacheStatus !== null && (
+              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                cacheStatus 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+              }`}>
+                <div className={`w-2 h-2 rounded-full mr-2 ${
+                  cacheStatus ? 'bg-green-500' : 'bg-blue-500'
+                }`}></div>
+                {cacheStatus ? '⚡ ข้อมูลแคช (โหลดเร็ว)' : '🔄 ข้อมูลใหม่ (อัปเดตล่าสุด)'}
+                {cacheTimestamp && (
+                  <span className="ml-2 text-[10px] opacity-75">
+                    {cacheTimestamp.toLocaleTimeString('th-TH', { 
+                      hour: '2-digit', 
+                      minute: '2-digit', 
+                      second: '2-digit' 
+                    })}
+                  </span>
+                )}
+              </div>
+            )}
+            {performanceMetrics.totalQueries > 0 && (
+              <div className="hidden inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                <Clock className="w-3 h-3 mr-1" />
+                {performanceMetrics.queryTime}ms | Cache: {performanceMetrics.cacheHitRate.toFixed(1)}% | Queries: {performanceMetrics.totalQueries}
+              </div>
+            )}
+
+            {/* Cleanup Status Indicators */}
+            {cleanupStatus.hasRun && (
+              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                cleanupStatus.error 
+                  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                  : cleanupStatus.oldRecordsCount > 0
+                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+              }`}>
+                <Trash2 className="w-3 h-3 mr-1" />
+                {cleanupStatus.error ? (
+                  `🚨 Cleanup Error`
+                ) : cleanupStatus.lastCleanupResult ? (
+                  `🧹 ลบข้อมูลเก่า: ${cleanupStatus.lastCleanupResult.totalDeleted.toLocaleString()} รายการ`
+                ) : cleanupStatus.oldRecordsCount > 0 ? (
+                  `⚠️ ข้อมูลเก่า: ${cleanupStatus.oldRecordsCount.toLocaleString()} รายการ`
+                ) : (
+                  `✅ ไม่มีข้อมูลเก่า`
+                )}
+              </div>
+            )}
+
+            {cleanupStatus.isRunning && (
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                <div className="animate-spin w-3 h-3 mr-1 border border-blue-500 border-t-transparent rounded-full"></div>
+                🧹 กำลังทำความสะอาดข้อมูล...
+              </div>
+            )}
+
+            {/* Manual Cleanup Button */}
+            {!cleanupStatus.isRunning && (
+              <button
+                onClick={runManualCleanup}
+                disabled={cleanupStatus.isRunning}
+                className="hidden inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 hover:bg-orange-200 dark:hover:bg-orange-800 transition-colors disabled:opacity-50"
+                title="ลบข้อมูลกิจกรรมเก่า (เก่ากว่า 2 เดือน) เพื่อเพิ่มประสิทธิภาพ"
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                ลบข้อมูลเก่า
+              </button>
+            )}
+
+            {/* Refresh Button */}
+            <button
+              onClick={() => setRefreshTrigger(prev => prev + 1)}
+              disabled={isLoading}
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+              title="รีเฟรชข้อมูลและล้างแคช"
+            >
+              <Monitor className="w-3 h-3 mr-1" />
+              รีเฟรช
+            </button>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
@@ -615,11 +936,23 @@ const [dateRange, setDateRange] = useState({
 
             {/* Detailed Activity Logs Section */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-              <div className="p-4 border-b dark:border-gray-700">
-                <h2 className="text-lg font-semibold">รายละเอียดกิจกรรม</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  จำนวน {activityLogs.length} กิจกรรม
-                </p>
+              <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-semibold">รายละเอียดกิจกรรม</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    จำนวน {activityLogs.length} กิจกรรม
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isLoading}
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors"
+                  >
+                    <Activity className="w-4 h-4" />
+                    {isLoading ? 'กำลังรีเฟรช...' : 'รีเฟรชข้อมูล'}
+                  </button>
+                </div>
               </div>
               <div className="h-[500px] overflow-auto">
                 <table className="w-full">
@@ -695,6 +1028,28 @@ const [dateRange, setDateRange] = useState({
                   </tbody>
                 </table>
               </div>
+              
+              {/* Load More Button */}
+              {hasMoreData && !isLoading && (
+                <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                  <button
+                    onClick={loadMoreActivityLogs}
+                    className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Activity className="w-4 h-4" />
+                    โหลดข้อมูลเพิ่มเติม ({activityLogs.length} จาก {totalCount}+)
+                  </button>
+                </div>
+              )}
+              
+              {isLoading && (
+                <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                  <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-gray-500"></div>
+                    กำลังโหลดข้อมูล...
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -798,7 +1153,7 @@ const [dateRange, setDateRange] = useState({
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                    หลักการคำนวณรายได้
+                    คำนวณรายได้
                   </h3>
                   <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
                     <p className="mb-2">
