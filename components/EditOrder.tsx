@@ -129,7 +129,7 @@ export default function EditSellOrderForm({
     transaction_id: "",
     transaction_type: TransactionType.SELL,
     sell_method: "",
-    vat_type: VatType.VAT0,
+    vat_type: VatType.VAT7,
     client_chat_name: "",
     client_name: "",
     client_id: "",
@@ -169,6 +169,8 @@ export default function EditSellOrderForm({
   const [products, setProducts] = useState<Product[]>([
       { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }
     ]);
+
+  const [allDiscountAmount, setAllDiscountAmount] = useState<string>('0');
     
 
   useEffect(() => {
@@ -186,7 +188,8 @@ export default function EditSellOrderForm({
           router.push("/sales"); // Redirect back to sales page
           return;
         }
-        
+
+        setAllDiscountAmount(String(transactionData.total_discount || 0));
         setOriginalTransactionData(transactionData); // Store original data
         setOrderState(prev => ({
           ...prev,
@@ -825,6 +828,8 @@ export default function EditSellOrderForm({
             shippingCost={orderState.shipping_cost}
             products={products} // Pass loaded products
             setProducts={setProducts} // Pass setProducts to allow ProductSection to update them
+            initialTotalDiscount={allDiscountAmount}
+            initialIsPercentDiscount={false} // Default to fixed amount since no type field exists
           />
 
           <div className="mt-4">

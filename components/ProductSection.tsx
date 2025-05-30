@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { getProductPaginated, getProductByName } from "@/app/firebase/firestore";
 import {VatType} from "@/app/firebase/enum";
 import { X, Plus, Search, ShoppingCart } from 'lucide-react';
@@ -31,13 +31,23 @@ interface ProductSectionProps {
   shippingCost: number;
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+  initialTotalDiscount?: string;
+  initialIsPercentDiscount?: boolean;
 }
-
 interface PaginatedResponse {
     [key: string]: any;
 }
 
-  const ProductSection: React.FC<ProductSectionProps> = ({ onProductsChange, warehouseName, vatType, shippingCost, products, setProducts }) => {
+  const ProductSection: React.FC<ProductSectionProps> = ({ 
+    onProductsChange, 
+    warehouseName, 
+    vatType, 
+    shippingCost, 
+    products, 
+    setProducts,
+    initialTotalDiscount,
+    initialIsPercentDiscount 
+  }) => {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [searchResults, setSearchResults] = useState<ProductData[]>([]);
@@ -45,11 +55,21 @@ interface PaginatedResponse {
   const [totalAmountNoVat, setTotalAmountNoVat] = useState<number>(0);
   const [totalVat, setTotalVat] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
-  const [totalDiscount, setTotalDiscount] = useState<string>('0');
-  const [isPercentDiscount, setIsPercentDiscount] = useState<boolean>(false);
+  const [totalDiscount, setTotalDiscount] = useState<string>(
+    '13'
+  );
+  const [isPercentDiscount, setIsPercentDiscount] = useState<boolean>(
+    initialIsPercentDiscount !== undefined ? initialIsPercentDiscount : false
+  );
   const [calculatedTotalDiscount, setCalculatedTotalDiscount] = useState<number>(0);
-  
 
+  useEffect(() => {
+    // Initialize total discount from props if provided
+    if (initialTotalDiscount) {
+      setTotalDiscount(initialTotalDiscount);
+    }
+  }
+  , [initialTotalDiscount]);
 
   useEffect(() => {
     // Calculate total amount whenever products change
@@ -382,7 +402,12 @@ if (numericValue < 0) {
                   </select>
                 </div>
               </td>
-              <td className="px-4 py-3 border-t border-gray-200"></td>
+                <td className="px-4 py-3 border-t border-gray-200 text-right text-sm text-gray-600">
+                {isPercentDiscount ? 
+                  `${formatCurrency(calculatedTotalDiscount)}` : 
+                  `${((calculatedTotalDiscount / (products.reduce((acc, product) => acc + (product.total || 0), 0))) * 100).toFixed(2)}%`
+                }
+                </td>
             </tr>
             <tr>
               <td colSpan={5} className="px-4 py-3 border-t border-r border-gray-200 text-right font-medium">จำนวนส่วนลด</td>

@@ -87,6 +87,7 @@ export default function SalesDetailsPage() {
 
   const [transaction, setTransaction] = useState<TransactionDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sumItemsPrice, setSumItemsPrice] = useState(0);
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     title: "",
@@ -108,7 +109,11 @@ export default function SalesDetailsPage() {
           return;
         }
 
-        setTransaction(data as TransactionDetails);
+        const transactionData = data as TransactionDetails;
+        setTransaction(transactionData);
+        // Calculate total price of items
+        const totalItemsPrice = transactionData.items?.reduce((sum:any, item:any) => sum + (item.subtotal), 0) || 0;
+        setSumItemsPrice(totalItemsPrice);
       } catch (error) {
         console.error("Error fetching transaction details:", error);
         setModalState({
@@ -673,21 +678,29 @@ export default function SalesDetailsPage() {
                 </h3>
               </div>
               <div className="p-6 space-y-4">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">มูลค่าสินค้า (ไม่รวม VAT)</span>
+
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">มูลค่าสินค้า</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {formatCurrency(transaction.total_amount_no_vat)}
+                    {formatCurrency(sumItemsPrice)} 
                   </span>
                 </div>
-                
-                {transaction.total_discount > 0 && (
+
+              {transaction.total_discount > 0 && (
                   <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                     <span className="text-sm text-gray-600 dark:text-gray-400">ส่วนลดรวม</span>
                     <span className="text-sm font-medium text-red-600">
-                      -{formatCurrency(transaction.total_discount)}
+                      {formatCurrency(transaction.total_discount)} ({((transaction.total_discount / sumItemsPrice) * 100).toFixed(2)}%)
                     </span>
                   </div>
                 )}
+
+                <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">มูลค่าสินค้า (ไม่รวม VAT)</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {formatCurrency(transaction.total_amount_no_vat)} 
+                  </span>
+                </div>
 
                 <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                   <span className="text-sm text-gray-600 dark:text-gray-400">VAT</span>

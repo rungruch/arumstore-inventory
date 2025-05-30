@@ -296,7 +296,7 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                <div className="mt-4">
+                <div className="mt-4 hidden">
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-300 dark:border-gray-600" />

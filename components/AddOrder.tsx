@@ -127,7 +127,7 @@ export default function AddSellOrderForm({
     transaction_id: "",
     transaction_type: TransactionType.SELL,
     sell_method: "",
-    vat_type: VatType.VAT0,
+    vat_type: VatType.VAT7,
     client_chat_name: "",
     client_name: "",
     client_id: "",
@@ -166,6 +166,7 @@ export default function AddSellOrderForm({
       { id: '', product_code: '', product_name: '', quantity: 0, price: 0, discount: 0, total: 0, unit_type: 'ชิ้น' }  
     ]);
     
+  const [allDiscountAmount, setAllDiscountAmount] = useState<string>('0');
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -192,6 +193,7 @@ export default function AddSellOrderForm({
         }));
         let transformedItemData = await transformItemData(transactionData.items);
         setProducts(transformedItemData)
+        setAllDiscountAmount(transactionData.total_discount || '0');
       }
 
       await generateSKU();
@@ -459,7 +461,7 @@ export default function AddSellOrderForm({
         transaction_id: "",
         transaction_type: TransactionType.SELL,
         sell_method: "",
-        vat_type: VatType.VAT0,
+        vat_type: VatType.VAT7,
         client_chat_name: "",
         client_name: "",
         client_id: "",
@@ -783,6 +785,7 @@ export default function AddSellOrderForm({
             shippingCost={orderState.shipping_cost}
             products={products}
             setProducts={setProducts}
+            initialTotalDiscount={allDiscountAmount}
           />
 
           <div className="mt-4">
