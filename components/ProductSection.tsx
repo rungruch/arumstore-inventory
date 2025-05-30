@@ -56,20 +56,12 @@ interface PaginatedResponse {
   const [totalVat, setTotalVat] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [totalDiscount, setTotalDiscount] = useState<string>(
-    initialTotalDiscount || ''
+    initialTotalDiscount || '0'
   );
   const [isPercentDiscount, setIsPercentDiscount] = useState<boolean>(
     initialIsPercentDiscount !== undefined ? initialIsPercentDiscount : false
   );
   const [calculatedTotalDiscount, setCalculatedTotalDiscount] = useState<number>(0);
-
-  useEffect(() => {
-    // Initialize total discount from props if provided
-    if (initialTotalDiscount) {
-      setTotalDiscount(initialTotalDiscount);
-    }
-  }
-  , [initialTotalDiscount]);
 
   useEffect(() => {
     // Calculate total amount whenever products change
@@ -110,6 +102,20 @@ interface PaginatedResponse {
       onProductsChange(products, totalAmount, totalAmountNoVat, totalVat, calculatedTotalDiscount);
     }
   }, [products, onProductsChange, vatType, totalDiscount, isPercentDiscount, shippingCost]);
+
+  useEffect(() => {
+    // Update totalDiscount when initialTotalDiscount prop changes
+    if (initialTotalDiscount !== undefined) {
+      setTotalDiscount(initialTotalDiscount);
+    }
+  }, [initialTotalDiscount]);
+
+  useEffect(() => {
+    // Update isPercentDiscount when initialIsPercentDiscount prop changes
+    if (initialIsPercentDiscount !== undefined) {
+      setIsPercentDiscount(initialIsPercentDiscount);
+    }
+  }, [initialIsPercentDiscount]);
 
   useEffect(() => {
     // Reset products when warehouseName changes
