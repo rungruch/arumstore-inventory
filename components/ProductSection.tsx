@@ -56,7 +56,7 @@ interface PaginatedResponse {
   const [totalVat, setTotalVat] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [totalDiscount, setTotalDiscount] = useState<string>(
-    '13'
+    initialTotalDiscount || ''
   );
   const [isPercentDiscount, setIsPercentDiscount] = useState<boolean>(
     initialIsPercentDiscount !== undefined ? initialIsPercentDiscount : false
