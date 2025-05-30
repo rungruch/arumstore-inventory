@@ -139,7 +139,7 @@ export default function StockDetailsPopup({ productName, productSKU, stocks, pen
                 />
                 <div className="flex justify-between items-center mb-4">
                   <p className="text-red-500 text-sm">
-                    {adjustQuantity === 0 ? 'กรุณากรอกจำนวนที่ต้องการปรับ' : ''}
+                    {adjustQuantity < 0 ? 'จำนวนต้องไม่ติดลบ' : ''}
                   </p>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -156,7 +156,7 @@ export default function StockDetailsPopup({ productName, productSKU, stocks, pen
                   </button>
                     <button 
                     onClick={async () => {
-                      if (adjustingWarehouse === null || adjustQuantity === 0) {
+                      if (adjustingWarehouse === null || adjustQuantity < 0) {
                       alert('Failed to adjust stock. Please try again.');
                       return;
                       }
@@ -182,7 +182,7 @@ export default function StockDetailsPopup({ productName, productSKU, stocks, pen
                     
                     }}
                     className="px-4 py-2 text-white rounded bg-gray-800 hover:bg-gray-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 "
-                    disabled={adjustQuantity === 0}
+                    disabled={adjustQuantity < 0}
                     >
                     บันทึก
                     </button>
